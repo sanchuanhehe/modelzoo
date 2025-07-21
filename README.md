@@ -1,39 +1,60 @@
 # ModelZoo
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
-
-#### 软件架构
-软件架构说明
+# 简介
+ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语言处理、语音、推荐、多模态、大语言模型等方向的AI模型及其基于海思实操案例。平台的每个模型都有详细的使用指导，为方便更多开发者使用ModelZoo，我们将持续增加典型网络和相关预训练模型。如果您有任何需求，请在[Gitee]([Issues · HiSpark/ModelZoo - Gitee.com](https://gitee.com/HiSpark/modelzoo/issues))提交issue，我们会及时处理。
 
 
-#### 安装教程
+# 目录
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+| 目录                                                         | 说明                       |
+| ------------------------------------------------------------ | -------------------------- |
+| docs | 文档说明 |
+| datasets | 数据集 |
+| samples | 模型 |
+| utils | 工具 |
 
-#### 使用说明
+# 如何贡献
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+本仓子模块参考目录，可以直接克隆子仓，也可以克隆主仓，在开始贡献之前，请先阅读[NOTICE]([contribute/社区参与贡献指南.md · HiSpark/docs - Gitee.com](https://gitee.com/HiSpark/docs/blob/master/contribute/社区参与贡献指南.md))，谢谢！
 
-#### 参与贡献
+# 模型列表
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+## 运行用户建议
+
+**说明：**
+**因使用版本差异，模型性能可能存在波动，性能仅供参考**
+
+<table align="center">
+    <tr>
+    <th rowspan=1>模型</th>
+    <th rowspan=1>数据集</th>
+    <th rowspan=1>3403性能</th>
+    <th rowspan=1>3403性能</th>
+    <th rowspan=1>3591性能</th>
+    <th rowspan=1>输入shape</th>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification">Squeezenet1_1 </a>
+    </td>
+    <td>ImageNet</td>
+    <td>1ms</td>
+    <td></td>
+    <td></td>
+    <td>1 x 3 x 224 x 224</td>
+    </tr>
+</table>
 
 
-#### 特技
+# 免责声明
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+## 致ModelZoo使用者
+1. HiSpark ModelZoo提供的模型仅供您用于非商业目的。
+2. HiSpark ModelZoo仅提供公共数据集下载、模型下载和预处理脚本。这些数据集和模型不属于ModelZoo，ModelZoo也不对其质量或维护负责。请确保您具有这些数据集和模型的使用许可，如您因使用数据集和模型产生侵权纠纷，海思不承担任何责任。
+3. 如您在使用ModelZoo模型过程中，发现任何问题（包括但不限于功能问题、合规问题），请在Gitee提交issue，我们将及时审视并解决。
+
+## 致数据集、模型所有者
+如果您不希望您的数据集、模型公布在ModelZoo上或希望更新ModelZoo中属于您的数据集、模型，请在Gitee提交issue，我们将根据您的issue删除或更新您的数据集、模型。衷心感谢您对ModelZoo的理解和贡献。
+
+## License声明
+HiSpark ModelZoo提供的模型，如模型目录下存在License的，以该License为准。如模型目录下不存在License的，以Apache 2.0许可证许可，对应许可证文本可查阅HiSpark ModelZoo根目录。
