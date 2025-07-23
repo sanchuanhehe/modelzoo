@@ -225,7 +225,7 @@ def sample_build(source_directory, chip_name, builddef_engine, log_basic_name, b
     if not os.path.exists("./archives"):
         os.mkdir("./archives")
     os.chdir(root_dir)
-    log_path = os.path.join('.', 'archives', f'{log_basic_name}-{chip_name}-{builddef_engine}.log')
+    log_path = os.path.join('.', 'archives', f'build-{log_basic_name}-{chip_name}-{builddef_engine}.log')
     writer = os.fdopen(os.open(
         log_path,
         os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
@@ -337,7 +337,7 @@ def sample_build_prepare(input_list):
         print(source_directory)
         print(f"[sample_build_prepare] source_directory: {source_directory}")
 
-        log_basic_name = f'build-{build_target}-{sample_name}'
+        log_basic_name = f'{build_target}-{sample_name}'
         sample_setenv(chip_name, builddef_engine)
         sample_build(source_directory, chip_name, builddef_engine, log_basic_name, build_target)
 
