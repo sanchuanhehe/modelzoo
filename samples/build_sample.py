@@ -28,7 +28,7 @@ def check_changes_and_get_folders(changed_files: List[str]) -> Optional[Set[str]
     返回None表示不需要构建或存在非法修改
     """
     # 检查是否有C/H文件修改
-    has_c_or_h_files = any(f.endswith(('.c', '.h', '.cpp', ".hpp")) for f in changed_files)
+    has_c_or_h_files = any(f.endswith(('.c', '.h', '.cpp', 'txt', '.py')) for f in changed_files)
     
     if not has_c_or_h_files:
         print("Not need build, only non-source files modified")
@@ -50,7 +50,7 @@ def check_changes_and_get_folders(changed_files: List[str]) -> Optional[Set[str]
     # 提取三级文件夹结构
     changed_folders = set()
     for file_path in changed_files:
-        if file_path.endswith(('.c', '.cpp', '.h', 'txt')):
+        if file_path.endswith(('.c', '.h', '.cpp', 'txt', '.py')):
             parts = file_path.split('/')
             if len(parts) >= 4:  # 确保路径深度足够
                 folder_name = '+'.join(parts[1:4])  # 取第2-4级目录
@@ -126,7 +126,7 @@ def process_build_info_files():
                         for item in data:
                             # 提取需要的字段值
                             build_target = item.get('buildTarget', '')
-                            relative_path = item.get('relativePath', '').replace('/','-')
+                            relative_path = item.get('relativePath', '').replace('/','=')
                             chip_name = item.get('chip', '')
                             build_def = item.get('buildDef', '')
                             # 组合成一个字符串并添加到结果列表
@@ -153,7 +153,7 @@ def extract_exact_match(input_list, match_list):
             parts = string.split('+')
             if len(parts) >= 4:
                 sample_company_name = parts[0].split('/')[2]
-                sample_name_field = parts[2].replace('-','+')
+                sample_name_field = parts[2].replace('=','+')
                 combined_string = sample_company_name + "+" + sample_name_field
                 if combined_string in match_list:
                     exact_matches.append(string)
@@ -225,7 +225,7 @@ def sample_build(source_directory, chip_name, builddef_engine, log_basic_name, b
     if not os.path.exists("./archives"):
         os.mkdir("./archives")
     os.chdir(root_dir)
-    log_path = os.path.join('.', 'archives', f'build-{log_basic_name}-{chip_name}-{builddef_engine}.log')
+    log_path = os.path.join('.', 'archives', f'build-{log_basic_name}_{chip_name}_{builddef_engine}.log')
     writer = os.fdopen(os.open(
         log_path,
         os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
@@ -289,7 +289,7 @@ def sample_build(source_directory, chip_name, builddef_engine, log_basic_name, b
                 sys.exit(-1) 
             
             # 目标目录路径
-            tar_path = os.path.join(root_dir, f'archives/{log_basic_name}-{chip_name}-{builddef_engine}.tar')
+            tar_path = os.path.join(root_dir, f'archives/{log_basic_name}_{chip_name}_{builddef_engine}.tar')
             print(f"src_file: {src_file}")
             print(f"tar_path: {tar_path}")
             try:
@@ -332,12 +332,13 @@ def sample_build_prepare(input_list):
             builddef_engine = 'VOID'
 
         target_string = sample_file_path.split('/build_config.json')[0] + '/'
-        samples = sample_name.replace('-','/')
+        samples = sample_name.replace('=','/')
+        sample_name = sample_name.replace('=','-')
         source_directory = target_string + samples
         print(source_directory)
         print(f"[sample_build_prepare] source_directory: {source_directory}")
 
-        log_basic_name = f'{build_target}-{sample_name}'
+        log_basic_name = f'{build_target}_{sample_name}'
         sample_setenv(chip_name, builddef_engine)
         sample_build(source_directory, chip_name, builddef_engine, log_basic_name, build_target)
 
@@ -351,3 +352,4 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+    
