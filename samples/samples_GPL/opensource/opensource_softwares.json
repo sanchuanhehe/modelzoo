@@ -1,0 +1,6 @@
+{
+    "pkg_name_versions" : [
+        "json==3.12.0==samples/samples_GPL/opensource/json",
+        "opencv=4.12.0==samples/samples_GPL/opensource/opencv"
+    ]
+}

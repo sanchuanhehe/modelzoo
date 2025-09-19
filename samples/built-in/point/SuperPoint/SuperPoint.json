@@ -1,0 +1,191 @@
+{
+	"modelName": "SuperPoint",
+	"modelDesc": "我们设计了一种称为SuperPoint的全卷积神经网络架构，该架构对全尺寸图像进行操作，并在单次前向传递中产生伴随固定长度描述符的兴趣点检测。该模型有一个单一的共享编码器来处理和减少输入图像的维数。在编码器之后，该架构分成两个解码器“头”，它们学习任务特定权重——一个用于兴趣点检测，另一个用于感兴趣点描述。大多数网络参数在两个任务之间共享，这与传统系统不同，传统系统首先检测兴趣点，然后计算描述符，并且缺乏跨两个任务共享计算和表示的能力。",
+	"modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/point/SuperPoint",
+	"modelParameter": {
+		"输入": "240x320",
+		"参数量": "1.24M",
+		"计算量": "13.116GFLOPS"
+	},
+	"modelUsageScenes": [
+		"特征点检测"
+	],
+	"modelTags": [
+		"特征点检测"
+	],
+	"modelDatasets": {
+		"desc": "数据集HPatches",
+		"link": "https://gitee.com/link?target=http%3A%2F%2Ficvl.ee.ic.ac.uk%2Fvbalnt%2Fhpatches%2Fhpatches-sequences-release.tar.gz"
+	},
+	"modelLicense": [
+		{
+			"desc": "源模型",
+			"link": "https://github.com/eric-yyjau/pytorch-superpoint/LICENSE"
+		},
+		{
+			"desc": "部署模型",
+			"link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/point/SuperPoint/LICENSE"
+		}
+	],
+	"modelChipset": [
+		{
+			"chipset": "SS928V100 SVP_NNN",
+			"performance": [
+				{
+					"performance": 3.12,
+					"performanceUnit": "耗时（ms）"
+				},
+				{
+					"performance": 320.60,
+					"performanceUnit": "性能（fps）"
+				},
+				{
+					"performance": 5.772,
+					"performanceUnit": "带宽(M)"
+				},
+				{
+					"performance": 8.520,
+					"performanceUnit": "内存（M）"
+				}
+			],
+			"tools": [
+				{
+					"name": "CANN配置",
+					"link": ""
+				},
+				{
+					"name": "编译工具库",
+					"link": ""
+				}
+			],
+			"runtime": [
+				{
+					"Task ID": "-",
+					"Layer ID": "-",
+					"Layer Name": "-",
+					"Layer Type": "-",
+					"Ori Layer Name": "-",
+					"Time(us)": 3092.0,
+					"Time Ratio(%)": "100",
+					"Mac Busy Ratio(%)": 79.8,
+					"Mac Ppen Ratio(%)": 78.31,
+					"Vec Busy Ratio(%)": 84.93,
+					"Vec Ppen Ratio(%)": 9.76,
+					"Dstr Ratio(%)": 9.85,
+					"Dtrans Ratio(%)": 8.87,
+					"DLD Ratio(%)": 8.69,
+					"WLD Ratio(%)": 2.84,
+					"Memory Bound": 0.12,
+					"DDR Read(KB)": 3178.28,
+					"DDR Write(KB)": 2617.09,
+					"DDR Total(KB)": 5795.38
+				},
+				{
+					"Task ID": 0,
+					"Layer ID": "0,1,2,3,4,5,6,7,8,9,10,11",
+					"Layer Name": "image,/inc/conv/conv/conv.0/Conv,/down1/mpconv/mpconv.0/MaxPool,/down1/mpconv/mpconv.1/conv/conv.0/Conv,/down2/mpconv/mpconv.0/MaxPool,/down2/mpconv/mpconv.1/conv/conv.0/Conv,/down3/mpconv/mpconv.0/MaxPool,/down3/mpconv/mpconv.1/conv/conv.0/Conv,/down3/mpconv/mpconv.1/conv/conv.3/Conv,/convPa/Conv,/convPb/Conv,/convPb/Conv_report_0_0",
+					"Layer Type": "Preprocess,Convolution,Convolution,Convolution,Convolution,Convolution,Convolution,Convolution,Convolution,Convolution,Convolution,Reportop",
+					"Ori Layer Name": "image,/inc/conv/conv/conv.0/Conv,/down1/mpconv/mpconv.0/MaxPool,/down1/mpconv/mpconv.1/conv/conv.0/Conv,/down2/mpconv/mpconv.0/MaxPool,/down2/mpconv/mpconv.1/conv/conv.0/Conv,/down3/mpconv/mpconv.0/MaxPool,/down3/mpconv/mpconv.1/conv/conv.0/Conv,/down3/mpconv/mpconv.1/conv/conv.3/Conv,/convPa/Conv,/convPb/Conv,/convPb/Conv_report_0_0",
+					"Time(us)": 2367.14,
+					"Time Ratio(%)": 76.56,
+					"Mac Busy Ratio(%)": 96.57,
+					"Mac Ppen Ratio(%)": 94.64,
+					"Vec Busy Ratio(%)": 99.27,
+					"Vec Ppen Ratio(%)": 10.47,
+					"Dstr Ratio(%)": 1.67,
+					"Dtrans Ratio(%)": 0.86,
+					"DLD Ratio(%)": 2.22,
+					"WLD Ratio(%)": 2.6,
+					"Memory Bound": 0.03,
+					"DDR Read(KB)": 1336.02,
+					"DDR Write(KB)": 454.69,
+					"DDR Total(KB)": 1790.7
+				},
+				{
+					"Task ID": 1,
+					"Layer ID": "12,13",
+					"Layer Name": "/convDa/Conv,/convDb/Conv",
+					"Layer Type": "Convolution,Convolution",
+					"Ori Layer Name": "/convDa/Conv,/convDb/Conv",
+					"Time(us)": 234.86,
+					"Time Ratio(%)": 7.6,
+					"Mac Busy Ratio(%)": 77.24,
+					"Mac Ppen Ratio(%)": 77.08,
+					"Vec Busy Ratio(%)": 88.06,
+					"Vec Ppen Ratio(%)": 7.01,
+					"Dstr Ratio(%)": 24.12,
+					"Dtrans Ratio(%)": 21.91,
+					"DLD Ratio(%)": 6.69,
+					"WLD Ratio(%)": 11.21,
+					"Memory Bound": 0.31,
+					"DDR Read(KB)": 514.3,
+					"DDR Write(KB)": 360.25,
+					"DDR Total(KB)": 874.55
+				},
+				{
+					"Task ID": 2,
+					"Layer ID": "14",
+					"Layer Name": "/ReduceL2",
+					"Layer Type": "Reduction",
+					"Ori Layer Name": "/ReduceL2",
+					"Time(us)": 207.14,
+					"Time Ratio(%)": 6.7,
+					"Mac Busy Ratio(%)": 0,
+					"Mac Ppen Ratio(%)": 0,
+					"Vec Busy Ratio(%)": 29.35,
+					"Vec Ppen Ratio(%)": 14.76,
+					"Dstr Ratio(%)": 0.31,
+					"Dtrans Ratio(%)": 0,
+					"DLD Ratio(%)": 60.93,
+					"WLD Ratio(%)": 0,
+					"Memory Bound": 4.13,
+					"DDR Read(KB)": 363.3,
+					"DDR Write(KB)": 1.66,
+					"DDR Total(KB)": 364.95
+				},
+				{
+					"Task ID": 3,
+					"Layer ID": "15,16",
+					"Layer Name": "/Unsqueeze,/Div",
+					"Layer Type": "Reshape,BinaryMath",
+					"Ori Layer Name": "/Unsqueeze,/Div",
+					"Time(us)": 121.29,
+					"Time Ratio(%)": 3.92,
+					"Mac Busy Ratio(%)": 0,
+					"Mac Ppen Ratio(%)": 0,
+					"Vec Busy Ratio(%)": 6.98,
+					"Vec Ppen Ratio(%)": 5.77,
+					"Dstr Ratio(%)": 72.25,
+					"Dtrans Ratio(%)": 70.4,
+					"DLD Ratio(%)": 28.72,
+					"WLD Ratio(%)": 0,
+					"Memory Bound": 12.51,
+					"DDR Read(KB)": 363.66,
+					"DDR Write(KB)": 600.25,
+					"DDR Total(KB)": 963.91
+				},
+				{
+					"Task ID": 4,
+					"Layer ID": "17",
+					"Layer Name": "/Div_report_0_1",
+					"Layer Type": "Reportop",
+					"Ori Layer Name": "/Div_report_0_1",
+					"Time(us)": 161.57,
+					"Time Ratio(%)": 5.23,
+					"Mac Busy Ratio(%)": 0,
+					"Mac Ppen Ratio(%)": 0,
+					"Vec Busy Ratio(%)": 0,
+					"Vec Ppen Ratio(%)": 0,
+					"Dstr Ratio(%)": 74.41,
+					"Dtrans Ratio(%)": 72.44,
+					"DLD Ratio(%)": 24.29,
+					"WLD Ratio(%)": 0,
+					"Memory Bound": 0.0,
+					"DDR Read(KB)": 601.02,
+					"DDR Write(KB)": 1200.25,
+					"DDR Total(KB)": 1801.27
+				}
+			]
+		}
+	]
+}

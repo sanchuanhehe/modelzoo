@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) ModelZoo. 2025-2025. All rights reserved.
+	 Licensed under the Apache License, Version 2.0 (the "License");
+	 you may not use this file except in compliance with the License.
+	 You may obtain a copy of the License at
+
+		  http://www.apache.org/licenses/LICENSE-2.0
+
+	 Unless required by applicable law or agreed to in writing, software
+	 distributed under the License is distributed on an "AS IS" BASIS,
+	 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	 See the License for the specific language governing permissions and
+	 limitations under the License.
+-->
+<configuration>
+    <oatconfig>
+        <licensefile></licensefile>
+        <policylist>
+            <policy name="projectPolicy" desc="">
+                <policyitem type="license" name="Apache-2.0" path="!.*LICENSE" rule="may" group="defaultGroup" filefilter="defaultPolicyFilter" desc=""/>
+                <policyitem type="copyright" name="ModelZoo."
+                            path=".*" rule="may" group="defaultGroup"
+                            filefilter="copyrightPolicyFilter" desc="ModelZoo copyright"/>
+            </policy>
+        </policylist>
+        <filefilterlist>
+            <filefilter name="defaultPolicyFilter" desc="Filters for compatibility, license header policies">
+                <filteritem type="filename" name="README"/>
+                <filteritem type="filename" name="COPYRIGHT"/>
+            </filefilter>
+            <filefilter name="copyrightPolicyFilter" desc="Filters for copyright header policies" >
+                <filteritem type="filename" name="README"/>
+                <filteritem type="filename" name="*.dox|*.xml|*.xsd"/>
+                <filteritem type="filename" name="*.code-workspace"/>
+            </filefilter>
+            <filefilter name="binaryFileTypePolicyFilter" desc="Filters for binary file policies" >
+                <filteritem type="filename" name="*.a|*.so|*.bin|*.ko" desc="Shared libraries of Hisilicon self-developed platform"/>
+            </filefilter>
+            <filefilter name="liteosPolicyFilter" desc="Filters for compatibility, license header policies">
+                <filteritem type="filepath" name="open_source/.*" desc="Exclude opesource"/>
+            </filefilter>
+        </filefilterlist>
+    </oatconfig>
+</configuration>

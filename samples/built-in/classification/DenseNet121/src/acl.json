@@ -1,0 +1,6 @@
+{
+    "profiler": {
+    "switch": "on",
+    "storage_limit": "2048MB"
+    }
+}

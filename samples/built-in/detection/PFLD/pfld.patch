@@ -1,0 +1,113 @@
+diff --git a/data/SetPreparation.py b/data/SetPreparation.py
+index 1922fbd..749b02d 100644
+--- a/data/SetPreparation.py
++++ b/data/SetPreparation.py
+@@ -197,11 +197,11 @@ def get_dataset_list(imgDir, outDir, landmarkDir, is_train):
+ 
+ if __name__ == '__main__':
+     root_dir = os.path.dirname(os.path.realpath(__file__))
+-    imageDirs = 'WFLW/WFLW_images'
+-    Mirror_file = 'WFLW/WFLW_annotations/Mirror98.txt'
++    imageDirs = '../../../../../../datasets/WFLW/WFLW_images'
++    Mirror_file = '../../../../../../datasets/WFLW/WFLW_annotations/Mirror98.txt'
+ 
+-    landmarkDirs = ['WFLW/WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_test.txt',
+-                    'WFLW/WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_train.txt']
++    landmarkDirs = ['../../../../../../datasets/WFLW/WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_test.txt',
++                    '../../../../../../datasets/WFLW/WFLW_annotations/list_98pt_rect_attr_train_test/list_98pt_rect_attr_train.txt']
+ 
+     outDirs = ['test_data', 'train_data']
+     for landmarkDir, outDir in zip(landmarkDirs, outDirs):
+diff --git a/dataset/datasets.py b/dataset/datasets.py
+index e138996..338ef86 100644
+--- a/dataset/datasets.py
++++ b/dataset/datasets.py
+@@ -165,13 +165,14 @@ class WLFWDatasets(data.Dataset):
+ 
+     def __getitem__(self, index):
+         self.line = self.lines[index].strip().split()
++        self.path = self.line[0]
+         self.img = cv2.imread(self.line[0])
+         self.landmark = np.asarray(self.line[1:197], dtype=np.float32)
+         self.attribute = np.asarray(self.line[197:203], dtype=np.int32)
+         self.euler_angle = np.asarray(self.line[203:206], dtype=np.float32)
+         if self.transforms:
+             self.img = self.transforms(self.img)
+-        return (self.img, self.landmark, self.attribute, self.euler_angle)
++        return (self.path, self.img, self.landmark, self.attribute, self.euler_angle)
+ 
+     def __len__(self):
+         return len(self.lines)
+@@ -185,7 +186,7 @@ if __name__ == '__main__':
+                             shuffle=True,
+                             num_workers=0,
+                             drop_last=False)
+-    for img, landmark, attribute, euler_angle in dataloader:
++    for _, img, landmark, attribute, euler_angle in dataloader:
+         print("img shape", img.shape)
+         print("landmark size", landmark.size())
+         print("attrbute size", attribute)
+diff --git a/pytorch2onnx.py b/pytorch2onnx.py
+index 915d741..9005929 100644
+--- a/pytorch2onnx.py
++++ b/pytorch2onnx.py
+@@ -41,7 +41,7 @@ model = onnx.load(args.onnx_model)
+ onnx.checker.check_model(model)
+ 
+ print("====> Simplifying...")
+-model_opt = onnxsim.simplify(args.onnx_model)
++model_opt, check_ok = onnxsim.simplify(args.onnx_model)
+ # print("model_opt", model_opt)
+ onnx.save(model_opt, args.onnx_model_sim)
+ print("onnx model simplify Ok!")
+\ No newline at end of file
+diff --git a/test.py b/test.py
+index a8e30d8..6b8cded 100644
+--- a/test.py
++++ b/test.py
+@@ -72,17 +72,17 @@ def validate(wlfw_val_dataloader, pfld_backbone):
+ 
+     nme_list = []
+     cost_time = []
++    i = 1
+     with torch.no_grad():
+-        for img, landmark_gt, _, _ in wlfw_val_dataloader:
++        for path, img, landmark_gt, _, _ in wlfw_val_dataloader:
+             img = img.to(device)
+             landmark_gt = landmark_gt.to(device)
+             pfld_backbone = pfld_backbone.to(device)
+-
+             start_time = time.time()
+             _, landmarks = pfld_backbone(img)
+             cost_time.append(time.time() - start_time)
+-
+             landmarks = landmarks.cpu().numpy()
++
+             landmarks = landmarks.reshape(landmarks.shape[0], -1,
+                                           2)  # landmark
+             landmark_gt = landmark_gt.reshape(landmark_gt.shape[0], -1,
+@@ -103,11 +103,9 @@ def validate(wlfw_val_dataloader, pfld_backbone):
+                     cv2.circle(img_clone, (x, y), 1, (255, 0, 0), -1)
+                 cv2.imshow("show_img.jpg", img_clone)
+                 cv2.waitKey(0)
+-
+             nme_temp = compute_nme(landmarks, landmark_gt)
+             for item in nme_temp:
+                 nme_list.append(item)
+-
+         # nme
+         print('nme: {:.4f}'.format(np.mean(nme_list)))
+         # auc and failure rate
+diff --git a/train.py b/train.py
+index 3183df4..cbb82a8 100644
+--- a/train.py
++++ b/train.py
+@@ -75,7 +75,7 @@ def validate(wlfw_val_dataloader, pfld_backbone, auxiliarynet, criterion):
+     auxiliarynet.eval()
+     losses = []
+     with torch.no_grad():
+-        for img, landmark_gt, attribute_gt, euler_angle_gt in wlfw_val_dataloader:
++        for _, img, landmark_gt, attribute_gt, euler_angle_gt in wlfw_val_dataloader:
+             img = img.to(device)
+             attribute_gt = attribute_gt.to(device)
+             landmark_gt = landmark_gt.to(device)
