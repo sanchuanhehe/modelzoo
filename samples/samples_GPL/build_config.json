@@ -1,0 +1,58 @@
+[
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/UNet",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分割网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov5",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov5",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolo11s",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolo11s-seg",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8l",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  }
+]

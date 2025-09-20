@@ -1,0 +1,23 @@
+diff --git a/models/yolo.py b/models/yolo.py
+index ed21c067..54f125a0 100644
+--- a/models/yolo.py
++++ b/models/yolo.py
+@@ -54,6 +54,7 @@ class Detect(nn.Module):
+         self.inplace = inplace  # use inplace ops (e.g. slice assignment)
+ 
+     def forward(self, x):
++        """
+         z = []  # inference output
+         for i in range(self.nl):
+             x[i] = self.m[i](x[i])  # conv
+@@ -77,6 +78,10 @@ class Detect(nn.Module):
+                 z.append(y.view(bs, self.na * nx * ny, self.no))
+ 
+         return x if self.training else (torch.cat(z, 1),) if self.export else (torch.cat(z, 1), x)
++        """
++        for i in range(self.nl):
++            x[i] = self.m[i](x[i])  # conv
++        return x[0], x[1], x[2]
+ 
+     def _make_grid(self, nx=20, ny=20, i=0, torch_1_10=check_version(torch.__version__, '1.10.0')):
+         d = self.anchors[i].device

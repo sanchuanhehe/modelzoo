@@ -1,0 +1,34 @@
+version: 65536
+layer {
+  name: "text"
+  calc_data_type: F32
+  quant_param {
+    input {
+      data_type: F32
+      scale: 1
+      offset: 0
+    }
+  }
+}
+layer {
+  name: "/Equal"
+  calc_data_type: F16
+  quant_param {
+    input {
+      data_type: F32
+      scale: 1
+      offset: 0
+    }
+  }
+}
+layer {
+  name: "/bert/embeddings/word_embeddings/Gather"
+  calc_data_type: F32
+  quant_param {
+    input {
+      data_type: F32
+      scale: 1
+      offset: 0
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # ModelZoo
 
 # 简介
-ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语言处理、语音、推荐、多模态、大语言模型等方向的AI模型及其基于海思实操案例。平台的每个模型都有详细的使用指导，为方便更多开发者使用ModelZoo，我们将持续增加典型网络和相关预训练模型。如果您有任何需求，请在[Gitee]([Issues · HiSpark/ModelZoo - Gitee.com](https://gitee.com/HiSpark/modelzoo/issues))提交issue，我们会及时处理。
+ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语言处理、语音、推荐、多模态等方向的AI模型。我们仅对模型做适配和格式转化，未重新训练模型和对模型进行功能性修改。我们提供模型基于海思实操案例demo和性能表现，供开发者学习。平台的每个模型都有详细的使用指导，为方便更多开发者使用ModelZoo，我们将持续增加典型网络和相关预训练模型。如果您有任何需求，请在[Gitee](https://gitee.com/HiSpark/modelzoo/issues)提交issue，我们会及时处理。
 
 
 # 目录
@@ -15,7 +15,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 
 # 如何贡献
 
-本仓子模块参考目录，可以直接克隆子仓，也可以克隆主仓，在开始贡献之前，请先阅读[NOTICE]([contribute/社区参与贡献指南.md · HiSpark/docs - Gitee.com](https://gitee.com/HiSpark/docs/blob/master/contribute/社区参与贡献指南.md))，谢谢！
+本仓子模块参考目录，可以直接克隆子仓，也可以克隆主仓，在开始贡献之前，请先阅读[NOTICE](https://gitee.com/HiSpark/docs/blob/master/contribute/%E7%A4%BE%E5%8C%BA%E5%8F%82%E4%B8%8E%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97.md)，谢谢！
 
 # 模型列表
 
@@ -28,20 +28,190 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <tr>
     <th rowspan=1>模型</th>
     <th rowspan=1>数据集</th>
-    <th rowspan=1>3403性能</th>
-    <th rowspan=1>3403性能</th>
-    <th rowspan=1>3591性能</th>
-    <th rowspan=1>输入shape</th>
+    <th rowspan=1>SVP NNN性能fps</th>
+    <th rowspan=1>NNN性能fps</th>
+    <th rowspan=1>输入</th>
     </tr>
     <tr>
     <td>
-    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification">Squeezenet1_1 </a>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Squeezenet1_1">Squeezenet1_1 </a>
     </td>
     <td>ImageNet</td>
-    <td>1ms</td>
+    <td>2052.42</td>
+    <td>801.62</td>
+    <td>224 x 224</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ShuffleNetV2">ShuffleNetV2 </a>
+    </td>
+    <td>ImageNet</td>
+    <td>403.39</td>
+    <td>255</td>
+    <td>224 x 224</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet50">ResNet50 </a>
+    </td>
+    <td>ImageNet</td>
+    <td>336.66</td>
+    <td>133.10</td>
+    <td>224 x 224</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/MobileNetV2">MobileNetV2 </a>
+    </td>
+    <td>ImageNet</td>
+    <td>1317.222</td>
+    <td>311.80</td>
+    <td>224 x 224</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/EfficientNetV2">EfficientNetV2 </a>
+    </td>
+    <td>ImageNet</td>
+    <td>37.051</td>
     <td></td>
+    <td>288x288</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/DenseNet121">DenseNet121 </a>
+    </td>
+    <td>ImageNet</td>
+    <td>170.63</td>
+    <td>108.01</td>
+    <td>224x224</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Swin-Transformer">Swin-Transformer </a>
+    </td>
+    <td>ImageNet</td>
+    <td>38.24</td>
     <td></td>
-    <td>1 x 3 x 224 x 224</td>
+    <td>224x224</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Vit-B-16">Vit-B-16</a>
+    </td>
+    <td>ImageNet</td>
+    <td>28.56</td>
+    <td></td>
+    <td>224x224</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet101">ResNet101</a>
+    </td>
+    <td>ImageNet</td>
+    <td>210.675</td>
+    <td>83.102</td>
+    <td>224x224</td>
+    </tr>
+    <tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet18">ResNet18</a>
+    </td>
+    <td>ImageNet</td>
+    <td>753.02</td>
+    <td></td>
+    <td>500x375</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Chinese-CLIP">Chinese-CLIP</a>
+    </td>
+    <td>CIFAR100</td>
+    <td>11.142</td>
+    <td></td>
+    <td>224x224</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/depth/Depth-Anything-v2">Depth-Anything-v2</a>
+    </td>
+    <td>DA-2K</td>
+    <td>3.756</td>
+    <td></td>
+    <td>518x518</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/PFLD">PFLD</a>
+    </td>
+    <td>WFLW</td>
+    <td>1631.88</td>
+    <td></td>
+    <td>112x112</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/point/SuperPoint">SuperPoint</a>
+    </td>
+    <td>HPatches</td>
+    <td>320.60</td>
+    <td></td>
+    <td>240x320</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/UNet">UNet</a>
+    </td>
+    <td>carvana</td>
+    <td>9.6372</td>
+    <td></td>
+    <td>572x572</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov5">yolov5s</a>
+    </td>
+    <td>coco2017</td>
+    <td>85.41</td>
+    <td>35.54</td>
+    <td>640x640</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8l">yolov8l</a>
+    </td>
+    <td>coco2017</td>
+    <td>10.393</td>
+    <td></td>
+    <td>640x640</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s">yolov8s</a>
+    </td>
+    <td>coco2017</td>
+    <td>42.914</td>
+    <td></td>
+    <td>640x640</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s">yolo11s</a>
+    </td>
+    <td>coco2017</td>
+    <td>42.753</td>
+    <td></td>
+    <td>640x640</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s-seg">yolo11s-seg</a>
+    </td>
+    <td>coco2017</td>
+    <td>32.732</td>
+    <td></td>
+    <td>640x640</td>
     </tr>
 </table>
 
