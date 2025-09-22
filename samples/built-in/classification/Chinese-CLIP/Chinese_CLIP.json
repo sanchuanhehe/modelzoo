@@ -1,7 +1,7 @@
 {
 	"modelName": "Chinese-CLIP",
 	"modelDesc": "Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，同时学习图像和文本的表示，并能够理解两者之间的语义关联。Chinese-CLIP 使用约 2 亿规模的中文图文对进行训练，其核心目标是解决中文场景下的跨模态检索、图像表示生成等任务。",
-	"modelRepository": "https://gitee.com/HiSpark/modelzoov/tree/master/samples/built-in/classification/Chinese_CLIP",
+	"modelRepository": "https://gitee.com/HiSpark/modelzoov/tree/master/samples/built-in/classification/Chinese-CLIP",
 	"modelParameter": {
 		"输入": "224x224",
 		"参数量": "86.193M",

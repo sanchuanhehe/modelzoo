@@ -1,7 +1,7 @@
 {
 	"modelName": "Vit-B-16",
 	"modelDesc": "`Transformer` 架构已广泛应用于自然语言处理领域。Vision Transformer（ViT）模型在计算机视觉领域中对CNN的依赖不是必需的，直接将其应用于图像块序列来进行图像分类时，也能得到和目前卷积网络相媲美的准确率。",
-	"modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/vit-base-patch16",
+	"modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Vit-B-16",
 	"modelParameter": {
 		"输入": "224x224",
 		"参数量": "86.568M",
@@ -24,7 +24,7 @@
 		},
 		{
 			"desc": "部署模型",
-			"link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/vit-base-patch16/LICENSE"
+			"link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Vit-B-16/LICENSE"
 		}
 	],
 	"modelChipset": [

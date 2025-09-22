@@ -108,7 +108,6 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
    cd Pytorch-UNet
    git reset --hard 6aa14cb
    cd ..
-   mv ./Pytorch-UNet ./Pytorch_UNet
    ```
 
 ## 准备数据集<a name="section183221994411"></a>
@@ -156,18 +155,17 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
 2. 导出onnx文件。
 
-    1. 移动unet_pth2onnx.py至Pytorch_Unet目录，使用unet_pth2onnx.py导出onnx文件。
+    1. 移动pth2onnx.py至Pytorch_Unet目录，使用pth2onnx.py导出onnx文件。
 
          ```
-         cp pth2onnx.py ./Pytorch_UNet
-         python ./Pytorch_UNet/pth2onnx.py ./UNet.pth ./UNet_dynamic_bs.onnx
+         python ./Pytorch-UNet/pth2onnx.py ./model/UNet.pth ./model/UNet_dynamic_bs.onnx
          ```
          
          获得UNet_dynamic_bs.onnx文件。
 
     2. 使用onnxsim精简onnx文件。
          ```
-         python -m onnxsim --dynamic-input-shape --input-shape="1,3,572,572" UNet_dynamic_bs.onnx UNet_dynamic_sim.onnx
+         python -m onnxsim --dynamic-input-shape --input-shape="1,3,572,572" ./model/UNet_dynamic_bs.onnx ./model/UNet_dynamic_sim.onnx
          ```
          获得UNet_dynamic_sim.onnx文件。
 
@@ -271,7 +269,7 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
     - --result：输出精度结果所在的位置。
 
-    例如：  `python ./Pytorch_UNet/accuracy.py --output ./result/bin/ --label ../../../../datasets/carvana/train_masks/ --result ./Pytorch_UNet/accuracy.txt`
+    例如：  `python ./Pytorch-UNet/accuracy.py --output ./out/result/bin/ --label ../../../../datasets/carvana/train_masks/ --result ./Pytorch_UNet/accuracy.txt`
       
     SVP_NNN平台上精度结果：
      文件中保存的是每一个图片的结果，平均结果为上述所有值求和输出：

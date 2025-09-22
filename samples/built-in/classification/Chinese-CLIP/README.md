@@ -114,6 +114,7 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
    git clone https://github.com/OFA-Sys/Chinese-CLIP.git
    cd Chinese-CLIP
    git reset 2c38d03557e50eadc72972b272cebf840dbc34ea --hard
+   git apply ../clip.patch
    cd ..
    ``
 

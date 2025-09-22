@@ -1,7 +1,7 @@
 {
     "modelName": "PFLD",
     "modelDesc": "PFLD全称A Practical Facial Landmark Detector是一个精度高，速度快，模型小的人脸关键点检测模型。",
-    "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/recognition/PFLD",
+    "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/PFLD",
     "modelParameter": {
 		"输入": "112 x 112",
 		"参数量": "24.184M",
