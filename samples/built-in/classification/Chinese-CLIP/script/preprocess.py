@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import torch
+import sys
 torch.multiprocessing.set_sharing_strategy('file_system')
 sys.path.append('./Chinese-CLIP')
 from cn_clip.clip.utils import image_transform
@@ -24,18 +25,17 @@ import numpy as np
 from cn_clip.eval.data import get_zeroshot_dataset, _preprocess_text
 import os
 from tqdm import tqdm
-import sys
 from cn_clip.clip import tokenize
 from cn_clip.eval.zeroshot_evaluation import parse_args
 
 
-def get_txt_pre(classnames, templates):
+def get_txt_pre(classnames, templates, context_length):
     i= 0
     for cn_name in tqdm(classnames):
         print(" cn_name: " , cn_name, "i: ", i)
         # 将关键字填入模板中，然后加密
         template_texts = [_preprocess_text(template(cn_name)) for template in templates]
-        tokenize_texts = tokenize(template_texts, context_length=args.context_length).to('cpu')
+        tokenize_texts = tokenize(template_texts, context_length=context_length).to('cpu')
         j = 0
         for template in templates:
             one_text = np.array(tokenize_texts[j].to(torch.float32).unsqueeze(0))
@@ -72,3 +72,16 @@ if __name__ == "__main__":
     )
     get_txt_pre(classnames, cifar100_templates, 512)
     get_image_pre(data[args.dataset].dataloader)
+    file_list = os.listdir("./data/" + '/img/')
+    sorted_files = sorted(file_list)
+    # 将文件列表保存到文本文件
+    with open(os.path.join("./data/" , 'img_list.txt'), 'w', encoding='utf-8') as f:
+        for item in sorted_files:
+            f.write(f"img/{item}\n")
+        file_list = os.listdir("./data/" + '/text/')
+    sorted_files = sorted(file_list)
+    # 将文件列表保存到文本文件
+    with open(os.path.join("./data/" , 'txt_list.txt'), 'w', encoding='utf-8') as f:
+        for item in sorted_files:
+            f.write(f"text/{item}\n")
+    

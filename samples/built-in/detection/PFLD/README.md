@@ -173,7 +173,7 @@ PFLD全称A Practical Facial Landmark Detector是一个精度高，速度快，�
     执行ATC命令。
     1. SS928V100 SVP_NNN上的om模型转换命令
         ```
-        atc --framework=5 --model="./model/pfld-sim.onnx" --input_shape="input_1:1,3,112,112" --output="./model/pfld" --image_list="./data/quant/data.txt" --compile_mode=5 --soc_version=SS928V100
+        atc --framework=5 --model="./model/pfld-sim.onnx" --input_shape="input_1:1,3,112,112" --output="./model/pfld" --image_list="./data/quant/quant.txt" --compile_mode=5 --soc_version=SS928V100
         ```
    
         运行成功后生成pfld.om模型文件。

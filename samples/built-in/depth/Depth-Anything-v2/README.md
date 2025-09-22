@@ -103,10 +103,9 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
 3. 源代码下载。
    ```
    git clone https://github.com/DepthAnything/Depth-Anything-V2.git
-   git reset --hard e5a2732d3ea2cddc081d7bfd708fc0bf09f812f1
    cd Depth-Anything-V2
-   cp ../depth.patch ./
-   git apply depth.patch
+   git reset --hard e5a2732d3ea2cddc081d7bfd708fc0bf09f812f1
+   git apply ../depth.patch
    cd ..
    ```
 
@@ -152,11 +151,12 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
 
 2. 导出onnx文件。
 
-    将pth2onnx.py和deploy文件夹复制到下载好的源码Depth-Anything-V2中，执行下面命令完成完成模型转换到onnx。
+    将pth2onnx.py文件夹复制到下载好的源码Depth-Anything-V2中，执行下面命令完成完成模型转换到onnx。
 
     ```
     cd Depth-Anything-V2
-    python ./load_model.py
+    python ./pth2onnx.py
+    cd ../
     ```
     生成模型depth_anything_v2_vits.onnx。在model目录下
 

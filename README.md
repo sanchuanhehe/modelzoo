@@ -34,7 +34,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     </tr>
     <tr>
     <td>
-    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Squeezenet1_1">Squeezenet1_1 </a>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SqueezeNet1_1">SqueezeNet1_1 </a>
     </td>
     <td>ImageNet</td>
     <td>2052.42</td>
