@@ -42,11 +42,6 @@ def check_changes_and_get_folders(changed_files: List[str]) -> Optional[Set[str]
                 print(f"invalid modify, not allow modify src dir and build script")
                 print(f"build exit cause")
                 sys.exit(-1)
-            # Check if it's modifying 'build_sample.py' file
-        if 'build_sample.py' in file_path:
-            print(f"invalid modify, not allow modify build_sample.py")
-            print(f"build exit cause")
-            sys.exit(-1)
     # 提取三级文件夹结构
     changed_folders = set()
     for file_path in changed_files:
@@ -126,7 +121,7 @@ def process_build_info_files():
                         for item in data:
                             # 提取需要的字段值
                             build_target = item.get('buildTarget', '')
-                            relative_path = item.get('relativePath', '').replace('/','=')
+                            relative_path = item.get('relativePath', '')
                             chip_name = item.get('chip', '')
                             build_def = item.get('buildDef', '')
                             # 组合成一个字符串并添加到结果列表
@@ -153,7 +148,7 @@ def extract_exact_match(input_list, match_list):
             parts = string.split('+')
             if len(parts) >= 4:
                 sample_company_name = parts[0].split('/')[2]
-                sample_name_field = parts[2].replace('=','+')
+                sample_name_field = parts[2].replace('/','+')
                 combined_string = sample_company_name + "+" + sample_name_field
                 if combined_string in match_list:
                     exact_matches.append(string)
@@ -194,24 +189,9 @@ def insert_content_before_line(file_path, target_line, content_to_insert):
     except FileNotFoundError:
         print(f"文件 {file_path} 未找到。")
         print(f"build exit cause")
-        sys.exit(-1) 
+        sys.exit(-1)
 
-# 搭建环境
-def sample_setenv(chip_name, builddef_engine):
-    command = f"/home/build/env.sh {chip_name} {builddef_engine}"
-    try:
-        result = subprocess.run(command, shell=True, check=True)
-        print(f"The shell command executed successfully: {result}")
-    except subprocess.CalledProcessError as e:
-        print(f"The shell command execution failed: {e}")
-        print(f"build exit cause")
-        sys.exit(-1) 
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        print(f"build exit cause")
-        sys.exit(-1) 
-
-def sample_build(source_directory, chip_name, builddef_engine, log_basic_name, build_target):
+def build_sample(source_directory, chip_name, builddef_engine, log_basic_name, build_target):
     root_dir = '/home/build/modelzoo'
     build_directory_path = 'samples'
 
@@ -240,11 +220,12 @@ def sample_build(source_directory, chip_name, builddef_engine, log_basic_name, b
     # 切换到目标目录
     os.chdir(build_directory_path)
     build_dir = root_dir + '/' + build_directory_path + '/' + source_directory
+    build_gate = root_dir + '/' + build_directory_path + '/build_gate.sh'
 
     try:
         # 打开日志文件准备写入
         # 使用 subprocess.Popen() 执行命令，并将标准输出和标准错误重定向到日志文件
-        process = subprocess.Popen(['/home/build/build.sh', chip_name, builddef_engine, build_dir, build_target], text=False, stdout=writer, stderr=writer)
+        process = subprocess.Popen([build_gate, chip_name, builddef_engine, build_dir, build_target], text=False, stdout=writer, stderr=writer)
         # 等待进程结束
         start = time.time()
         while True:
@@ -332,15 +313,12 @@ def sample_build_prepare(input_list):
             builddef_engine = 'VOID'
 
         target_string = sample_file_path.split('/build_config.json')[0] + '/'
-        samples = sample_name.replace('=','/')
-        sample_name = sample_name.replace('=','-')
-        source_directory = target_string + samples
+        source_directory = target_string + sample_name
+        sample_name = sample_name.replace('/','-')
         print(source_directory)
         print(f"[sample_build_prepare] source_directory: {source_directory}")
-
         log_basic_name = f'{build_target}_{sample_name}'
-        sample_setenv(chip_name, builddef_engine)
-        sample_build(source_directory, chip_name, builddef_engine, log_basic_name, build_target)
+        build_sample(source_directory, chip_name, builddef_engine, log_basic_name, build_target)
 
 def main():
     print(f"start main")
