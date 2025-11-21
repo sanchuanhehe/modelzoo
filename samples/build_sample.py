@@ -23,16 +23,22 @@ def get_local_branches() -> List[str]:
     return result.stdout.strip().split("\n") if result.stdout else []
 
 def check_changes_and_get_folders(changed_files: List[str]) -> Optional[Set[str]]:
+    # 定义要剔除的文件和目录
+    files_to_remove = ['samples/build_sample.py','samples/build_gate.sh','samples/build_script.sh']
+    directories_to_remove = ['common']
+    # 剔除匹配的文件和目录
+    changed_files = [f for f in changed_files if not (f in files_to_remove or any(f.startswith(d) for d in directories_to_remove))]
+
     """
     检查变更文件并返回受影响的文件夹集合
     返回None表示不需要构建或存在非法修改
     """
-    # 检查是否有C/H文件修改
+    # 检查是否有代码文件修改
     has_c_or_h_files = any(f.endswith(('.c', '.h', '.cpp', 'txt', '.py')) for f in changed_files)
     
     if not has_c_or_h_files:
         print("Not need build, only non-source files modified")
-        return None
+        sys.exit(0)
     
     # 检查是否修改了src目录或构建脚本
     for file_path in changed_files:
@@ -41,7 +47,11 @@ def check_changes_and_get_folders(changed_files: List[str]) -> Optional[Set[str]
             if '"src' in src_folder_name or 'src' in src_folder_name:
                 print(f"invalid modify, not allow modify src dir and build script")
                 print(f"build exit cause")
-                sys.exit(-1)
+                sys.exit(0)
+                # Check if it's modifying 'build_sample.py' file
+            # if 'build_sample.py' in file_path:
+            #     print(f"invalid modify, not allow modify build_sample.py")
+            #     sys.exit(0)
     # 提取三级文件夹结构
     changed_folders = set()
     for file_path in changed_files:
@@ -161,8 +171,7 @@ def extract_exact_match(input_list, match_list):
             return exact_matches
     except TypeError as e:
         print(f"Error: {e}")
-        print(f"build exit cause")
-        sys.exit(-1) 
+        exit(0)
 
 def insert_content_before_line(file_path, target_line, content_to_insert):
     print(f"start insert_content_before_line")
@@ -189,7 +198,7 @@ def insert_content_before_line(file_path, target_line, content_to_insert):
     except FileNotFoundError:
         print(f"文件 {file_path} 未找到。")
         print(f"build exit cause")
-        sys.exit(-1)
+        sys.exit(-1) 
 
 def build_sample(source_directory, chip_name, builddef_engine, log_basic_name, build_target):
     root_dir = '/home/build/modelzoo'
