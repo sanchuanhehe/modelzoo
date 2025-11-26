@@ -218,37 +218,38 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 
 <div align="center">
 
-|       |    **2025Q4**    |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
-| ----- |:----------------:|:----------------------:|:-------------------:|:----------------------:|
-| dpico | **vgg16**        | **YOLOV8s-OBB**        |                     |                        |
-|       | **inception v3** | **YOLOV9s**            |                     |                        |
-|       | **seresnet50**   | **Yolov8s-world**      |                     |                        |
-|       | **YOLOV3**       | **centernet**          |                     |                        |
-|       | **YOLOV4**       | **deepsort**           |                     |                        |
-|       | **YOLOV6s**      | **x-Stereo**           |                     |                        |
-|       | **YOLOV7**       | **Yolov8s-seg**        |                     |                        |
-|       | **YOLOV10s**     | **tinysan(MobileSam)** |                     |                        |
-|       | **YOLO11s-pose** | **Siamese network**    |                     |                        |
-|       | **HRNet**        | **Facenet**            |                     |                        |
-|       | **CrowdCount**   | **PaddleOCR-rec**      |                     |                        |
-|       | **CodeFormer**   | **PaddleOCR-det**      |                     |                        |
-|       |                  | **CRNN**               |                     |                        |
-|       |                  | **VDSR**               |                     |                        |
-|       |                  | **FastSpeech2**        |                     |                        |
-| dlite | **vgg16**        | **YOLOV3**             | **YOLOV8s-OBB**     | **YOLOV10s**           |
-|       | **inception v3** | **YOLOV4**             | **centernet**       | **Yolov8s-world**      |
-|       | **seresnet50**   | **YOLO11s-pose**       | **deepsort**        | **tinysan(MobileSam)** |
-|       | **YOLOV6s**      | **CodeFormer**         | **Siamese network** |                        |
-|       | **YOLOV7**       | **YOLOV9s**            | **Facenet**         |                        |
-|       | **HRNet**        | **Yolov8s-seg**        | **PaddleOCR-rec**   |                        |
-|       | **CrowdCount**   |                        | **PaddleOCR-det**   |                        |
-|       |                  |                        | **CRNN**            |                        |
-|       |                  |                        | **VDSR**            |                        |
-|       |                  |                        | **FastSpeech2**     |                        |
-|       |                  |                        |                     |                        |
+|       |      **2025Q4**     |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
+| ----- |:-------------------:|:----------------------:|:-------------------:|:----------------------:|
+| dpico | **vgg16**           | **YOLOV8s-OBB**        |                     |                        |
+|       | **inception v3**    | **YOLOV9s**            |                     |                        |
+|       | **seresnet50**      | **Yolov8s-world**      |                     |                        |
+|       | **YOLOV3**          | **centernet**          |                     |                        |
+|       | **YOLOV4**          | **deepsort**           |                     |                        |
+|       | **YOLOV6s**         | **x-Stereo**           |                     |                        |
+|       | **YOLOV7**          | **Yolov8s-seg**        |                     |                        |
+|       | **YOLOV10s**        | **tinysan(MobileSam)** |                     |                        |
+|       | **YOLO11s-pose**    | **Siamese network**    |                     |                        |
+|       | **HRNet**           | **Facenet**            |                     |                        |
+|       | **CrowdCount**      | **PaddleOCR-rec**      |                     |                        |
+|       | **CodeFormer**      | **PaddleOCR-det**      |                     |                        |
+|       |                     | **CRNN**               |                     |                        |
+|       |                     | **VDSR**               |                     |                        |
+|       |                     | **FastSpeech2**        |                     |                        |
+| dlite | **vgg16**           | **CN-CLIP**            | **YOLOV8s-OBB**     | **YOLOV10s**           |
+|       | **inception v3**    | **YOLOV3**             | **centernet**       | **Yolov8s-world**      |
+|       | **seresnet50**      | **YOLOV4**             | **deepsort**        | **tinysan(MobileSam)** |
+|       | **EfficientNet-V2** | **YOLOV8s**            | **DepthAnythingV2** |                        |
+|       | **SwinT**           | **YOLOV9s**            | **Siamese network** |                        |
+|       | **Vit-B-16**        | **YOLOV11s**           | **Facenet**         |                        |
+|       | **YOLOV6s**         | **YOLO11s-seg**        | **PaddleOCR-rec**   |                        |
+|       | **YOLOV7**          | **YOLO11s-pose**       | **PaddleOCR-det**   |                        |
+|       | **UNET**            | **Yolov8s-seg**        | **CRNN**            |                        |
+|       | **HRNet**           | **PFLD**               | **VDSR**            |                        |
+|       | **CrowdCount**      | **CodeFormer**         | **FastSpeech2**     |                        |
+|       |                     | **SuperPoint**         |                     |                        |
 </div>
-
-
+    
+ 
 # 如何贡献
 
 本仓子模块参考目录，可以直接克隆子仓，也可以克隆主仓，在开始贡献之前，请先阅读[NOTICE](https://gitee.com/HiSpark/docs/blob/master/contribute/%E7%A4%BE%E5%8C%BA%E5%8F%82%E4%B8%8E%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97.md)，谢谢！
