@@ -215,12 +215,15 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 
 
 # 模型与算力引擎适配计划
+**注：**
+**适配计划如下所示，具体时间节点，以实际发布为准**
 
+## Hi3403 
 <div align="center">
 
 |       |      **2025Q4**     |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
 | ----- |:-------------------:|:----------------------:|:-------------------:|:----------------------:|
-| dpico | **vgg16**           | **YOLOV8s-OBB**        |                     |                        |
+|SVP NNN| **vgg16**           | **YOLOV8s-OBB**        |                     |                        |
 |       | **inception v3**    | **YOLOV9s**            |                     |                        |
 |       | **seresnet50**      | **Yolov8s-world**      |                     |                        |
 |       | **YOLOV3**          | **centernet**          |                     |                        |
@@ -235,7 +238,8 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 |       |                     | **CRNN**               |                     |                        |
 |       |                     | **VDSR**               |                     |                        |
 |       |                     | **FastSpeech2**        |                     |                        |
-| dlite | **vgg16**           | **CN-CLIP**            | **YOLOV8s-OBB**     | **YOLOV10s**           |
+|       |                     | **minicpm(VLM 0.5B)**  |                     |                        |
+|  NNN  | **vgg16**           | **CN-CLIP**            | **YOLOV8s-OBB**     | **YOLOV10s**           |
 |       | **inception v3**    | **YOLOV3**             | **centernet**       | **Yolov8s-world**      |
 |       | **seresnet50**      | **YOLOV4**             | **deepsort**        | **tinysan(MobileSam)** |
 |       | **EfficientNet-V2** | **YOLOV8s**            | **DepthAnythingV2** |                        |
@@ -247,9 +251,20 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 |       | **HRNet**           | **PFLD**               | **VDSR**            |                        |
 |       | **CrowdCount**      | **CodeFormer**         | **FastSpeech2**     |                        |
 |       |                     | **SuperPoint**         |                     |                        |
+
 </div>
-    
- 
+
+## Hi3591P   
+<div align="center">
+
+|       |  **2026Q1**  | 
+| ----- |:------------:|
+|       | **pi0**      |
+|       | **graspnet** |
+
+</div>
+
+
 # 如何贡献
 
 本仓子模块参考目录，可以直接克隆子仓，也可以克隆主仓，在开始贡献之前，请先阅读[NOTICE](https://gitee.com/HiSpark/docs/blob/master/contribute/%E7%A4%BE%E5%8C%BA%E5%8F%82%E4%B8%8E%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97.md)，谢谢！
