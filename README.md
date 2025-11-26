@@ -1,7 +1,8 @@
 # ModelZoo
 
+
 # 简介
-ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语言处理、语音、推荐、多模态等方向的AI模型。我们仅对模型做适配和格式转化，未重新训练模型和对模型进行功能性修改。我们提供模型基于海思实操案例demo和性能表现，供开发者学习。平台的每个模型都有详细的使用指导，为方便更多开发者使用ModelZoo，我们将持续增加典型网络和相关预训练模型。如果您有任何需求，请在[Gitee](https://gitee.com/HiSpark/modelzoo/issues)提交issue，我们会及时处理。
+ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语言处理、语音、推荐、多模态等方向的AI模型。我们仅对模型做适配和格式转化，未重新训练模型和对模型进行功能性修改。我们提供模型基于海思实操案例demo和性能表现，供开发者学习。平台的每个模型都有详细的使用指导，为方便更多开发者使用ModelZoo，我们将持续增加典型网络和相关预训练模型。如果您有任何需求，请在 **Gitee** 提交 [issue](https://gitee.com/HiSpark/modelzoo/issues) ，我们会及时处理。
 
 
 # 目录
@@ -13,9 +14,6 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 | samples | 模型 |
 | utils | 工具 |
 
-# 如何贡献
-
-本仓子模块参考目录，可以直接克隆子仓，也可以克隆主仓，在开始贡献之前，请先阅读[NOTICE](https://gitee.com/HiSpark/docs/blob/master/contribute/%E7%A4%BE%E5%8C%BA%E5%8F%82%E4%B8%8E%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97.md)，谢谢！
 
 # 模型列表
 
@@ -75,7 +73,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>ImageNet</td>
     <td>37.051</td>
     <td></td>
-    <td>288x288</td>
+    <td>288 x 288</td>
     </tr>
     <tr>
     <td>
@@ -84,7 +82,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>ImageNet</td>
     <td>170.63</td>
     <td>108.01</td>
-    <td>224x224</td>
+    <td>224 x 224</td>
     </tr>
     <tr>
     <td>
@@ -93,7 +91,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>ImageNet</td>
     <td>38.24</td>
     <td></td>
-    <td>224x224</td>
+    <td>224 x 224</td>
     </tr>
     <tr>
     <td>
@@ -102,7 +100,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>ImageNet</td>
     <td>28.56</td>
     <td></td>
-    <td>224x224</td>
+    <td>224 x 224</td>
     </tr>
     <tr>
     <td>
@@ -111,7 +109,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>ImageNet</td>
     <td>210.675</td>
     <td>83.102</td>
-    <td>224x224</td>
+    <td>224 x 224</td>
     </tr>
     <tr>
     <tr>
@@ -121,7 +119,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>ImageNet</td>
     <td>753.02</td>
     <td></td>
-    <td>500x375</td>
+    <td>500 x 375</td>
     </tr>
     <tr>
     <td>
@@ -130,7 +128,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>CIFAR100</td>
     <td>11.142</td>
     <td></td>
-    <td>224x224</td>
+    <td>224 x 224</td>
     </tr>
     <tr>
     <td>
@@ -139,7 +137,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>DA-2K</td>
     <td>3.756</td>
     <td></td>
-    <td>518x518</td>
+    <td>518 x 518</td>
     </tr>
     <tr>
     <td>
@@ -148,7 +146,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>WFLW</td>
     <td>1631.88</td>
     <td></td>
-    <td>112x112</td>
+    <td>112 x 112</td>
     </tr>
     <tr>
     <td>
@@ -157,7 +155,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>HPatches</td>
     <td>320.60</td>
     <td></td>
-    <td>240x320</td>
+    <td>240 x 320</td>
     </tr>
     <tr>
     <td>
@@ -166,7 +164,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>carvana</td>
     <td>9.6372</td>
     <td></td>
-    <td>572x572</td>
+    <td>572 x 572</td>
     </tr>
     <tr>
     <td>
@@ -175,7 +173,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>coco2017</td>
     <td>85.41</td>
     <td>35.54</td>
-    <td>640x640</td>
+    <td>640 x 640</td>
     </tr>
     <tr>
     <td>
@@ -184,7 +182,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>coco2017</td>
     <td>10.393</td>
     <td></td>
-    <td>640x640</td>
+    <td>640 x 640</td>
     </tr>
     <tr>
     <td>
@@ -193,7 +191,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>coco2017</td>
     <td>42.914</td>
     <td></td>
-    <td>640x640</td>
+    <td>640 x 640</td>
     </tr>
     <tr>
     <td>
@@ -202,7 +200,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>coco2017</td>
     <td>42.753</td>
     <td></td>
-    <td>640x640</td>
+    <td>640 x 640</td>
     </tr>
     <tr>
     <td>
@@ -211,17 +209,71 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>coco2017</td>
     <td>32.732</td>
     <td></td>
-    <td>640x640</td>
+    <td>640 x 640</td>
     </tr>
 </table>
+
+
+# 模型适配算力引擎计划
+**注：**
+**适配计划如下所示，具体时间节点，以实际发布为准**
+
+## Hi3403 
+<div align="center">
+
+|       |      **2025Q4**     |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
+| ----- |:-------------------:|:----------------------:|:-------------------:|:----------------------:|
+|SVP NNN| **vgg16**           | **YOLOV8s-OBB**        |                     |                        |
+|       | **inception v3**    | **YOLOV9s**            |                     |                        |
+|       | **seresnet50**      | **Yolov8s-world**      |                     |                        |
+|       | **YOLOV3**          | **centernet**          |                     |                        |
+|       | **YOLOV4**          | **deepsort**           |                     |                        |
+|       | **YOLOV6s**         | **x-Stereo**           |                     |                        |
+|       | **YOLOV7**          | **Yolov8s-seg**        |                     |                        |
+|       | **YOLOV10s**        | **tinysan(MobileSam)** |                     |                        |
+|       | **YOLO11s-pose**    | **Siamese network**    |                     |                        |
+|       | **HRNet**           | **Facenet**            |                     |                        |
+|       | **CrowdCount**      | **PaddleOCR-rec**      |                     |                        |
+|       | **CodeFormer**      | **PaddleOCR-det**      |                     |                        |
+|       |                     | **CRNN**               |                     |                        |
+|       |                     | **VDSR**               |                     |                        |
+|       |                     | **FastSpeech2**        |                     |                        |
+|       |                     | **minicpm(VLM 0.5B)**  |                     |                        |
+|  NNN  | **vgg16**           | **CN-CLIP**            | **YOLOV8s-OBB**     | **YOLOV10s**           |
+|       | **inception v3**    | **YOLOV3**             | **centernet**       | **Yolov8s-world**      |
+|       | **seresnet50**      | **YOLOV4**             | **deepsort**        | **tinysan(MobileSam)** |
+|       | **EfficientNet-V2** | **YOLOV8s**            | **DepthAnythingV2** |                        |
+|       | **SwinT**           | **YOLOV9s**            | **Siamese network** |                        |
+|       | **Vit-B-16**        | **YOLOV11s**           | **Facenet**         |                        |
+|       | **YOLOV6s**         | **YOLO11s-seg**        | **PaddleOCR-rec**   |                        |
+|       | **YOLOV7**          | **YOLO11s-pose**       | **PaddleOCR-det**   |                        |
+|       | **UNET**            | **Yolov8s-seg**        | **CRNN**            |                        |
+|       | **HRNet**           | **PFLD**               | **VDSR**            |                        |
+|       | **CrowdCount**      | **CodeFormer**         | **FastSpeech2**     |                        |
+|       |                     | **SuperPoint**         |                     |                        |
+
+</div>
+
+## Hi3591P   
+<div align="center">
+
+| **2026Q1** | **pi0** | **graspnet** |
+|:----------:|:-------:|:------------:|
+
+</div>
+
+
+# 如何贡献
+
+本仓子模块参考目录，可以直接克隆子仓，也可以克隆主仓，在开始贡献之前，请先阅读[NOTICE](https://gitee.com/HiSpark/docs/blob/master/contribute/%E7%A4%BE%E5%8C%BA%E5%8F%82%E4%B8%8E%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97.md)，谢谢！
 
 
 # 免责声明
 
 ## 致ModelZoo使用者
-1. HiSpark ModelZoo提供的模型仅供您用于非商业目的。
-2. HiSpark ModelZoo仅提供公共数据集下载、模型下载和预处理脚本。这些数据集和模型不属于ModelZoo，ModelZoo也不对其质量或维护负责。请确保您具有这些数据集和模型的使用许可，如您因使用数据集和模型产生侵权纠纷，海思不承担任何责任。
-3. 如您在使用ModelZoo模型过程中，发现任何问题（包括但不限于功能问题、合规问题），请在Gitee提交issue，我们将及时审视并解决。
+* HiSpark ModelZoo提供的模型仅供您用于非商业目的。
+* HiSpark ModelZoo仅提供公共数据集下载、模型下载和预处理脚本。这些数据集和模型不属于ModelZoo，ModelZoo也不对其质量或维护负责。请确保您具有这些数据集和模型的使用许可，如您因使用数据集和模型产生侵权纠纷，海思不承担任何责任。
+* 如您在使用ModelZoo模型过程中，发现任何问题（包括但不限于功能问题、合规问题），请在Gitee提交issue，我们将及时审视并解决。
 
 ## 致数据集、模型所有者
 如果您不希望您的数据集、模型公布在ModelZoo上或希望更新ModelZoo中属于您的数据集、模型，请在Gitee提交issue，我们将根据您的issue删除或更新您的数据集、模型。衷心感谢您对ModelZoo的理解和贡献。
