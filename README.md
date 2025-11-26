@@ -218,34 +218,34 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 
 <div align="center">
 
-|       |    **2025Q4**    |        **2026Q1**      |      **2026Q2**     |     **2026Q3**    |
-| ----- |:----------------:|:----------------------:|:-------------------:|:-----------------:|
-| dpico | **vgg16**        | **YOLOV3**             | **YOLOV8s-OBB**     |
-|       | **inception v3** | **YOLOV4**             | **centernet**       |
-|       | **seresnet50**   | **YOLO11s-pose**       | **deepsort**        |
-|       | **YOLOV6s**      | **CodeFormer**         | **Siamese network** |
-|       | **YOLOV7**       | **YOLOV8s-OBB**        | **Facenet**         |
-|       | **HRNet**        | **YOLOV9s**            | **PaddleOCR-rec**   |
-|       | **CrowdCount**   | **Yolov8s-world**      | **PaddleOCR-det**   |
-|       | **YOLOV10s**     | **centernet**          | **CRNN**            |
-|       |                  | **deepsort**           | **VDSR**            |
-|       |                  | **x-Stereo**           | **FastSpeech2**     |
-|       |                  | **Yolov8s-seg**        |
-|       |                  | **tinysan(MobileSam)** |
-|       |                  | **Siamese network**    |
-|       |                  | **Facenet**            |
-|       |                  | **PaddleOCR-rec**      |
-|       |                  | **PaddleOCR-det**      |
-|       |                  | **CRNN**               |
-|       |                  | **VDSR**               |
-|       |                  | **FastSpeech2**        |
-| dlite | **vgg16**        | **YOLOV3**             |                     | **YOLOV10s**      |
-|       | **inception v3** | **YOLOV4**             |                     | **Yolov8s-world** |
-|       | **seresnet50**   | **YOLO11s-pose**       |
-|       | **YOLOV6s**      | **CodeFormer**         |
-|       | **YOLOV7**       | **YOLOV9s**            |
-|       | **HRNet**        | **Yolov8s-seg**        |
-|       | **CrowdCount**   |                        |
+|       |    **2025Q4**    |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
+| ----- |:----------------:|:----------------------:|:-------------------:|:----------------------:|
+| dpico | **vgg16**        | **YOLOV8s-OBB**        |                     |                        |
+|       | **inception v3** | **YOLOV9s**            |                     |                        |
+|       | **seresnet50**   | **Yolov8s-world**      |                     |                        |
+|       | **YOLOV3**       | **centernet**          |                     |                        |
+|       | **YOLOV4**       | **deepsort**           |                     |                        |
+|       | **YOLOV6s**      | **x-Stereo**           |                     |                        |
+|       | **YOLOV7**       | **Yolov8s-seg**        |                     |                        |
+|       | **YOLOV10s**     | **tinysan(MobileSam)** |                     |                        |
+|       | **YOLO11s-pose** | **Siamese network**    |                     |                        |
+|       | **HRNet**        | **Facenet**            |                     |                        |
+|       | **CrowdCount**   | **PaddleOCR-rec**      |                     |                        |
+|       | **CodeFormer**   | **PaddleOCR-det**      |                     |                        |
+|       |                  | **CRNN**               |                     |                        |
+|       |                  | **VDSR**               |                     |                        |
+|       |                  | **FastSpeech2**        |                     |                        |
+| dlite | **vgg16**        | **YOLOV3**             | **YOLOV8s-OBB**     | **YOLOV10s**           |
+|       | **inception v3** | **YOLOV4**             | **centernet**       | **Yolov8s-world**      |
+|       | **seresnet50**   | **YOLO11s-pose**       | **deepsort**        | **tinysan(MobileSam)** |
+|       | **YOLOV6s**      | **CodeFormer**         | **Siamese network** |                        |
+|       | **YOLOV7**       | **YOLOV9s**            | **Facenet**         |                        |
+|       | **HRNet**        | **Yolov8s-seg**        | **PaddleOCR-rec**   |                        |
+|       | **CrowdCount**   |                        | **PaddleOCR-det**   |                        |
+|       |                  |                        | **CRNN**            |                        |
+|       |                  |                        | **VDSR**            |                        |
+|       |                  |                        | **FastSpeech2**     |                        |
+|       |                  |                        |                     |                        |
 </div>
 
 
