@@ -7,12 +7,12 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 
 # 目录
 
-| 目录                                                         | 说明                       |
-| ------------------------------------------------------------ | -------------------------- |
-| docs | 文档说明 |
-| datasets | 数据集 |
-| samples | 模型 |
-| utils | 工具 |
+| 目录     | 说明    |
+| -------- | ------- |
+| docs     | 文档说明 |
+| datasets | 数据集   |
+| samples  | 模型     |
+| utils    | 工具     |
 
 
 # 模型列表
@@ -214,43 +214,47 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 </table>
 
 
-# 模型适配算力引擎计划
+# 模型适配AI引擎计划
 **注：**
 **适配计划如下所示，具体时间节点，以实际发布为准**
 
 ## Hi3403 
 <div align="center">
 
-|       |      **2025Q4**     |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
-| ----- |:-------------------:|:----------------------:|:-------------------:|:----------------------:|
-|SVP NNN| **vgg16**           | **YOLOV8s-OBB**        |                     |                        |
-|       | **inception v3**    | **YOLOV9s**            |                     |                        |
-|       | **seresnet50**      | **Yolov8s-world**      |                     |                        |
-|       | **YOLOV3**          | **centernet**          |                     |                        |
-|       | **YOLOV4**          | **deepsort**           |                     |                        |
-|       | **YOLOV6s**         | **x-Stereo**           |                     |                        |
-|       | **YOLOV7**          | **Yolov8s-seg**        |                     |                        |
-|       | **YOLOV10s**        | **tinysan(MobileSam)** |                     |                        |
-|       | **YOLO11s-pose**    | **Siamese network**    |                     |                        |
-|       | **HRNet**           | **Facenet**            |                     |                        |
-|       | **CrowdCount**      | **PaddleOCR-rec**      |                     |                        |
-|       | **CodeFormer**      | **PaddleOCR-det**      |                     |                        |
-|       |                     | **CRNN**               |                     |                        |
-|       |                     | **VDSR**               |                     |                        |
-|       |                     | **FastSpeech2**        |                     |                        |
-|       |                     | **minicpm(VLM 0.5B)**  |                     |                        |
-|  NNN  | **vgg16**           | **CN-CLIP**            | **YOLOV8s-OBB**     | **YOLOV10s**           |
-|       | **inception v3**    | **YOLOV3**             | **centernet**       | **Yolov8s-world**      |
-|       | **seresnet50**      | **YOLOV4**             | **deepsort**        | **tinysan(MobileSam)** |
-|       | **EfficientNet-V2** | **YOLOV8s**            | **DepthAnythingV2** |                        |
-|       | **SwinT**           | **YOLOV9s**            | **Siamese network** |                        |
-|       | **Vit-B-16**        | **YOLOV11s**           | **Facenet**         |                        |
-|       | **YOLOV6s**         | **YOLO11s-seg**        | **PaddleOCR-rec**   |                        |
-|       | **YOLOV7**          | **YOLO11s-pose**       | **PaddleOCR-det**   |                        |
-|       | **UNET**            | **Yolov8s-seg**        | **CRNN**            |                        |
-|       | **HRNet**           | **PFLD**               | **VDSR**            |                        |
-|       | **CrowdCount**      | **CodeFormer**         | **FastSpeech2**     |                        |
-|       |                     | **SuperPoint**         |                     |                        |
+| *序号* | *AI引擎*    |       **2025Q3**      |      **2025Q4**     |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
+| ------ | ---------- |:---------------------:|:-------------------:|:----------------------:|:-------------------:|:----------------------:|
+|   1   |   SVP NNN   | **SqueezeNet1_1**     | **vgg16**           | **YOLOV8s-OBB**        |                     |                        |
+|   2   |             | **ShuffleNetV2**      | **inception v3**    | **YOLOV9s**            |                     |                        |
+|   3   |             | **ResNet50**          | **seresnet50**      | **Yolov8s-world**      |                     |                        |
+|   4   |             | **MobileNetV2**       | **YOLOV3**          | **centernet**          |                     |                        |
+|   5   |             | **EfficientNetV2**    | **YOLOV4**          | **deepsort**           |                     |                        |
+|   6   |             | **DenseNet121**       | **YOLOV6s**         | **x-Stereo**           |                     |                        |
+|   7   |             | **Swin-Transformer**  | **YOLOV7**          | **Yolov8s-seg**        |                     |                        |
+|   8   |             | **Vit-B-16**          | **YOLOV10s**        | **tinysan(MobileSam)** |                     |                        |
+|   9   |             | **ResNet101**         | **YOLO11s-pose**    | **Siamese network**    |                     |                        |
+|  10   |             | **ResNet18**          | **HRNet**           | **Facenet**            |                     |                        |
+|  11   |             | **Chinese-CLIP**      | **CrowdCount**      | **PaddleOCR-rec**      |                     |                        |
+|  12   |             | **Depth-Anything-v2** | **CodeFormer**      | **PaddleOCR-det**      |                     |                        |
+|  13   |             | **PFLD**              |                     | **CRNN**               |                     |                        |
+|  14   |             | **SuperPoint**        |                     | **VDSR**               |                     |                        |
+|  15   |             | **UNet**              |                     | **FastSpeech2**        |                     |                        |
+|  16   |             | **yolov5s**           |                     | **minicpm(VLM 0.5B)**  |                     |                        |
+|  17   |             | **yolov8l**           |                     |                        |                     |                        |
+|  18   |             | **yolov8s**           |                     |                        |                     |                        |
+|  19   |             | **yolo11s**           |                     |                        |                     |                        |
+|  20   |             | **yolo11s-seg**       |                     |                        |                     |                        |
+|   1   |     NNN     | **SqueezeNet1_1**     | **vgg16**           | **CN-CLIP**            | **YOLOV8s-OBB**     | **YOLOV10s**           |
+|   2   |             | **ShuffleNetV2**      | **inception v3**    | **YOLOV3**             | **centernet**       | **Yolov8s-world**      |
+|   3   |             | **ResNet50**          | **seresnet50**      | **YOLOV4**             | **deepsort**        | **tinysan(MobileSam)** |
+|   4   |             | **MobileNetV2**       | **EfficientNet-V2** | **YOLOV8s**            | **DepthAnythingV2** |                        |
+|   5   |             | **DenseNet121**       | **SwinT**           | **YOLOV9s**            | **Siamese network** |                        |
+|   6   |             | **ResNet101**         | **Vit-B-16**        | **YOLOV11s**           | **Facenet**         |                        |
+|   7   |             | **yolov5s**           | **YOLOV6s**         | **YOLO11s-seg**        | **PaddleOCR-rec**   |                        |
+|   8   |             |                       | **YOLOV7**          | **YOLO11s-pose**       | **PaddleOCR-det**   |                        |
+|   9   |             |                       | **UNET**            | **Yolov8s-seg**        | **CRNN**            |                        |
+|  10   |             |                       | **HRNet**           | **PFLD**               | **VDSR**            |                        |
+|  11   |             |                       | **CrowdCount**      | **CodeFormer**         | **FastSpeech2**     |                        |
+|  12   |             |                       |                     | **SuperPoint**         |                     |                        |
 
 </div>
 
