@@ -2,7 +2,7 @@
 
 
 # 简介
-ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语言处理、语音、推荐、多模态等方向的AI模型。我们仅对模型做适配和格式转化，未重新训练模型和对模型进行功能性修改。我们提供模型基于海思实操案例demo和性能表现，供开发者学习。平台的每个模型都有详细的使用指导，为方便更多开发者使用ModelZoo，我们将持续增加典型网络和相关预训练模型。如果您有任何需求，请在 **Gitee** 提交 [issue](https://gitee.com/HiSpark/modelzoo/issues) ，我们会及时处理。
+ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语言处理、语音、推荐、多模态等方向的AI模型。我们仅对模型做适配和格式转化，未重新训练模型和对模型进行功能性修改。我们提供模型基于海思实操案例demo和性能表现，供开发者学习。平台的每个模型都有详细的使用指导，为方便更多开发者使用ModelZoo，我们将持续增加典型网络和相关预训练模型。如果您有任何需求，请在 **Gitee** 提交 [**issue**](https://gitee.com/HiSpark/modelzoo/issues) ，我们会及时处理。
 
 
 # 目录
@@ -221,40 +221,40 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 ## Hi3403 
 <div align="center">
 
-| *序号* | *AI引擎*    |       **2025Q3**      |      **2025Q4**     |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
-| ------ | ---------- |:---------------------:|:-------------------:|:----------------------:|:-------------------:|:----------------------:|
-|   1   |   SVP NNN   | **SqueezeNet1_1**     | **vgg16**           | **YOLOV8s-OBB**        |                     |                        |
-|   2   |             | **ShuffleNetV2**      | **inception v3**    | **YOLOV9s**            |                     |                        |
-|   3   |             | **ResNet50**          | **seresnet50**      | **Yolov8s-world**      |                     |                        |
-|   4   |             | **MobileNetV2**       | **YOLOV3**          | **centernet**          |                     |                        |
-|   5   |             | **EfficientNetV2**    | **YOLOV4**          | **deepsort**           |                     |                        |
-|   6   |             | **DenseNet121**       | **YOLOV6s**         | **x-Stereo**           |                     |                        |
-|   7   |             | **Swin-Transformer**  | **YOLOV7**          | **Yolov8s-seg**        |                     |                        |
-|   8   |             | **Vit-B-16**          | **YOLOV10s**        | **tinysan(MobileSam)** |                     |                        |
-|   9   |             | **ResNet101**         | **YOLO11s-pose**    | **Siamese network**    |                     |                        |
-|  10   |             | **ResNet18**          | **HRNet**           | **Facenet**            |                     |                        |
-|  11   |             | **Chinese-CLIP**      | **CrowdCount**      | **PaddleOCR-rec**      |                     |                        |
-|  12   |             | **Depth-Anything-v2** | **CodeFormer**      | **PaddleOCR-det**      |                     |                        |
-|  13   |             | **PFLD**              |                     | **CRNN**               |                     |                        |
-|  14   |             | **SuperPoint**        |                     | **VDSR**               |                     |                        |
-|  15   |             | **UNet**              |                     | **FastSpeech2**        |                     |                        |
-|  16   |             | **yolov5s**           |                     | **minicpm(VLM 0.5B)**  |                     |                        |
-|  17   |             | **yolov8l**           |                     |                        |                     |                        |
-|  18   |             | **yolov8s**           |                     |                        |                     |                        |
-|  19   |             | **yolo11s**           |                     |                        |                     |                        |
-|  20   |             | **yolo11s-seg**       |                     |                        |                     |                        |
-|   1   |     NNN     | **SqueezeNet1_1**     | **vgg16**           | **CN-CLIP**            | **YOLOV8s-OBB**     | **YOLOV10s**           |
-|   2   |             | **ShuffleNetV2**      | **inception v3**    | **YOLOV3**             | **centernet**       | **Yolov8s-world**      |
-|   3   |             | **ResNet50**          | **seresnet50**      | **YOLOV4**             | **deepsort**        | **tinysan(MobileSam)** |
-|   4   |             | **MobileNetV2**       | **EfficientNet-V2** | **YOLOV8s**            | **DepthAnythingV2** |                        |
-|   5   |             | **DenseNet121**       | **SwinT**           | **YOLOV9s**            | **Siamese network** |                        |
-|   6   |             | **ResNet101**         | **Vit-B-16**        | **YOLOV11s**           | **Facenet**         |                        |
-|   7   |             | **yolov5s**           | **YOLOV6s**         | **YOLO11s-seg**        | **PaddleOCR-rec**   |                        |
-|   8   |             |                       | **YOLOV7**          | **YOLO11s-pose**       | **PaddleOCR-det**   |                        |
-|   9   |             |                       | **UNET**            | **Yolov8s-seg**        | **CRNN**            |                        |
-|  10   |             |                       | **HRNet**           | **PFLD**               | **VDSR**            |                        |
-|  11   |             |                       | **CrowdCount**      | **CodeFormer**         | **FastSpeech2**     |                        |
-|  12   |             |                       |                     | **SuperPoint**         |                     |                        |
+|*AI引擎* |                                                        **2025Q3**                                                       |      **2025Q4**     |        **2026Q1**      |      **2026Q2**     |       **2026Q3**       |
+|:-------:|:-----------------------------------------------------------------------------------------------------------------------:|:-------------------:|:----------------------:|:-------------------:|:----------------------:|
+| SVP NNN | [**SqueezeNet1_1**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SqueezeNet1_1)       | **vgg16**           | **YOLOV8s-OBB**        |                     |                        |
+|         | [**ShuffleNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ShuffleNetV2)         | **inception v3**    | **YOLOV9s**            |                     |                        |
+|         | [**ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet50)                 | **seresnet50**      | **Yolov8s-world**      |                     |                        |
+|         | [**MobileNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/MobileNetV2)           | **YOLOV3**          | **centernet**          |                     |                        |
+|         | [**EfficientNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/EfficientNetV2)     | **YOLOV4**          | **deepsort**           |                     |                        |
+|         | [**DenseNet121**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/DenseNet121)           | **YOLOV6s**         | **x-Stereo**           |                     |                        |
+|         | [**Swin-Transformer**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Swin-Transformer) | **YOLOV7**          | **Yolov8s-seg**        |                     |                        |
+|         | [**Vit-B-16**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Vit-B-16)                 | **YOLOV10s**        | **tinysan(MobileSam)** |                     |                        |
+|         | [**ResNet101**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet101)               | **YOLO11s-pose**    | **Siamese network**    |                     |                        |
+|         | [**ResNet18**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet18)                 | **HRNet**           | **Facenet**            |                     |                        |
+|         | [**Chinese-CLIP**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Chinese-CLIP)         | **CrowdCount**      | **PaddleOCR-rec**      |                     |                        |
+|         | [**Depth-Anything-v2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/depth/Depth-Anything-v2)        | **CodeFormer**      | **PaddleOCR-det**      |                     |                        |
+|         | [**PFLD**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/PFLD)                              |                     | **CRNN**               |                     |                        |
+|         | [**SuperPoint**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/point/SuperPoint)                      |                     | **VDSR**               |                     |                        |
+|         | [**UNet**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/UNet)                            |                     | **FastSpeech2**        |                     |                        |
+|         | [**yolov5s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov5)                       |                     | **minicpm(VLM 0.5B)**  |                     |                        |
+|         | [**yolov8l**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8l)                      |                     |                        |                     |                        |
+|         | [**yolov8s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s)                      |                     |                        |                     |                        |
+|         | [**yolo11s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s)                      |                     |                        |                     |                        |
+|         | [**yolo11s-seg**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s-seg)              |                     |                        |                     |                        |
+|   NNN   | [**SqueezeNet1_1**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SqueezeNet1_1)       | **vgg16**           | **CN-CLIP**            | **YOLOV8s-OBB**     | **YOLOV10s**           |
+|         | [**ShuffleNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ShuffleNetV2)         | **inception v3**    | **YOLOV3**             | **centernet**       | **Yolov8s-world**      |
+|         | [**ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet50)                 | **seresnet50**      | **YOLOV4**             | **deepsort**        | **tinysan(MobileSam)** |
+|         | [**MobileNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/MobileNetV2)           | **EfficientNet-V2** | **YOLOV8s**            | **DepthAnythingV2** |                        |
+|         | [**DenseNet121**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/DenseNet121)           | **SwinT**           | **YOLOV9s**            | **Siamese network** |                        |
+|         | [**ResNet101**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet101)               | **Vit-B-16**        | **YOLOV11s**           | **Facenet**         |                        |
+|         | [**yolov5s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov5)                       | **YOLOV6s**         | **YOLO11s-seg**        | **PaddleOCR-rec**   |                        |
+|         |                                                                                                                         | **YOLOV7**          | **YOLO11s-pose**       | **PaddleOCR-det**   |                        |
+|         |                                                                                                                         | **UNET**            | **Yolov8s-seg**        | **CRNN**            |                        |
+|         |                                                                                                                         | **HRNet**           | **PFLD**               | **VDSR**            |                        |
+|         |                                                                                                                         | **CrowdCount**      | **CodeFormer**         | **FastSpeech2**     |                        |
+|         |                                                                                                                         |                     | **SuperPoint**         |                     |                        |
 
 </div>
 
