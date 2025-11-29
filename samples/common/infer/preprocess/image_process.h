@@ -15,14 +15,17 @@
 
 #pragma once
 
-#include "model.h"
+#include "dev_interface_adapter.h"
+#include "PillowResize/PillowResize.hpp"
 
 namespace Infer {
 struct ImageprocessOptions {
-    ImageprocessOptions(int resize, int centerCrop) : resizeValue(resize), centerCropValue(centerCrop) {}
+    ImageprocessOptions(int resize, int centerCrop, bool chw, int32_t interpolation = PillowResize::INTERPOLATION_BILINEAR) : resizeValue(resize), centerCropValue(centerCrop), chwFlag(chw), interpolationValue(interpolation) {}
     int resizeValue;
     int centerCropValue;
-    std::string dtypeStr = "int8";
+    bool chwFlag = false;
+    std::string dtypeStr = "uint8";
+    int32_t interpolationValue = PillowResize::INTERPOLATION_BILINEAR;
 };
-bool ImageProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, const ImageprocessOptions& options);
+bool ImageProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs, const ImageprocessOptions& options);
 }

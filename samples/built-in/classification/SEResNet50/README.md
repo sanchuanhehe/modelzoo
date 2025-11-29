@@ -1,0 +1,309 @@
+# 基于SE-ResNet50网络实现图片分类
+- [概述](#ZH-CN_TOPIC_0000001172161501)
+
+    - [输入输出数据](#section540883920406)
+    - [目录结构](#section540883920407)
+
+- [环境准备](#ZH-CN_TOPIC_0000001126281702)
+
+- [快速上手](#ZH-CN_TOPIC_0000001126281700)
+
+  - [获取源码](#section4622531142816)
+  - [准备数据集](#section183221994411)
+  - [模型转化](#section741711594517)
+  - [模型推理](#section741711594518)
+
+- [模型推理性能&精度](#ZH-CN_TOPIC_0000001172201573)
+
+  ------
+
+# 概述<a name="ZH-CN_TOPIC_0000001172161501"></a>
+
+SE-ResNet50是一种基于ResNet50架构的改进卷积神经网络，通过引入SE（Squeeze-and-Excitation）注意力模块，自适应校准通道特征响应，显著提升模型表达能力。
+- 参考实现：
+
+  ```
+  https://github.com/moskomule/senet.pytorch/
+  ```
+
+## 输入输出数据<a name="section540883920406"></a>
+
+- 输入数据
+
+  | 输入数据 | 数据类型 | 大小                | 数据排布格式 |
+  | -------- | -------- |-------------------| ------------ |
+  | image    | RGB_FP32 | 1 x 3 x 224 x 224 | NCHW         |
+
+- 输出数据
+
+  | 输出数据 | 数据类型 | 大小   |
+  | -------- | -------- | ------ |
+  | class    | FP32     | 1x1000 |
+
+
+
+## 目录结构<a name="section540883920407"></a>
+
+样例代码结构如下所示。
+
+```
+├── data
+│   ├── ...            //测试数据
+
+├── script
+│   ├── accuracy.py     //精度评估脚本
+│   ├── pth2onnx.py     //onnx转换脚本
+
+├── src
+│   ├── acl.json         //系统初始化的配置文件
+│   ├── CMakeLists.txt         //编译脚本
+│   ├── main.cpp     //资源初始化/销毁相关函数的实现文件
+
+├── model
+│   ├── ...	//模型文件
+
+├── model_cfg
+│   ├── SS928V100_NNN	//模型配置文件
+|   |	├── insert_op.cfg		//aipp配置文件
+│   ├── SS928V100_SVP_NNN	//模型配置文件
+|   |	├── insert_op.cfg		//aipp配置文件
+
+├── CMakeLists.txt    //编译脚本，调用src目录下CMakeLists文件
+├── *.json			//模型信息
+├── LICENSE			//模型LICENSE
+```
+
+# 推理环境准备<a name="ZH-CN_TOPIC_0000001126281702"></a>
+
+1、执行命令查看芯片名称。
+```
+    cat /proc/umap/sys
+    #该设备芯片名为SS928V100 （自行替换）
+    回显如下：
+    [SYS] Version: [SS928V100XXXXXXXXX]
+```
+2、该模型需要以下环境
+
+  **表 1** 版本配套表
+
+| 芯片型号  | npu  | soc_version | 环境准备指导     |
+| --------- | ---- | ----------- | ---------------- |
+| SS928V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+
+
+# 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
+
+## 获取源码<a name="section4622531142816"></a>
+
+1. 获取本仓源码
+
+2. 安装依赖。
+
+   ```
+   # 建议使用 python 3.7.5 版本
+   pip3 install -r requirements.txt
+   ```
+
+## 准备数据集<a name="section183221994411"></a>
+
+1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
+
+   本模型使用[ImageNet](https://image-net.org/download.php)验证集进行推理测试 ，用户自行获取数据集后，将文件解压并上传数据集modelzoo/datasets/ImageNet路径下。数据集目录结构如下所示：
+
+   ```
+   ImageNet/
+   |-- val
+   |   |-- ILSVRC2012_val_00000001.JPEG
+   |   |-- ILSVRC2012_val_00000002.JPEG
+   |   |-- ILSVRC2012_val_00000003.JPEG
+   |   ...
+   |-- val_list.txt
+   ...
+   ```
+
+2. 生成文件集file_list.json，将原始数据集图片地址转换为模型的输入数据。
+  
+    执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
+    
+    ```
+    python3 ../../../../utils/generate_file_list.py ${dataset_path}
+    ```
+    例如:
+    ```
+    python3 ../../../../utils/generate_file_list.py ../../../../datasets/ImageNet/val
+    ```
+  
+   参数说明：
+   - --dataset_path：原数据集所在路径。
+
+
+## 模型转化<a name="section741711594517"></a>
+
+使用PyTorch将模型权重文件.pth转换为.onnx文件，再使用ATC工具将.onnx文件转为离线推理模型文件.om文件。
+
+1. 获取权重文件。
+
+   前往[Pytorch官方文档](https://github.com/moskomule/senet.pytorch/)下载对应权重，参考下载权重如下：
+
+   [权重](https://github.com/moskomule/senet.pytorch/releases/download/archive/seresnet50-60a8950a85b2b.pkl)
+
+2. 导出onnx文件。
+    生成SE-ResNet50依赖文件
+    ```
+    mkdir model
+    cd script
+    git clone https://github.com/morning4346/Se_resnet50.git
+    cd Se_resnet50
+    git checkout bc1217132313216e3f92bbc76b67fe59e260b617
+    cd senet
+    sed -i 's/from senet.se_module import SELayer/from .se_module import SELayer/g' se_resnet.py
+    cd ../../../
+    ```
+
+    使用./script/pth2onnx.py导出动态batch的onnx文件。
+
+    ```
+    python3 ./script/pth2onnx.py ${pth_file} ${onnx_file}
+    ```
+
+    参数说明：
+
+    - pth_file：权重文件。
+    - onnx_file：生成 onnx 文件。建议保存为./model/seresnet50.onnx
+
+    比如：`python3 ./script/pth2onnx.py ./model/seresnet50-60a8950a85b2b.pkl ./model/seresnet50.onnx`
+
+3. 使用ATC工具将ONNX模型转OM模型。
+
+    执行ATC命令。
+    1. SS928V100 SVP_NNN上的om模型转换命令
+        ```
+        atc --framework=5 --model="./model/seresnet50.onnx" --input_shape="input_0:1,3,224,224" --insert_op_conf=./model_cfg/SS928V100_SVP_NNN/insert_op.cfg --output="./model/seresnet50" --image_list="./data/image_ref_list.txt" --soc_version=SS928V100 
+        ```
+    2. SS928V100 NNN上的om模型转换命令
+        ```
+        atc --framework=5 --model="./model/seresnet50.onnx" --input_shape="input_0:1,3,224,224" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/seresnet50" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
+        ```
+
+        运行成功后生成seresnet50.om模型文件。
+
+        参数说明：
+      
+        - --framework：5代表ONNX模型。
+        - --model：为ONNX模型文件。
+        - --input_shape：输入数据的shape。
+        - --insert_op_conf：aipp算子配置，用于输入数据处理。
+        - --output：输出的OM模型。
+        - --image_list: 量化校准数据。
+        - --enable_small_channel:使能small channel优化。
+        - --enable_single_stream:推理时使用一条stream。
+        - --soc_version：处理器型号。
+        
+        注意：如果出现命令找不到，配置环境变量。
+        ```
+        source /usr/local/Ascend/ascend-toolkit/set_env.sh
+        ```
+
+## 模型推理<a name="section741711594518"></a>
+
+**步骤1：编译代码。**
+
+1.  切换到样例目录，创建目录用于存放编译文件，例如，本文中，创建的目录为“build“。
+
+    ```
+    mkdir -p build
+    ```
+
+2.  切换到“build“目录，执行**cmake**生成编译文件。
+
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
+
+    当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
+
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器为aarch64-mix210-linux-gcc，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
+    
+    ```
+    cd build
+    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    ```
+    
+3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
+
+    ```
+    make
+    ```
+
+**步骤2：运行应用。**
+
+1.  以运行用户将开发环境的样例目录及目录下的文件上传到运行环境（Host），例如“$HOME/acl\_sample”。
+2.  以运行用户登录运行环境（Host）。
+3.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，给该目录下的main文件加执行权限。
+
+    ```
+    chmod +x main
+    ```
+
+4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
+
+    ```
+    ./main --acl ../src/acl.json --model ../model/seresnet50.om --input ../data/file_list.json
+    ```
+
+**步骤3：输出后处理**
+
+本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。
+
+1. 精度验证。
+
+    调用脚本与数据集标签val_label.txt比对，可以获得Accuracy数据，结果保存在accuracy.txt中。
+
+    ```
+    python3 ./script/accuracy.py --output ${result_dir} --label ${gt_file} --result ${--result_file}
+    ```
+
+    参数说明：
+
+    - --output：推理结果所在路径，默认为./out/result/txt/
+
+    - --label：真值标签文件val_label.txt所在路径。
+
+    - --result：输出精度结果所在的位置。
+
+    例如：  `python3 ./script/accuracy.py --output ./out/result/txt/ --label ../../../../datasets/ImageNet/val_list.txt --result ./out/accuracy.txt`
+    SVP_NNN平台上精度结果：
+    ```
+    {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "75.61%"}, {"key": "Top2 accuracy", "value": "85.68%"}, {"key": "Top3 accuracy", "value": "89.45%"}, {"key": "Top4 accuracy", "value": "91.4%"}, {"key": "Top5 accuracy", "value": "92.72%"}]}
+   ```
+    NNN平台上精度结果：
+    ```
+    {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "75.74%"}, {"key": "Top2 accuracy", "value": "85.83%"}, {"key": "Top3 accuracy", "value": "89.68%"}, {"key": "Top4 accuracy", "value": "91.63%"}, {"key": "Top5 accuracy", "value": "92.91%"}]}
+    ```
+2. 验证batch_size的om模型的性能，参考命令如下：
+    ```
+    执行./main --acl ../src/acl.json --model ../model/seresnet50.om --input ../data/file_list_1.json
+    ```
+
+    参数说明：(此模式下，file_list_1.json只放一张图片)
+
+    - --model：om模型路径。
+    - --input:  输入图片地址，file_list_1.json中loop参数设置为1000。
+    - --model: 模型所在位置。
+
+    在板端会输出显示，SVP_NNN平台上性能结果如下：
+    ```
+    [INFO] execution time: 73.74ms, frame rate: 13.56fps
+    ```
+    NNN平台上性能结果如下：
+    ```
+    [INFO] execution time: 15.67ms, frame rate: 63.83fps
+    ```
+
+# 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
+
+调用ACL接口推理计算，SE-ResNet50模型的性能和精度参考下列数据。
+
+| 芯片型号    | Batch Size | 数据集   | 精度指标1（Acc@1） | 精度指标2（Acc@5） |性能(fps) |
+| ----------- | ---------- | -------- |--------------|--------------|----------- |
+| SS928V100 SVP_NNN | 1          | ImageNet  | 75.61%       | 92.72%       |13.56    |
+| SS928V100 NNN | 1              | ImageNet  | 75.74%       | 92.91%       |63.83    |

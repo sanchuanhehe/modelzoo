@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "log.h"
 
 namespace Infer {
 #define MAX_TENSOR_DIM 128
@@ -116,6 +117,41 @@ public:
    virtual int32_t Execute(std::vector<TensorBuf>& inBufs, std::vector<TensorBuf>& outBufs,
       RunMode runMode = RunMode::Sync) = 0;
    virtual int32_t Wait() = 0;
+
+protected:
+   void PrintModelDesc()
+   {
+      TensorDesc tensorDesc;
+      for (size_t i = 0; i < GetInTensorNum(); i++) {
+         GetInTensorDescByIdx(i, tensorDesc);
+         std::string dimsStr = "[";
+         for (size_t j = 0; j < tensorDesc.dimCount; j++) {
+               if (j + 1 == tensorDesc.dimCount) {
+                  dimsStr =  dimsStr + std::to_string(tensorDesc.dims[j]) + "]";
+                  break;
+               }
+               dimsStr =  dimsStr + std::to_string(tensorDesc.dims[j]) + "*";
+         }
+         LOG(DEBUG) << "input tensor " << i << " info : dims = " << dimsStr << ", dataType = " << tensorDesc.type
+               << ",  dataSize = " << tensorDesc.typeSize << "bits, dataFormat = " << tensorDesc.format <<
+               ", stride = " <<  tensorDesc.defaultStride << ", size = " << tensorDesc.defaultSize;
+      }
+
+      for (size_t i = 0; i < GetOutTensorNum(); i++) {
+         GetOutTensorDescByIdx(i, tensorDesc);
+         std::string dimsStr = "[";
+         for (size_t j = 0; j < tensorDesc.dimCount; j++) {
+               if (j + 1 == tensorDesc.dimCount) {
+                  dimsStr =  dimsStr + std::to_string(tensorDesc.dims[j]) + "]";
+                  break;
+               }
+               dimsStr =  dimsStr + std::to_string(tensorDesc.dims[j]) + "*";
+         }
+         LOG(DEBUG) << "output tensor " << i << " info : dims = " << dimsStr << ", dataType = " << tensorDesc.type
+               << ",  dataSize = " << tensorDesc.typeSize << "bits, dataFormat = " << tensorDesc.format <<
+               ", stride = " <<  tensorDesc.defaultStride << ", size = " << tensorDesc.defaultSize;
+      }
+   }
 };
 
 std::shared_ptr<MdlBase> MdlCreate();

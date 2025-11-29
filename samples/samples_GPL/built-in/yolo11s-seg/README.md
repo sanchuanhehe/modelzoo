@@ -183,7 +183,7 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
       执行ATC命令。
       ```
-      atc ----framework=5 --model="./model/yolo11s-seg.onnx" --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_SVP_NNN/insert_op.cfg" --output="model/yolo11s-seg" --image_list="./data/image_ref_list.txt" --soc_version=SS928V100 --compile_mode=6
+      atc --framework=5 --model="./model/yolo11s-seg.onnx" --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_SVP_NNN/insert_op.cfg" --output="model/yolo11s-seg" --image_list="./data/image_ref_list.txt" --soc_version=SS928V100 --compile_mode=6
       ```
       运行成功后生成yolo11s.om模型文件。
     

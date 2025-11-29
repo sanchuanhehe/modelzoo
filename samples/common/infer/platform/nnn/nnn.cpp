@@ -178,6 +178,7 @@ int32_t AclMdl::LoadModel(const std::string& modelPath)
 
     loadFlag_ = true;
     LOG(INFO) << "load model success, model file is " << modelPath;
+    PrintModelDesc();
     return 0;
 }
 
@@ -211,6 +212,7 @@ int32_t AclMdl::LoadModel(const char* modelBuf, size_t modelSize)
 
     loadFlag_ = true;
     LOG(INFO) << "load model success";
+    PrintModelDesc();
     return 0;
 }
 
@@ -456,7 +458,7 @@ int32_t AclMdl::Execute(std::vector<TensorBuf>& inBufs, std::vector<TensorBuf>& 
         }
     }
     aclrtSetDevice(0);
-    aclError ret;
+    aclError ret = ACL_SUCCESS;
     if (runMode == RunMode::Sync) {
         ret = aclmdlExecute(modelId_, input_, output_);
     } else if (runMode == RunMode::Async) {

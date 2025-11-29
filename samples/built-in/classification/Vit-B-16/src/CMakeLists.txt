@@ -38,15 +38,24 @@ set(LIB_PATH $ENV{NPU_HOST_LIB})
 
 include_directories(
     ${COMMON_PATH}/infer/platform
-    ${COMMON_PATH}/log
+    ${COMMON_PATH}/include
 )
 
 link_directories(
     ${LIB_PATH}
 )
 
-add_executable(main main.cpp)
-
-target_link_libraries(main infer_utils_static m stdc++)
-
-install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+if(SOC_VERSION STREQUAL "SS928V100")
+    add_executable(main main.cpp)
+    target_link_libraries(main infer_utils_static m stdc++)
+    install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+else()
+    find_library(OpenCV_WORLD_SHARED_LIB
+        NAMES libopencv_world.so.412
+        PATHS "../../../../opensource/opencv/lib"
+        NO_DEFAULT_PATH
+    )
+    add_executable(main main_dlite.cpp)
+    target_link_libraries(main infer_common ${OpenCV_WORLD_SHARED_LIB} stdc++)
+    install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+endif ()

@@ -1,0 +1,21 @@
+# 预处理后二进制文件保存路径，为空则不保存
+save_preprocess_bin="../data/preprocess/bin"
+
+# 预处理后二进制文件列表，为空则不保存
+save_preprocess_txt="../data/preprocess"
+
+# 模型推理原始二进制结果路径（供Python后处理用），为空则不保存
+save_result_bin="../data/result/bin"
+
+# 模型推理原结果路径，为空则不保存
+save_result_img="../data/result/img"
+
+######## 如下参数请优先使用命令行传参 ########
+# ACL配置文件路径（用于Ascend平台初始化），优先使用命令行传参
+acl_config_path="../config/acl.json"
+
+# 离线推理模型（OM文件）路径，优先使用命令行传参
+om_model_path="../model/codeformer.om"
+
+# 输入图像路径，优先使用命令行传参
+img_list_path="../data/file_list.json"

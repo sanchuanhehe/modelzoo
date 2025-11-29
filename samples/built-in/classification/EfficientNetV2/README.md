@@ -48,13 +48,12 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
 
 ```
 ├── data
-│   ├── ...            //测试数据
-
-├── inc
-│   ├── ...            //声明头文件
+│   ├── file_list_1.json          //测试数据输入样例
 
 ├── script
-│   ├── pth2onnx.py     //python执行脚本
+│   ├── pth2onnx.py     // python执行脚本
+|   ├── preprocess.py   // python版本前处理
+|   ├── accuracy.py     // 精度评估脚本
 
 ├── src
 │   ├── acl.json         //系统初始化的配置文件
@@ -119,22 +118,19 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
    ```
 
 2. 数据预处理，将原始数据集转换为模型的输入数据。
-  
-    执行 ./script/preprocess.py 脚本，完成数据预处理。
+
+    执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
     
     ```
-    python ./script/preprocess.py ${dataset_path} ${data_save_path}
+    python3 ../../../../utils/generate_file_list.py ${dataset_path}
     ```
-   2.1 SS928V100 SVP_NNN上的数据预处理命令
-   
-   ```
-   python ./script/preprocess.py  --dataset_path='../../../../datasets/ImageNet/' --data_save_path='./data/img/'
-   ```
-   
+    例如:
+    ```
+    python3 ../../../../utils/generate_file_list.py ../../../../datasets/ImageNet/val
+    ```
+  
    参数说明：
-   
    - --dataset_path：原数据集所在路径。
-   - --data_save_path：转化完后的数据保存路径， 默认在./data路径下
 
 
 ## 模型转化<a name="section741711594517"></a>
@@ -169,6 +165,11 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
 
         ```
         atc --framework=5 --model="./model/efficientnetv2.onnx" --input_shape="image:1,3,288,288" --output="./model/efficientnetv2" --image_list="./data/img/ILSVRC2012_val_00000002.bin" --soc_version=SS928V100 
+        ```
+    2. SS928V100 NNN上的om模型转换命令
+
+        ```
+        atc --framework=5 --model="./model/efficientnetv2.onnx" --input_shape="image:1,3,288,288" --output="./model/efficientnetv2_dlite" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG 
         ```
    
         运行成功后生成efficientnetv2.om模型文件。
@@ -261,6 +262,10 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
     ```
     {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "81.77%"}, {"key": "Top2 accuracy", "value": "90.65%"}, {"key": "Top3 accuracy", "value": "93.57%"}, {"key": "Top4 accuracy", "value": "95.02%"}, {"key": "Top5 accuracy", "value": "95.9%"}]}
     ```
+    NNN平台上精度结果：
+    ```
+    {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "82.34%"}, {"key": "Top2 accuracy", "value": "91.05%"}, {"key": "Top3 accuracy", "value": "93.94%"}, {"key": "Top4 accuracy", "value": "95.4%"}, {"key": "Top5 accuracy", "value": "96.19%"}]}
+    ```
 2. 验证batch_size的om模型的性能，参考命令如下：
 
     ```
@@ -274,9 +279,14 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
     - --model: 模型所在位置
     - --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
-    在板端会输出显示，SVP_NNN平台上性能结果如下：
+    在板端会输出显示
+    SVP_NNN平台上性能结果如下：
     ```
     [INFO]  time: 2698983, fps: 37.050993
+    ```
+    NNN平台上性能结果如下：
+    ```
+    [INFO]  time: 3657867, fps: 27.3383
     ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
@@ -286,3 +296,4 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
 | 芯片型号    | Batch Size | 数据集   | 精度指标1（Acc@1） | 精度指标2（Acc@5） |性能(fps) |
 | ----------- | ---------- | -------- | ------------------ | ------------------ |----------- |
 | SS928V100 SVP_NNN | 1          | ImageNet  | 81.77%            | 95.9%             |37.051   |
+| SS928V100 NNN | 1          | ImageNet  | 82.34%            | 96.19%             |27.338  |

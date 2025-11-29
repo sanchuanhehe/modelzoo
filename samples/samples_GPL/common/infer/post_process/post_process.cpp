@@ -20,18 +20,18 @@
 
 namespace Infer {
 using namespace std;
-bool PrintTop5(std::vector<Tensor>& modelOuput, std::vector<std::string>& inputFileList)
+bool PrintTop5(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs)
 {
-    if (modelOuput.size() != 1 || inputFileList.size() != 1) {
+    if (tensorBufs.size() != 1 || fileList.size() != 1) {
         return false;
     }
-    float *outData = static_cast<float*>(modelOuput[0].buf.GetRawPtr());
+    float *outData = static_cast<float*>(tensorBufs[0].GetRawPtr());
     map<float, unsigned int, greater<float> > resultMap;
-    for (unsigned int j = 0; j < modelOuput[0].buf.size / sizeof(float); ++j) {
+    for (unsigned int j = 0; j < tensorBufs[0].size / sizeof(float); ++j) {
         resultMap[*outData] = j;
         outData++;
     }
-    LOG(INFO) << inputFileList[0] << " inference result top 5:";
+    LOG(INFO) << fileList[0] << " inference result top 5:";
     int cnt = 0;
     for (auto it = resultMap.begin(); it != resultMap.end(); ++it) {
         if (++cnt > 5) {

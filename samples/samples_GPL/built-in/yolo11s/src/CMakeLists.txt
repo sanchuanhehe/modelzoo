@@ -42,7 +42,7 @@ endif ()
 
 include_directories(
     ../../../common/infer/platform
-    ../../../common/log
+    ../../../common/include
 )
 
 link_directories(

@@ -16,7 +16,7 @@
 #include "log.h"
 
 namespace Infer {
-std::atomic<LogLevel> Logger::globalLevel_{INFO};
+std::atomic<LogLevel> Logger::globalLevel_ {DEBUG};
 std::mutex Logger::mutex_;
 
 Logger::Logger(LogLevel level, const char* file, int line)
@@ -24,6 +24,10 @@ Logger::Logger(LogLevel level, const char* file, int line)
 
 Logger::~Logger()
 {
+#ifdef NDEBUG
+    if (level_ <= LogLevel::DEBUG)
+    return;
+#endif
     if (level_ < globalLevel_) return;
     std::string formatted = "[" + levelToString() + "] " + formatTime() + " ["
                             + GetFileName(file_) + ":" + std::to_string(line_)

@@ -337,7 +337,7 @@ static void SaveResult(const vector<vector<float>> &bboxes, vector<TensorBuf> &o
     size_t start = filePath.find_last_of("/");
     size_t end = filePath.find(".");
     string outputName = filePath.substr(start, end - start);
-    string resultPath = filePath.substr(0, start) + "/../result";
+    string resultPath = filePath.substr(0, start) + "/../../out/result";
     string binPath = resultPath + "/bin";
     string txtPath = resultPath + "/txt";
     for (auto& path : {resultPath, binPath, txtPath}) {

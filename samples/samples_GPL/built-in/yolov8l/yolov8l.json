@@ -1,7 +1,7 @@
 {
-    "modelName": "yolov8l",
+    "modelName": "YOLOv8l",
     "modelDesc": "YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领域使用最多的目标检测网络，YOLOv8在之前的YOLO版本的基础上进行了改进，在继承了原有YOLO网络模型优点的基础上，引入了新的特效和优化，具有更高的检测精度。",
-    "modelRepository": "https://gitee.com/Hispark/modelzoo/tree/master/samples/samples/samples_GPL/built-in/yolo/yolov8l",
+    "modelRepository": "https://gitee.com/Hispark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8l",
     "modelParameter": {
         "输入":"640x640",
         "参数量":"43.694M",
@@ -24,7 +24,7 @@
         },
         {
             "desc": "部署模型",
-            "link": "https://gitee.com/HiSpark/modelzoo-dev/blob/master/samples/samples_GPL/built-in/yolov8l/LICENSE"
+            "link": "https://gitee.com/HiSpark/modelzoo/blob/master/samples/samples_GPL/built-in/yolov8l/LICENSE"
         }
     ],
     "modelChipset": [

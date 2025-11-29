@@ -118,7 +118,7 @@ YOLOv5每个版本主要有4个开源模型，分别为YOLOv5s、YOLOv5m、YOLOv
 
 1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
 
-   该模型使用 [coco2017 val数据集](https://cocodataset.org/#download) 进行精度评估，在`yolov5`源码根目录下新建`coco`文件夹，数据集放到`coco`里，文件结构如下：
+   该模型使用 [coco2017 val数据集](https://cocodataset.org/#download) 进行精度评估，在`yolov5`源码目录`data`目录下新建`coco`文件夹，数据集放到`coco`里，文件结构如下：
    
    ```
    coco
@@ -127,23 +127,22 @@ YOLOv5每个版本主要有4个开源模型，分别为YOLOv5s、YOLOv5m、YOLOv
          ├── 00000000285.jpg
          ……
          └── 00000581781.jpg
-      ├── instances_val2017.json
-      └── val2017.txt
+      └── instances_val2017.json
    ...
    ```
 
-2. 数据预处理，将原始数据集转换为模型的输入数据。
+2. 数据预处理，执行yolov5_preprocess.py脚本将原始数据集转换为模型的输入数据。
     1. 针对SS928V100 SVP_NNN平台上的om模型的预处理转换命令
         ```
-        python ./yolov5_preprocess.py --data_path "../../../../../../datasets/coco"
+        python ./yolov5_preprocess.py --data_path "../data/coco"
         ```
     2. 针对SS928V100 NNN平台上的om模型的预处理转换命令
         ```
-        python ./yolov5_preprocess.py --data_path "../../../../../../datasets/coco" --data_type uint8
+        python ./yolov5_preprocess.py --data_path "../data/coco" --data_type uint8
         ```
    
    参数说明：
-   
+
    - --data_path：原数据集所在路径。
    - --data_type：图像数据类型。
 
@@ -221,7 +220,7 @@ YOLOv5每个版本主要有4个开源模型，分别为YOLOv5s、YOLOv5m、YOLOv
     
     ```
     cd build
-    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
     ```
     
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
@@ -255,13 +254,12 @@ YOLOv5每个版本主要有4个开源模型，分别为YOLOv5s、YOLOv5m、YOLOv
     调用脚本可以获得精度数据。
 
     ```
-    python yolov5_postprocess.py --ground_truth_json "../../../../../../datasets/coco/instances_val2017.json" --output "../out/result/bin"
+    python yolov5_postprocess.py --ground_truth_json "../data/coco/instances_val2017.json" --output "../out/result/bin"
     ```
 
     参数说明：
 
-    - --output：推理结果所在路径，默认为./out/result/bin/
-
+    - --output：推理结果所在路径
     - --ground_truth_json：真值标签文件所在路径。
       
     运行yolov5_postprocess.py脚本会输出文件，该文件中保存的是每一个图片的结果，平均结果为上述所有值求和输出：

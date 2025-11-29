@@ -23,19 +23,10 @@ add_compile_options(
     -fstack-protector-all
     -D_FORTIFY_SOURCE=2 -O2
 )
-set(CMAKE_CXX_FLAGS_DEBUG "-fPIC -O0 -g -Wall")
+set(CMAKE_CXX_FLAGS_DEBUG "-fPIC -O0 -g -DNDEBUG -Wall")
 set(CMAKE_CXX_FLAGS_RELEASE "-fPIC -O2 -Wall")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro,-z,now,-z,noexecstack -fPIE -pie")
 set(CMAKE_SKIP_RPATH TRUE)
-
-# eg:
-# export DDK_PATH=$HOME/Ascend/ascend-toolkit/latest
-# export NPU_HOST_LIB=$DDK_PATH/acllib/lib64/stub
-# cmake .. -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc
-# 
-# export DDK_PATH=$HOME/Ascend/ascend-toolkit/svp_latest
-# export NPU_HOST_LIB=$DDK_PATH/acllib/lib64/stub
-# cmake .. -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=SS928V100
 
 set(INC_PATH $ENV{DDK_PATH})
 if (NOT DEFINED ENV{DDK_PATH})
@@ -51,7 +42,7 @@ else()
     message(STATUS "set LIB_PATH: ${LIB_PATH}")
 endif ()
 
-set(ACL_UTILS_DIR ./log ./infer ./infer/platform ./infer/preprocess ./infer/post_process)
+set(ACL_UTILS_DIR ./infer/platform ./infer/preprocess ./infer/post_process)
 
 if(SOC_VERSION STREQUAL "SS928V100")
     add_definitions(-DSVP_ACL_PLATFORM)
@@ -69,8 +60,10 @@ endif ()
 include_directories(
     ${ACL_UTILS_DIR}
     ${INC_PATH}/acllib/include/
+    ./include
     ../opensource/json/single_include/
     ../opensource/opencv/include/
+    ../opensource/pillow-resize/include/
 )
 
 find_library(OpenCV_WORLD_SHARED_LIB
@@ -122,26 +115,12 @@ link_directories(
 file(GLOB INFER_SRC_LIST "./infer/*cpp")
 file(GLOB PREPROCESS_SRC_LIST "./infer/preprocess/*cpp")
 file(GLOB POSTPROCESS_SRC_LIST "./infer/post_process/*cpp")
+file(GLOB UTILS_SRC_LIST "./utils/*cpp")
+set(PILLOW_RESIZE_SRC "../opensource/pillow-resize/src/PillowResize/PillowResize.cc")
 
 # STATIC
-add_library(infer_common STATIC ${PLATFORM_SRC_LIST} ${INFER_SRC_LIST} ${PREPROCESS_SRC_LIST} ${POSTPROCESS_SRC_LIST} log/log.cpp)
-target_link_libraries(infer_common ${ACL_LIB_LIST} stdc++)
-
-add_executable(test_infer sample/test.cpp)
-target_link_libraries(test_infer ${ACL_LIB_LIST} stdc++ infer_common ${OpenCV_WORLD_SHARED_LIB})
-
-# 依赖静态库
-# target_link_libraries(test_infer 
-#     ${ACL_LIB_LIST}  
-#     infer_common 
-#     ${OpenCV_WORLD_LIB}
-#     ${ADE_LIB}
-#     ${ITTNOTIFY_LIB}
-#     ${JPEG_TURBO_LIB}
-#     ${OPENJP2_LIB}
-#     ${ZLIB_LIB}
-#     m
-#     stdc++)
+add_library(infer_common STATIC ${PLATFORM_SRC_LIST} ${INFER_SRC_LIST} ${PREPROCESS_SRC_LIST} ${POSTPROCESS_SRC_LIST} ${UTILS_SRC_LIST} ${PILLOW_RESIZE_SRC} log/log.cpp)
+target_link_libraries(infer_common ${ACL_LIB_LIST} m stdc++)
 
 # STATIC
 add_library(infer_utils_static STATIC ${PLATFORM_SRC_LIST} log/log.cpp)

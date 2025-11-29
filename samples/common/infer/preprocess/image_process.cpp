@@ -16,15 +16,18 @@
 
 #include "image_process.h"
 #include "log.h"
+#include "dev_interface_adapter.h"
 #include <opencv2/opencv.hpp>
+#include "PillowResize/PillowResize.hpp"
 #include <string>
 #include <unordered_map>
 #include <algorithm>
 #include <regex>
 #include <fstream>
+#include "utils.h"
 
 namespace Infer {
-static cv::Mat ResizeKeepRatio(const cv::Mat& img, int targetSize, int interpolation = cv::INTER_LINEAR)
+static cv::Mat PillowResizeKeepRatio(const cv::Mat& img, int targetSize, int32_t interpolation = PillowResize::INTERPOLATION_BILINEAR)
 {
     if (targetSize <= 0) {
         return img;
@@ -40,11 +43,11 @@ static cv::Mat ResizeKeepRatio(const cv::Mat& img, int targetSize, int interpola
     if (width < height) {
         int newWidth = targetSize;
         int newHeight = static_cast<int>(height * static_cast<float>(targetSize) / width);
-        cv::resize(img, targetImg, cv::Size(newWidth, newHeight), interpolation);
+        targetImg = PillowResize::resize(img, cv::Size(newWidth, newHeight), interpolation);
     } else {
         int newHeight = targetSize;
         int newWidth = static_cast<int>(width * static_cast<float>(targetSize) / height);
-        cv::resize(img, targetImg, cv::Size(newWidth, newHeight), interpolation);
+        targetImg = PillowResize::resize(img, cv::Size(newWidth, newHeight), interpolation);
     }
 
     return targetImg;
@@ -135,8 +138,7 @@ static bool Yuv420SpToRgb(const unsigned char* yuvData, int width, int height, c
     
     int ySize = width * height;
     int uvSize = ySize / 2;
-    int totalSize = ySize + uvSize; // YUV420SP总大小
-    
+
     // 创建YUV I420格式的Mat
     cv::Mat yuvI420(height + height/2, width, CV_8UC1);
     if (yuvI420.empty()) {
@@ -167,6 +169,7 @@ static bool ConvertImageToRgb(const std::string& filename, cv::Mat& rgbMat)
         // 使用OpenCV直接读取
         cv::Mat img = cv::imread(filename, cv::IMREAD_UNCHANGED);
         if (img.empty()) {
+            LOG(ERROR) << "fail to imread, path : " << filename;
             return false;
         }
         
@@ -183,7 +186,8 @@ static bool ConvertImageToRgb(const std::string& filename, cv::Mat& rgbMat)
             return false; // 不支持的通道数
         }
     } else if (ext == "yuv420sp") {
-        int yuvWidth, yuvHeight;
+        int yuvWidth = 0;
+        int yuvHeight = 0;
         // 从文件名解析宽高
         if (!ParseYuvDimensions(filename, yuvWidth, yuvHeight)) {
             return false; // 无法解析宽高
@@ -214,20 +218,19 @@ static bool ConvertImageToRgb(const std::string& filename, cv::Mat& rgbMat)
 static cv::Mat ProcessSingleImage(const std::string& imgPath, const ImageprocessOptions& options) 
 {
     cv::Mat rgbMat;
-    if (ConvertImageToRgb(imgPath, rgbMat)) {
+    if (!ConvertImageToRgb(imgPath, rgbMat)) { 
+        LOG(ERROR) << "fail to convert image to rgb";
         return {};
     }
-
-    cv::Mat image = CenterCrop(ResizeKeepRatio(rgbMat, options.resizeValue), options.centerCropValue);
+    cv::Mat image = CenterCrop(PillowResizeKeepRatio(rgbMat, options.resizeValue, options.interpolationValue), options.centerCropValue);
     image.convertTo(image, SelectDtype(options.dtypeStr));
-
-#ifdef SVP_ACL_PLATFORM
-    image = hwcToChw(image);
-#endif
+    if (options.chwFlag) {
+        image = hwcToChw(image);
+    }
     return image.clone(); // 确保内存连续
 }
 
-bool ImageProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, const ImageprocessOptions& options)
+bool ImageProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs, const ImageprocessOptions& options)
 {
     if (fileList.size() != tensorBufs.size()) {
         return false;
@@ -235,13 +238,15 @@ bool ImageProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& te
     for (size_t i = 0; i < fileList.size(); ++i) {
         cv::Mat image = ProcessSingleImage(fileList[i], options);
         if (image.empty()) {
+            LOG(ERROR) << "fail to preprocess " << fileList[i];
             return false;
         }
         size_t imageSize = image.total() * image.elemSize();
-        if (tensorBufs[i].size != imageSize) {
-            tensorBufs[i] = TensorBuf(imageSize, 0);
+        if (!image.isContinuous()) {
+            image = image.clone();
         }
-        if (memcpy(tensorBufs[i].GetRawPtr(), image.data, imageSize) != 0) {
+        if (!PadDataToTensorBuf(image.data, imageSize, tensorDescs[i], tensorBufs[i])) {
+            LOG(ERROR) << "fail to pad data";
             return false;
         }
     }

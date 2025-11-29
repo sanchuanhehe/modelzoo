@@ -1,0 +1,13 @@
+{
+    "fileList": [
+        [
+            "../datasets/coco/val2017/000000000139.jpg"
+        ],
+        [
+            "../datasets/coco/val2017/000000000285.jpg"
+        ],
+        [
+            "../datasets/coco/val2017/000000000632.jpg"
+        ]
+    ]
+}

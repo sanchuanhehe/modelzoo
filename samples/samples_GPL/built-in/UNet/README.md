@@ -114,7 +114,7 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
 1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
 
-   本模型支持carvana数据集，[下载链接](https://www.kaggle.com/competitions/carvana-image-masking-challenge/data)。数据集train.zip以及train_masks.zip分别作为训练和标签文件，上传并解压到源码包路径下，目录结构如下：
+   本模型支持carvana数据集，[下载链接](https://www.kaggle.com/competitions/carvana-image-masking-challenge/data)。数据集train.zip以及train_masks.zip分别作为训练和标签文件，上传并解压到datasets路径下，目录结构如下：
 
    ```
    carvana/
@@ -128,21 +128,18 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
 2. 数据预处理，将原始数据集转换为模型的输入数据。
   
-    执行 ../../../../utils/preprocess.py 脚本，完成数据预处理。
+    执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
+      
+    ```
+    python ../../../../utils/generate_file_list.py ${dataset_path}
+    ```
+    例如:
+    ```
+    python ../../../../utils/generate_file_list.py ../../../../datasets/carvana/train_hq/
+    ```
     
-    ```
-    python3 ../../../../utils/preprocess.py ${input_path} ${output_path}
-    ```
-   2.1 SS928V100 SVP_NNN上的数据预处理命令
-   
-   ```
-   python ../../../../utils/preprocess.py --input_path ../../../../datasets/carvana/train_hq/ --output_path ./data/ --resize 572 --resize_mode 1 --type float32 --mean 255
-   ```
-   
-   参数说明：
-   
-   - --input_path：原数据集所在路径。
-   - --output_path：转化完后的数据保存路径， 默认在./data路径下
+    参数说明：
+    - --dataset_path：原数据集所在路径。
 
 
 ## 模型转化<a name="section741711594517"></a>
@@ -180,6 +177,10 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
     1. SS928V100 SVP_NNN上的om模型转换命令
         ```
         atc --framework=5 --model="./model/UNet_dynamic_sim.onnx" --input_shape="actual_input_1:1,3,572,572" --output="./model/unet" --image_list="./data/img/0cdf5b5d0ce1_01.bin" --soc_version=SS928V100
+        ```
+    2. SS928V100 NNN上的om模型转换命令
+        ```
+        atc --framework=5 --model="./model/UNet_dynamic_sim.onnx" --input_shape="actual_input_1:1,3,572,572" --output="./model/unet" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG 
         ```
    
         运行成功后生成unet.om模型文件。
@@ -269,13 +270,21 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
     - --result：输出精度结果所在的位置。
 
-    例如：  `python ./Pytorch-UNet/accuracy.py --output ./out/result/bin/ --label ../../../../datasets/carvana/train_masks/ --result ./Pytorch_UNet/accuracy.txt`
+    例如：  `python ./script/accuracy.py --output ./out/result/bin/ --label ../../../../datasets/carvana/train_masks/ --result ./Pytorch_UNet/accuracy.txt`
       
     SVP_NNN平台上精度结果：
      文件中保存的是每一个图片的结果，平均结果为上述所有值求和输出：
     ```
     IOU Average: 0.9863201297157492
     ```
+
+    NNN平台上精度结果：
+     文件中保存的是每一个图片的结果，平均结果为上述所有值求和输出：
+    ```
+    IOU Average ：0.9858566882915737
+    ```
+
+
 2. 验证batch_size的om模型的性能，参考命令如下：
 
     ```
@@ -289,9 +298,14 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
     - --model: 模型所在位置
     - --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
-    在板端会输出显示，SVP_NNN平台上性能结果如下：
+    在板端会输出显示
+    SVP_NNN平台上性能结果如下：
     ```
      [INFO] time: 10374899, fps: 9.638646
+    ```
+    NNN平台上性能结果如下：
+    ```
+     [INFO] time: 46724082, fps: 2.14022
     ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
@@ -301,3 +315,4 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 | 芯片型号    | Batch Size | 数据集   | 开源精度                                              | 精度指标IOU |性能 |
 | ----------- | ---------- | -------- | ----------------------------------------------------- | ------------------ |------------------ |
 | SS928V100_SVP_NNN | 1          | carvana | [链接](https://pytorch.org/vision/stable/models.html) | 0.9863       | 9.6386|
+| SS928V100_NNN | 1          | carvana | [链接](https://pytorch.org/vision/stable/models.html) | 0.9858       | 2.14|

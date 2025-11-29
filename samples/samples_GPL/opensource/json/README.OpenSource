@@ -1,0 +1,10 @@
+[
+    {
+        "Name": "json",                   # 上游开源软件名全称
+        "License": "MIT",             # 上游开源软件中包含的许可证信息
+        "License File": "/LICENSE.OpenSource",         # 许可证所在文件路径
+        "Version Number": "3.12.0",       # 该软件的版本
+        "Upstream URL": "https://github.com/nlohmann/json/archive/refs/tags/v3.12.0.tar.gz",   # 上游软件包发布地址
+        "Description": "JSON for Modern C++"           # 开源软件功能描述
+    }
+]
