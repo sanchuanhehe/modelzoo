@@ -1,6 +1,6 @@
 {
 	"modelName": "ResNet50",
-	"modelDesc": "ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目标分类等领域以及作为计算机视觉任务主干经典神经网络的一部分，典型的网络有ResNet50, ResNet101等。Resnet证明网络能够向更深（包含更多隐藏层）的方向发展。",
+	"modelDesc": "ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目标分类等领域以及作为计算机视觉任务主干经典神经网络的一部分，典型的网络有ResNet50, ResNet101等。ResNet证明网络能够向更深（包含更多隐藏层）的方向发展。",
 	"modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet50",
 	"modelParameter": {
 		"输入": "224x224",

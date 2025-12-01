@@ -43,7 +43,7 @@ endif ()
 include_directories(
     ../../../../common/infer/platform
     ../../../../common/infer/platform/svp_nnn
-    ../../../../common/log
+    ../../../../common/include
     ${INC_PATH}/acllib/include/
     ../../../../opensource/json/single_include/
     ../../../../opensource/opencv/include/   

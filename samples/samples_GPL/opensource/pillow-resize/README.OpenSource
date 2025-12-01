@@ -1,0 +1,10 @@
+[
+    {
+        "Name": "pillow-resize",                   # 上游开源软件名全称
+        "License": "Apache License 2.0",             # 上游开源软件中包含的许可证信息
+        "License File": "/LICENSE.OpenSource",         # 许可证所在文件路径
+        "Version Number": "0.0.0",       # 该软件没有release版本
+        "Upstream URL": "https://github.com/zurutech/pillow-resize",   # branch=master, commit_id=4427c50425bcdacffb129cce28d44afcf3ce0856
+        "Description": "Porting of Pillow resize method in C++ and OpenCV"           # 开源软件功能描述
+    }
+]

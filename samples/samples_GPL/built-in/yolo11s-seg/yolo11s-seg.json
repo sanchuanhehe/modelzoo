@@ -1,7 +1,7 @@
 {
-    "modelName": "yolo11s-seg",
-    "modelDesc": "YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领域使用最多的目标检测网络，YOLO11网络模型是YOLO系列的最新版本，在继承了原有YOLO网络模型优点的基础上，在架构和训练方法上进行了重大改进，具有更高的检测精度、速度和效率。yolo11s-seg作为实例分割的模型，比检测模型更进一步，包括识别图像中的各个对象并将它们与图像的其余部分分割开来。",
-    "modelRepository": "https://gitee.com/Hispark/modelzoo/tree/master/samples/samples/samples_GPL/built-in/yolo/yolo11s-seg",
+    "modelName": "YOLO11s-seg",
+    "modelDesc": "YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领域使用最多的目标检测网络，YOLO11网络模型是YOLO系列的最新版本，在继承了原有YOLO网络模型优点的基础上，在架构和训练方法上进行了重大改进，具有更高的检测精度、速度和效率。YOLO11s-seg作为实例分割的模型，比检测模型更进一步，包括识别图像中的各个对象并将它们与图像的其余部分分割开来。",
+    "modelRepository": "https://gitee.com/Hispark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s-seg",
     "modelParameter": {
         "输入":"640x640",
         "参数量":"10.123M",
@@ -24,7 +24,7 @@
         },
         {
             "desc": "部署模型",
-            "link": "https://gitee.com/HiSpark/modelzoo-dev/blob/master/samples/samples_GPL/built-in/yolo11s-seg/LICENSE"
+            "link": "https://gitee.com/HiSpark/modelzoo/blob/master/samples/samples_GPL/built-in/yolo11s-seg/LICENSE"
         }
     ],
     "modelChipset": [

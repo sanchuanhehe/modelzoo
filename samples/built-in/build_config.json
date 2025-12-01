@@ -102,8 +102,7 @@
     "buildDef": "SS928V100",
     "needSmoke": "false",
     "description": "识别网"
-  }
-  ,
+  },
   {
     "buildTarget": "modelzoo-app",
     "relativePath": "classification/Swin-Transformer",
@@ -159,5 +158,101 @@
     "buildDef": "SS928V100",
     "needSmoke": "false",
     "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/EfficientNetV2",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/EfficientNetV2",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/InceptionV3",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/InceptionV3",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/SEResNet50",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/SEResNet50",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/Swin-Transformer",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/Vit-B-16",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/EfficientNetV2",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/EfficientNetV2",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "super_resolution/CodeFormer",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "detection/yolov4",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
   }
 ]

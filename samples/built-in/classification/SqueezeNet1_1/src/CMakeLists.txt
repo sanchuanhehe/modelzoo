@@ -38,7 +38,7 @@ set(LIB_PATH $ENV{NPU_HOST_LIB})
 
 include_directories(
     ${COMMON_PATH}/infer/platform
-    ${COMMON_PATH}/log
+    ${COMMON_PATH}/include
 )
 
 link_directories(

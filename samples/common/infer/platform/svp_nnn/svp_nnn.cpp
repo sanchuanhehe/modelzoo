@@ -80,8 +80,11 @@ int32_t DevFree(void *devPtr)
 }
 int32_t DevMemcpy(void *dst, size_t destMax, const void *src, size_t count)
 {
+    if (destMax < count) {
+        return -1;
+    }
     std::memcpy(dst, src, count);
-    return FAILED;
+    return 0;
 }
 
 TensorBuf::TensorBuf(size_t dataSize, size_t dataStride): data(nullptr), size(dataSize), stride(dataStride) 
@@ -370,6 +373,7 @@ int32_t SvpAclMdl::LoadModel(const std::string& modelPath)
         return FAILED;
     }
     loadFlag_ = true;
+    PrintModelDesc();
     return SUCCESS;
 }
 
@@ -385,6 +389,7 @@ int32_t SvpAclMdl::LoadModel(const char* modelBuf, size_t modelSize)
         return FAILED;
     }
     loadFlag_ = true;
+    PrintModelDesc();
     return SUCCESS;
 }
 

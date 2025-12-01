@@ -370,6 +370,7 @@ int32_t SvpAclMdl::LoadModel(const std::string& modelPath)
         return FAILED;
     }
     loadFlag_ = true;
+    PrintModelDesc();
     return SUCCESS;
 }
 
@@ -385,6 +386,7 @@ int32_t SvpAclMdl::LoadModel(const char* modelBuf, size_t modelSize)
         return FAILED;
     }
     loadFlag_ = true;
+    PrintModelDesc();
     return SUCCESS;
 }
 

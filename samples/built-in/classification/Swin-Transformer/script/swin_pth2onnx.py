@@ -16,9 +16,10 @@ from collections import OrderedDict
 import sys
 import torch
 
-sys.path.append('./Swin-Transformer')
+sys.path.append("./Swin-Transformer")
 from main import parse_option
 from models import build_model
+
 
 def get_model_dict(checkpoint, AttrName):
     model_dict = OrderedDict()
@@ -29,21 +30,25 @@ def get_model_dict(checkpoint, AttrName):
         model_dict[name] = value
     return model_dict
 
+
 def get_onnx_model(config):
     onnx_model = build_model(config)
-    resume = torch.load(config.MODEL.RESUME, map_location='cpu')
-    onnx_model.load_state_dict(get_model_dict(resume, 'model'))
+    resume = torch.load(config.MODEL.RESUME, map_location="cpu")
+    onnx_model.load_state_dict(get_model_dict(resume, "model"))
     onnx_model.cpu()
     dummy_input = torch.randn(1, 3, 224, 224)
-    torch.onnx.export(onnx_model,
-                      dummy_input,
-                      './model/swin.onnx',
-                      input_names=["image"],
-                      output_names=["class"],
-                      opset_version=11,
-                      verbose=True)
+    torch.onnx.export(
+        onnx_model,
+        dummy_input,
+        "./model/swin.onnx",
+        input_names=["image"],
+        output_names=["class"],
+        opset_version=11,
+        verbose=True,
+    )
     print("model saved successful")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     _, opts = parse_option()
     get_onnx_model(opts)

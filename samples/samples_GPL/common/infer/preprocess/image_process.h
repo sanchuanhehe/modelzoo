@@ -19,10 +19,11 @@
 
 namespace Infer {
 struct ImageprocessOptions {
-    ImageprocessOptions(int resize, int centerCrop) : resizeValue(resize), centerCropValue(centerCrop) {}
+    ImageprocessOptions(int resize, int centerCrop, bool chw) : resizeValue(resize), centerCropValue(centerCrop), chwFlag(chw) {}
     int resizeValue;
     int centerCropValue;
-    std::string dtypeStr = "int8";
+    bool chwFlag = false;
+    std::string dtypeStr = "uint8";
 };
-bool ImageProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, const ImageprocessOptions& options);
+bool ImageProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs, const ImageprocessOptions& options);
 }

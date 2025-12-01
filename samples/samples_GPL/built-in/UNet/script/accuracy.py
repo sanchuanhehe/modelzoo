@@ -15,12 +15,12 @@
 import os
 import time
 import argparse
-
-from dice_loss import dice_coeff
+import torch
 import multiprocessing
 import numpy as np
 from PIL import Image
 import torch
+from torch import Tensor
 
 """
     计算两个掩码图像中指定类别的并集像素数量
@@ -165,6 +165,26 @@ def evaluate_dice_coefficient(prediction_file_path, ground_truth_file_path):
     return dice_coeff(infer_result, binary_prediction ).item()
 
 """
+    dice参数计算：Dice = 2 * |A ∩ B| / (|A| + |B|)
+    
+    参数:
+        input: 预测结果的张量
+        target: 真实标签的张量
+        reduce_batch_first: 是否首先在批次维度上进行归约
+        epsilon: 平滑项，防止除零错误
+        
+"""
+def dice_coeff(input: Tensor, target: Tensor, reduce_batch_first: bool = False, epsilon: float = 1e-6):
+    sum_dim = (-1, -2) if input.dim() == 2 or not reduce_batch_first else (-1, -2, -3)
+    #计算交集
+    inter = 2 * (input * target).sum(dim=sum_dim)
+    sets_sum = input.sum(dim=sum_dim) + target.sum(dim=sum_dim)
+    sets_sum = torch.where(sets_sum == 0, inter, sets_sum)
+    #计算并集
+    dice = (inter + epsilon) / (sets_sum + epsilon)
+    return dice.mean()
+
+"""
     处理一个文件批次的IoU评估，提供详细日志和错误处理
     
     参数:
@@ -172,7 +192,7 @@ def evaluate_dice_coefficient(prediction_file_path, ground_truth_file_path):
         batch_index: 当前要处理的批次索引
         
 """
-def get_iou(batch_list, batch_index):
+def get_iou(batch_list, batch_index, accuray_file):
     print("start batch_index: ", batch_index ) 
     sum_evaluate = 0.0
     for file in batch_list[batch_index]:
@@ -183,24 +203,24 @@ def get_iou(batch_list, batch_index):
         # 处理预测和标签数据
         infer_val = postprocess(file)
         label_val = label_process(os.path.join(label_file, file.replace('_0.bin', '_mask.gif')))
-         # 计算IoU
+        # 计算IoU
         iou = getIoU(infer_val, label_val)
         if iou == 0:  # it's difficult
             print("  ====== " 
-              + batch_index
-              + " infer_ result"
-              + file
-              + " has iou : "
-              + 0
-              + "  ====== " ) 
+            + str(batch_index)
+            + " infer_ result"
+            + file
+            + " has iou : "
+            + str(0)
+            + "  ====== " ) 
             continue
         print("  ====== " 
-              + batch_index
-              + " infer_ result"
-              + file
-              + " has iou : "
-              + iou
-              + "  ====== " ) 
+            + str(batch_index)
+            + " infer_ result"
+            + file
+            + " has iou : "
+            + str(iou)
+            + "  ====== " ) 
         #由于是并发处理数据，所有写文件的时候必须加锁
         lock.acquire()
         try:
@@ -213,14 +233,22 @@ def get_iou(batch_list, batch_index):
     print("eval value is", sum_evaluate / len(batch_list[batch]))
 
 """计算最终结果"""
-def calculate_final_results(accuray_file):
+def calculate_final_results(accuracy_file):
     #从文件中读取处理后的结果，计算最终IOU值
     try:
-        with open(accuray_file) as f:
+        if not os.path.exists(accuracy_file):
+            raise FileNotFoundError(f"文件不存在: {accuracy_file}")
+        
+        # 检查文件是否为空
+        if os.path.getsize(accuracy_file) == 0:
+            raise ValueError(f"文件为空: {accuracy_file}")
+        with open(accuracy_file) as f:
             ret = list(map(float, f.read().replace(', ', ' ').strip().split(' ')))
         print('IOU Average : {}'.format(sum(ret) / len(ret)))
-    except:
-        print('Failed to process data...')
+    except Exception as e:
+        print('处理数据失败...')
+        print(f"错误类型: {type(e).__name__}")
+        print(f"错误信息: {str(e)}")
 
 """
     多进程IoU评估主程序
@@ -250,7 +278,7 @@ if __name__ == '__main__':
     lock = multiprocessing.Lock()
     multipool = multiprocessing.Pool(len(batch_list))
     for batch in range(len(batch_list)):
-        multipool.apply_async(get_iou, args=(batch_list, batch))
+        multipool.apply_async(get_iou, args=(batch_list, batch, accuray_file))
         print(f"批次 {batch} 处理完成: ")
     multipool.close()
     multipool.join()

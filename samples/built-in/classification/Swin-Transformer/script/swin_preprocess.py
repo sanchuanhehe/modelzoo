@@ -21,44 +21,51 @@ from torchvision import transforms
 import numpy as np
 from PIL import Image
 
-#模型图片预处理,使用transforms将图片大小等做转化
+
+# 模型图片预处理,使用transforms将图片大小等做转化
 def get_transform(args):
-    val_transform = transforms.Compose([
-            transforms.Resize(size=256, interpolation=transforms.InterpolationMode.BICUBIC),
+    val_transform = transforms.Compose(
+        [
+            transforms.Resize(
+                size=256, interpolation=transforms.InterpolationMode.BICUBIC
+            ),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        ])
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        ]
+    )
     return val_transform
+
 
 def preprocess(args):
     Transform = get_transform(args)
-    val_path = os.path.join(args.data_path, 'val')
-    save_path = args.bin_path + '/img'
+    val_path = os.path.join(args.data_path, "val")
+    save_path = args.bin_path + "/img"
     val_files = os.listdir(val_path)
     i = 0
     for img_path in tqdm(val_files):
-        input_image = Image.open(os.path.join(val_path, img_path)).convert('RGB')
+        input_image = Image.open(os.path.join(val_path, img_path)).convert("RGB")
         input_tensor = Transform(input_image)
         img = np.array(input_tensor).astype(np.float32)
-        img.tofile(os.path.join(save_path, img_path.split('.')[0] + ".bin"))
-            
+        img.tofile(os.path.join(save_path, img_path.split(".")[0] + ".bin"))
+
 
 def parse_ags():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', default='../../../../datasets/ImageNet/')
-    parser.add_argument('--bin_path', default='./data')
+    parser.add_argument("--data_path", default="../../../../datasets/ImageNet/")
+    parser.add_argument("--bin_path", default="./data")
     args = parser.parse_args()
     return args
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     args = parse_ags()
     preprocess(args)
-    if not os.path.isdir(args.bin_path + '/img/'):
-        os.makedirs(os.path.realpath(args.bin_path + '/img/'))
-    file_list = os.listdir(args.bin_path + '/img/')
+    if not os.path.isdir(args.bin_path + "/img/"):
+        os.makedirs(os.path.realpath(args.bin_path + "/img/"))
+    file_list = os.listdir(args.bin_path + "/img/")
     sorted_files = sorted(file_list)
     # 将文件列表保存到文本文件
-    with open(os.path.join(args.bin_path , 'file_list.txt'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(args.bin_path, "file_list.txt"), "w", encoding="utf-8") as f:
         for item in sorted_files:
             f.write(f"img/{item}\n")

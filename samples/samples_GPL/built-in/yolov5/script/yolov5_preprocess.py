@@ -45,7 +45,7 @@ def main(opt, cfg):
         img = np.ascontiguousarray(img)  # contiguous
         img.tofile("{}/{}.bin".format(opt.prep_data, paths_name))
     # 写入文件
-    with open("shapes.json", "w") as f:
+    with open("../data/shapes.json", "w") as f:
         json.dump(shapes_kv, f, indent=4)  # indent 美化格式
 
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path', type=str, default="coco")
     parser.add_argument('--prep_data', type=str, default='../data/prep_data_aipp')
     parser.add_argument('--data_type', type=str, default="float32", choices=["uint8", "float32"])
-    parser.add_argument('--output_path', default="./data/", type=str)
+    parser.add_argument('--output_path', default="../data/", type=str)
     parser.add_argument('--img_size', nargs='+', type=int, default=640)
     parser.add_argument('--cfg_file', type=str, default='model.yaml')
 

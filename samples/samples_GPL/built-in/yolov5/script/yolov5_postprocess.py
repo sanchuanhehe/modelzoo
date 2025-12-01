@@ -35,12 +35,12 @@ def postprocess(opt, cfg):
     print("postprocess: ")
         # the output shapes
     shapes = [[1, 255, 80, 80], [1, 255, 40, 40], [1, 255, 20, 20]]
-    with open("shapes.json", "r") as f:
+    with open("../data/shapes.json", "r") as f:
         loaded_data = json.load(f)
         shapes_data = {k: tuple(v) for k, v in loaded_data.items()}
     pred_results = []
     
-    with open('../data/list.txt', 'r') as f:
+    with open('../data/file_list.txt', 'r') as f:
         lines = f.readlines()
         
     for i in tqdm(range(len(reference_list) // 3)):

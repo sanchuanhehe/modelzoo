@@ -1,0 +1,29 @@
+coremltools==9.0
+matplotlib==3.5.3
+numpy==1.21.6
+onnx==1.12.0
+onnx_simplifier==0.3.6
+onnx_tool==0.9.0
+onnxsim==0.4.36
+opencv_contrib_python==3.4.4.19
+opencv-python==4.12.0.88
+opencv_python_headless==4.12.0.88
+pafy==0.5.5
+pandas==1.3.5
+Pillow==9.5.0
+pycocotools==2.0.6
+PyYAML==6.0.1
+Requests==2.31.0
+scipy==1.7.3
+seaborn==0.12.2
+setuptools==41.2.0
+torch==1.10.1
+torchvision==0.11.2
+tqdm==4.67.1
+tritonclient==2.62.0
+protobuf==3.20.1
+tensorboard==1.14.0
+scikit-learn==1.0.2  # CoreML quantization
+tensorflow==1.14.0  # TFLite export
+ipython==7.34.0  # interactive notebook
+psutil==7.0.0  # system utilization

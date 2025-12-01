@@ -52,16 +52,16 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 ├── data
 │   ├── ...            //测试数据
 
-├── inc
-│   ├── ...            //声明头文件
-
 ├── script
+│   ├── swin_preprocess.py //python执行脚本
+│   ├── swin_pth2onnx.py  //python执行脚本
 │   ├── pth2onnx.py     //python执行脚本
 
 ├── src
 │   ├── acl.json         //系统初始化的配置文件
 │   ├── CMakeLists.txt         //编译脚本
 │   ├── main.cpp     //资源初始化/销毁相关函数的实现文件
+│   ├── main_dlite.cpp //资源初始化/销毁相关函数的实现文件
 
 ├── model
 │   ├── ...	//模型文件
@@ -100,6 +100,7 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 2. 安装依赖。
 
    ```
+   # 建议使用 Python 3.7.5
    pip3 install -r requirements.txt
    ```
 3. 获取开源源码
@@ -107,7 +108,7 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
    git clone https://github.com/microsoft/Swin-Transformer
    cd Swin-Transformer
    git checkout 6bbd83ca617db8480b2fb9b335c476ffaf5afb1a
-   patch apply ../swin.patch
+   git apply ../swin.patch
    cd ..
    ```
 
@@ -129,22 +130,31 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
    ```
 
 2. 数据预处理，将原始数据集转换为模型的输入数据。
-  
-    执行swin_preprocess.py 脚本，完成数据预处理。
-    
-    ```
-    python ./script/swin_preprocess.py ${data_path} ${bin_path}
-    ```
+
    2.1 SS928V100 SVP_NNN上的数据预处理命令
    
-   ```
-   python ./script/swin_preprocess.py --data_path ../../../../datasets/ImageNet/ --bin_path ./data
-   ```
-   
-   参数说明：
-   
-   - --data_path：原数据集所在路径。
-   - --bin_path：转化完后的数据保存路径， 默认在./data路径下
+      ```
+      python ./script/swin_preprocess.py --data_path ../../../../datasets/ImageNet/ --bin_path ./data
+      ```
+      
+      参数说明：
+      
+      - --data_path：原数据集所在路径。
+      - --bin_path：转化完后的数据保存路径， 默认在./data路径下
+
+   2.2 SS928V100 NNN上的数据预处理命令
+      执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
+      
+      ```
+      python ../../../../utils/generate_file_list.py ${dataset_path}
+      ```
+      例如:
+      ```
+      python ../../../../utils/generate_file_list.py ../../../../datasets/ImageNet/val
+      ```
+    
+    参数说明：
+    - --dataset_path：原数据集所在路径。
 
 
 ## 模型转化<a name="section741711594517"></a>
@@ -177,7 +187,11 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
         ```
         atc --framework=5 --model="./model/swin_sim.onnx" --input_shape="image:1,3,224,224" --output="./model/swin" --image_list="./data/img/ILSVRC2012_val_00000001.bin" --compile_mode=5 --softmax_optimize_enable=1 --soc_version=SS928V100
         ```
-   
+    2. SS928V100 NNN上的om模型转换命令
+        ```
+        atc --framework=5 --model="./model/swin_sim.onnx" --input_shape="image:1,3,224,224" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/swin" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
+        ```
+
         运行成功后生成swin.om模型文件。
 
         参数说明：
@@ -239,9 +253,15 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
-    ```
-    ./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list.txt
-    ```
+    SS928V100 SVP_NNN上的指令
+      ```
+      ./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list.txt
+      ```
+
+    SS928V100 NNN上的指令
+      ```
+      ./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list_1.json
+      ```
 
 **步骤3：输出后处理**
 
@@ -269,13 +289,25 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
     ```
     {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "80.94%"}, {"key": "Top2 accuracy", "value": "90.02%"}, {"key": "Top3 accuracy", "value": "93.03%"}, {"key": "Top4 accuracy", "value": "94.46%"}, {"key": "Top5 accuracy", "value": "95.4%"}]}
     ```
+
+    NNN平台上精度结果：
+    ```
+    {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "81.18%"}, {"key": "Top2 accuracy", "value": "90.12%"}, {"key": "Top3 accuracy", "value": "93.1%"}, {"key": "Top4 accuracy", "value": "94.58%"}, {"key": "Top5 accuracy", "value": "95.5%"}]}
+    ```
 2. 验证batch_size的om模型的性能，参考命令如下：
 
-    ```
-    执行./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list_1.txt --loop 100
-    ```
+    SS928V100 SVP_NNN上的指令
+      ```
+      执行./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list_1.txt --loop 100
+      ```
+    SS928V100 NNN上的指令
+      
+      file_list_1.json 中 loop参数设置为 100
+      ```
+      执行./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list_1.json
+      ```
 
-    参数说明：(此模式下，file_list_1.txt只放一张图片)
+    参数说明：(此模式下，file_list_1.txt/file_list_1.json只放一张图片)
 
     - --model：om模型路径。
     - --output:  后处理后结果所在位置
@@ -287,6 +319,11 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
      [INFO]  time: 5431302, fps: 18.411792
     ```
 
+    NNN平台上性能结果如下：
+    ```
+     [INFO]  execution time: 101.97ms, frame rate: 9.81fps
+    ```
+
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
 
 调用ACL接口推理计算，Swin-Transformer模型的性能和精度参考下列数据。
@@ -294,3 +331,4 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 | 芯片型号    | Batch Size | 数据集   | 精度指标1（Acc@1） | 精度指标2（Acc@5） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
 | SS928V100 SVP_NNN | 1          | ImageNet  | 80.94%   | 95.4%              | 18.41        |
+| SS928V100 NNN | 1          | ImageNet  | 81.18%   | 95.5%              | 9.81        |

@@ -1,0 +1,5 @@
+img/ILSVRC2012_val_00000001.bin
+img/ILSVRC2012_val_00000001aaa.bin
+img/ILSVRC2012_val_00000001center_crop.bin
+img/ILSVRC2012_val_00000001chw1.bin
+img/ILSVRC2012_val_00000001resized1.bin

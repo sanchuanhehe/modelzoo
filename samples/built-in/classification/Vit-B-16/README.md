@@ -53,25 +53,24 @@ mode_name = [
 ├── data
 │   ├── ...            //测试数据
 
-├── inc
-│   ├── ...            //声明头文件
-
 ├── script
 │   ├── accuracy.py     // 精度验证脚本
-│   ├── pth2onnx.py     // pytorch模型转onnx模型脚本
+│   ├── vit_pth2onnx.py     // pytorch模型转onnx模型脚本
+│   ├── vit_preprocess.py   // 前处理脚本
+│   ├── vit_postprocess.py  // 后处理脚本
+
 
 ├── src
 │   ├── acl.json         //系统初始化的配置文件
 │   ├── CMakeLists.txt         //编译脚本
 │   ├── main.cpp     //资源初始化/销毁相关函数的实现文件
+│   ├── main_dlite.cpp     //资源初始化/销毁相关函数的实现文件
 
 ├── model
 │   ├── ...	//模型文件
 
 ├── model_cfg
 │   ├── SS928V100_NNN	//模型配置文件
-|   |	├── insert_op.cfg		//aipp配置文件
-│   ├── SS928V100_SVP_NNN	//模型配置文件
 |   |	├── insert_op.cfg		//aipp配置文件
 
 ├── CMakeLists.txt    //编译脚本，调用src目录下CMakeLists文件
@@ -110,6 +109,7 @@ mode_name = [
 2. 安装依赖。
 
    ```
+   # 建议使用 Python 3.7.5版本
    pip3 install -r requirements.txt
    ```
 
@@ -141,6 +141,21 @@ mode_name = [
     - --store_path：转化完后的数据保存路径， 默认在./data路径下
     - --image_size： 图像缩放后的尺寸
 
+    2.2. SS928V100 NNN上的数据预处理命令
+
+    执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
+    
+    ```
+    python3 ../../../../utils/generate_file_list.py ${dataset_path}
+    ```
+    例如:
+    ```
+    python3 ../../../../utils/generate_file_list.py ../../../../datasets/ImageNet/val
+    ```
+
+    参数说明：
+    - --dataset_path：原数据集所在路径。
+
 
 ## 模型转化<a name="section741711594517"></a>
 
@@ -167,10 +182,9 @@ mode_name = [
 	```bash
 	# bs为Batch Size，可根据需要设置，此处以1为例
 	# model_name为模型变体名称，可根据需要设置，此处以 vit_base_patch16_224 为例
-	python3 ./script/vit_pth2onnx.py --batch_size 1 --model_path ./model/vit_base_patch16_224.npz --save_dir model/ --model_name vit_base_patch16_224
+	python3 ./script/vit_pth2onnx.py --model_path ./model/vit_base_patch16_224.npz --save_dir model/ --model_name vit_base_patch16_224
 	```
 	参数说明：
-	- --batch_size: 批次大小
 	- --model_path: 模型权重npz文件路径
 	- --save_dir: 保存onnx文件的目录
 	- --model_name: 模型变体名称
@@ -182,6 +196,7 @@ mode_name = [
 
     执行ATC命令。
     1. SS928V100 SVP_NNN上的om模型转换命令
+
         ```
         atc --framework=5                                   \
         --online_model_type=2                               \
@@ -195,8 +210,21 @@ mode_name = [
         --soc_version=SS928V100                             \
         --fusion_switch_file=TransformerFusion:on 
         ```
+
+    2. SS928V100 NNN上的om模型转换命令
+
+        ```
+        atc --framework=5                                   \
+        --output="./model/vit_base_patch16_224"             \
+        --model="./model/vit_base_patch16_224.onnx"         \
+        --soc_version=OPTG                                  \
+        --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" \
+        --enable_small_channel=1                            \
+        --enable_single_stream=true                         \
+        --input_shape="input:1,3,224,224"                   
+        ```
+    
     运行成功后生成 vit_base_patch16_224.om 模型文件。
-  
     参数说明：
     - --model：为ONNX模型文件。
     - --framework：5代表ONNX模型。
@@ -207,6 +235,8 @@ mode_name = [
     - --soc_version：处理器型号。
     - --insert_op_conf：aipp算子配置，用于输入数据处理
     - --image_list: 量化校准数据
+    - --enable_small_channel:使能small channel优化。
+    - --enable_single_stream:推理时使用一条stream。
     
     注意：如果出现命令找不到，配置环境变量。
     
@@ -254,9 +284,16 @@ mode_name = [
     ```
 
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
+    1. SS928V100 SVP_NNN上的命令
 
     ```
     ./main --acl ../src/acl.json --model ../model/vit_base_patch16_224.om --input ../data/file_list.txt
+    ```
+
+    2. SS928V100 NNN上的命令
+
+    ```
+    ./main --acl ../src/acl.json --model ../model/vit_base_patch16_224.om --input ../data/file_list.json
     ```
 
 **步骤3：输出后处理**
@@ -264,6 +301,7 @@ mode_name = [
 本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。
 
 1. 精度验证。
+    1. SS928V100 SVP_NNN上的命令
 
     调用脚本与数据集标签val_label.txt比对，可以获得Accuracy数据，结果保存在result_acc.json中。
 
@@ -282,21 +320,51 @@ mode_name = [
 	{'Top1 Acc': '82.48%', 'Top5 Acc': '96.60%'}
     ```
 
+    2. SS928V100 NNN上的命令
+
+    ```
+    python ./script/accuracy.py --output ./out/result/txt/ --label ../../../../datasets/ImageNet/val_label.txt --result ./out/accuracy.txt
+    ```
+
+    参数说明： 
+	- --input_dir：为生成推理结果所在路径
+	- --label_path：为标签数据路径
+	- --save_path: 结果保存路径
+     
+    精度结果如下：
+
+    NNN精度验证如下：
+    ```
+    {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "84.49%"}, {"key": "Top2 accuracy", "value": "93.0%"}, {"key": "Top3 accuracy", "value": "95.47%"}, {"key": "Top4 accuracy", "value": "96.64%"}, {"key": "Top5 accuracy", "value": "97.3%"}]}    
+    ```
+
 2. 验证batch_size的om模型的性能，参考命令如下：
+    1. SS928V100 SVP_NNN上的命令
 
 	```
 	./main --acl ../src/acl.json --model ../model/vit_base_patch16_224.om --input ../data/file_list_1.txt --loop 100
 	```
 
-	参数说明：(此模式下，file_list_1.txt中为一张图片路径)
+    2. SS928V100 NNN上的命令, file_list_1.json 中loop参数设置为 100
+
+    ```
+	./main --acl ../src/acl.json --model ../model/vit_base_patch16_224.om --input ../data/file_list_1.json
+	```
+
+	参数说明：(此模式下，file_list_1.txt/.json中为一张图片路径)
 	- --acl：acl.json文件的路径，默认放在src目录下。
 	- --input_path:  后处理后结果所在位置
 	- --model: 模型所在位置
 	- --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
-	dpico 性能结果如下：
+	SS928V100 SVP_NNN 性能结果如下：
 	```
     [INFO] time: 28778476, fps: 34.748192
+	```
+
+    SS928V100 NNN 性能结果如下：
+	```
+    [INFO] execution time: 145.93ms, frame rate: 6.85fps
 	```
 
 
@@ -307,5 +375,5 @@ mode_name = [
 | 芯片型号    | Batch Size | 数据集   | 精度指标1（Acc@1） | 精度指标2（Acc@5）   | 性能（FPS）|
 | ----------- | ---------- | --------| ------------------ | ------------------ |---------- |
 | SS928V100 SVP_NNN | 1  | ImageNet  | 82.48%              | 96.60%             |   34.75  |
-
+| SS928V100 NNN | 1  | ImageNet  | 84.49%              | 97.3%             |   6.85  |
 

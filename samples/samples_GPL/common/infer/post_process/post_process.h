@@ -18,5 +18,5 @@
 #include "model.h"
 
 namespace Infer {
-bool PrintTop5(std::vector<Tensor>& modelOuput, std::vector<std::string>& inputFileList);
+bool PrintTop5(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs);
 }
