@@ -136,15 +136,15 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
       ```
       python ./script/swin_preprocess.py --data_path ../../../../datasets/ImageNet/ --bin_path ./data
       ```
-      
+   
       参数说明：
-      
+   
       - --data_path：原数据集所在路径。
       - --bin_path：转化完后的数据保存路径， 默认在./data路径下
 
    2.2 SS928V100 NNN上的数据预处理命令
       执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
-      
+   
       ```
       python ../../../../utils/generate_file_list.py ${dataset_path}
       ```
@@ -152,7 +152,7 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
       ```
       python ../../../../utils/generate_file_list.py ../../../../datasets/ImageNet/val
       ```
-    
+   
     参数说明：
     - --dataset_path：原数据集所在路径。
 
@@ -284,7 +284,7 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
     - --result：输出精度结果所在的位置。
 
     例如：  `python ./script/accuracy.py --output ./out/result/txt/ --label ../../../../datasets/ImageNet/val_label.txt --result ./out/accuracy.txt`
-      
+    
     SVP_NNN平台上精度结果：
     ```
     {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "80.94%"}, {"key": "Top2 accuracy", "value": "90.02%"}, {"key": "Top3 accuracy", "value": "93.03%"}, {"key": "Top4 accuracy", "value": "94.46%"}, {"key": "Top5 accuracy", "value": "95.4%"}]}
@@ -301,7 +301,7 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
       执行./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list_1.txt --loop 100
       ```
     SS928V100 NNN上的指令
-      
+    
       file_list_1.json 中 loop参数设置为 100
       ```
       执行./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list_1.json
@@ -330,5 +330,5 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 
 | 芯片型号    | Batch Size | 数据集   | 精度指标1（Acc@1） | 精度指标2（Acc@5） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | ImageNet  | 80.94%   | 95.4%              | 18.41        |
+| SS928V100 SVP_NNN | 1          | ImageNet  | 80.94%   | 95.4%              | 38.24   |
 | SS928V100 NNN | 1          | ImageNet  | 81.18%   | 95.5%              | 9.81        |
