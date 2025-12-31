@@ -31,4 +31,9 @@ bool ParseParamFromCmd(int argc, char *argv[], InferParam &inferParam);
 bool PadDataToTensorBuf(void* data, size_t size, TensorDesc& desc, TensorBuf& buf);
 std::unordered_map<std::string, std::string> ReadCfgFile(const std::string& cfgPath);
 bool CreateDirectoryRecursive(const std::string& path);
+std::vector<std::vector<std::string>> ParseFileList(const std::string& fileListPaths);
+std::string BuildInputString(std::vector<std::string>& fileListPaths);
+std::vector<std::string> GetInputList(std::string inputString);
+uint16_t FloatToHalf(float value);
+float HalfToFloat(uint16_t value);
 }

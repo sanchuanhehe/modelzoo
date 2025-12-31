@@ -2,7 +2,7 @@
     "loop": 15,
     "fileList": [
         [
-            "../../../../../datasets/celeba-512/celeba-512-300/hq/000004.jpg"
+            "../../../../../datasets/celeba-512/celeba-512-300/lq/000004.jpg"
         ]
     ]
 }

@@ -16,8 +16,8 @@
 #pragma once
 
 #include "dev_interface_adapter.h"
-#include "acl/svp_acl.h"
-#include "acl/svp_acl_mdl.h"
+#include "svp_acl.h"
+#include "svp_acl_mdl.h"
 #include <mutex>
 
 namespace Infer {

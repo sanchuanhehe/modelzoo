@@ -1,0 +1,147 @@
+{
+  "modelName": "YOLOv8s-seg",
+  "modelDesc": "YOLOv8s-seg 是一种轻量高效的 one-stage 实例分割模型。相比前代 YOLO 模型，YOLOv8s-seg 采用 C2f 作为 backbone 和 PAFPN 作为颈部网络，结合 “原型掩码 + 掩码系数” 的分割头设计，在保证实时推理速度的同时实现像素级实例分割，适用于轻量化边缘部署场景。",
+  "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-seg",
+  "modelParameter": {
+    "输入": "640x640",
+    "参数量": "11.853M",
+    "计算量": "44.864GFLOPS"
+  },
+  "isBeta": false,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "Vision",
+      "tags": [
+        "分割",
+        "检测"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "Pytorch"
+  ],
+  "modelDatasets": {
+    "desc": "数据集coco2017",
+    "link": "https://cocodataset.org/#download"
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/ultralytics/ultralytics/blob/main/LICENSE"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-seg/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-seg/doc/快速开始.md"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3403V100 SVP_NNN",
+      "tools": [
+        {
+          "name": "CANN配置",
+          "link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+          "desc": ""
+        },
+        {
+          "name": "编译工具库",
+          "link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md",
+          "desc": ""
+        },
+        {
+          "name": "SDK",
+          "link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/",
+          "desc": ""
+        }
+      ],
+      "os": [
+        "OpenHarmony",
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "a16w8",
+          "detail": [
+            {
+              "performance": 46.59,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 21.46,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 165.177,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 63.418,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chipset": "Hi3403V100 NNN",
+      "tools": [
+        {
+          "name": "CANN配置 SPC022",
+          "link": "",
+          "desc": ""
+        },
+        {
+          "name": "编译工具库 SPC022",
+          "link": "",
+          "desc": ""
+        },
+        {
+          "name": "SDK SPC022",
+          "link": "",
+          "desc": ""
+        }
+      ],
+      "os": [
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "fp16",
+          "detail": [
+            {
+              "performance": 48.34,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 20.69,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 371.216,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 124.887,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "modelName": "CRNN",
+  "modelDesc": "CRNN是卷积循环网络，本模型是一个基于其的中文 OCR 模型。",
+  "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/CRNN",
+  "modelParameter": {
+    "输入": "32x160",
+    "参数量": "11.765M",
+    "计算量": "2.550GFLOPs"
+  },
+  "isBeta": true,
+  "betaDesc": "Hi3403V100 SVP_NNN 和 NNN 引擎上模型性能待进一步优化",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "Vision",
+      "tags": [
+        "文字识别"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "Pytorch"
+  ],
+  "modelDatasets": {
+    "desc": "数据集Synthetic-Chinese-String-Dataset",
+    "link": "https://github.com/Sierkinhane/CRNN_Chinese_Characters_Rec?tab=readme-ov-file#synthetic-chinese-string-dataset"
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/meijieru/crnn.pytorch/blob/master/LICENSE.md"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/CRNN/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/CRNN/doc/快速开始.md/"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3403V100 SVP_NNN",
+      "tools": [
+        {
+          "name": "CANN配置",
+          "link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+          "desc": ""
+        },
+        {
+          "name": "编译工具库",
+          "link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md",
+          "desc": ""
+        },
+        {
+          "name": "SDK",
+          "link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/",
+          "desc": ""
+        }
+      ],
+      "os": [
+        "OpenHarmony",
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "a8w8",
+          "detail": [
+            {
+              "performance": 12.31,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 81.26,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 124.114,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 184.258,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chipset": "Hi3403V100 NNN",
+      "tools": [
+        {
+          "name": "CANN工具包 SPC022 (请联系FAE获取)",
+          "link": "",
+          "desc": ""
+        },
+        {
+          "name": "编译工具链 aarch64-mix210-linux-gcc (请联系FAE获取)",
+          "link": "",
+          "desc": ""
+        },
+        {
+          "name": "SDK SPC022 (请联系FAE获取)",
+          "link": "",
+          "desc": ""
+        }
+      ],
+      "os": [
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "fp16",
+          "detail": [
+            {
+              "performance": 100.6,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 9.94,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 477.985,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 100.082,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

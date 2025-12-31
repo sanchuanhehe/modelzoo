@@ -41,8 +41,14 @@ def preprocess(args):
     Transform = get_transform(args)
     val_path = os.path.join(args.data_path, "val")
     save_path = args.bin_path + "/img"
+    
+    if args.data_path.endswith(".JPEG"):
+        input_image = Image.open(args.data_path).convert("RGB")
+        input_tensor = Transform(input_image)
+        img = np.array(input_tensor).astype(np.float32)
+        img.tofile(os.path.join(save_path, args.data_path.split("/")[-1].split(".")[0] + ".bin"))
+        return
     val_files = os.listdir(val_path)
-    i = 0
     for img_path in tqdm(val_files):
         input_image = Image.open(os.path.join(val_path, img_path)).convert("RGB")
         input_tensor = Transform(input_image)
@@ -61,8 +67,10 @@ def parse_ags():
 if __name__ == "__main__":
     args = parse_ags()
     preprocess(args)
-    if not os.path.isdir(args.bin_path + "/img/"):
-        os.makedirs(os.path.realpath(args.bin_path + "/img/"))
+    img_dir = os.path.join(args.bin_path, "img")
+    img_dir = os.path.join(img_dir)
+    if not os.path.isdir(img_dir):
+        os.makedirs(img_dir)
     file_list = os.listdir(args.bin_path + "/img/")
     sorted_files = sorted(file_list)
     # 将文件列表保存到文本文件

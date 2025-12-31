@@ -42,6 +42,10 @@ enum ModelType {
     Resnet50,
     VGG16,
     Yolov5,
+    PFLD,
+    CrowdCount,
+    FaceNet,
+    FastSpeech2,
 	EfficientNet,
     InceptionV3,
     SEResnet50,
@@ -49,6 +53,16 @@ enum ModelType {
     VitB16,
     CodeFormer,
     Yolov4,
+    SiameseNetwork,
+    VDSR,
+    SuperPoint,
+    LRStereo,
+    LRStereoDis,
+    PaddleOCR_Det,
+    PaddleOCR_Rec,
+    CRNN,
+    HRNet,
+    TinySam
 };
 
 using ProcessFunc = std::function<bool(std::vector<std::string>&, std::vector<TensorBuf>&, std::vector<TensorDesc>&)>;
@@ -63,6 +77,10 @@ public:
 
     std::vector<std::vector<Tensor>> Infer(const std::string& filePath, FileType fileType = JsonFile);
     std::vector<Tensor> Infer(std::vector<Tensor>& tensors);
+    std::vector<Tensor> Infer(std::vector<Tensor>& tensors, std::string filePath);
+
+    std::vector<TensorBuf> Infer(std::vector<TensorBuf>& tensorBufs);
+    std::pair<std::vector<TensorDesc>, std::vector<TensorDesc>> GetModelInfo();
 
     void SetPreProcessFunc(ProcessFunc func);
     void SetPostProcessFunc(ProcessFunc func);

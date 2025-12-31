@@ -116,7 +116,7 @@ def main():
     parser = argparse.ArgumentParser(description='YOLO模型推理脚本')
 
     parser.add_argument('--preprocess_bin_dir', default='../data/preprocess/bin', help='预处理后二进制文件目录')
-    parser.add_argument('--infer_bin_dir', default='../data/result_pc/bin', help='推理结果二进制文件输出目录')
+    parser.add_argument('--infer_bin_dir', default='../out/result_pc/bin', help='推理结果二进制文件输出目录')
     parser.add_argument('--file_list_path', default='../data/preprocess/file_list.txt', help='预处理生成的文件列表路径')
     parser.add_argument('--onnx_model_path', default='../model/yolov4.onnx', help='ONNX模型文件路径')
     parser.add_argument('--input_size', type=int, nargs=2, default=[608, 608], help='模型输入尺寸，格式为 高 宽，默认608 608')

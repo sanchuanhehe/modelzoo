@@ -20,11 +20,11 @@ function parse_arg()
         "SS928V100")
              case $DEF in
                 "SS928V100")
-                    /home/build/miniconda3/bin/conda run -n ${SOC}_SVP_NNN /home/build/modelzoo/samples/build_script.sh $SOC $DEF $DIR $TARGET
+                    /home/build/miniconda3/bin/conda run -n ${SOC}_SVP_NNN /home/build/modelzoo-dev/samples/build_script.sh $SOC $DEF $DIR $TARGET
                     exit_status=$?
                     ;;
                 "OPTG")
-                    /home/build/miniconda3/bin/conda run -n ${SOC}_NNN /home/build/modelzoo/samples/build_script.sh $SOC $DEF $DIR $TARGET
+                    /home/build/miniconda3/bin/conda run -n ${SOC}_NNN /home/build/modelzoo-dev/samples/build_script.sh $SOC $DEF $DIR $TARGET
                     exit_status=$?
                     ;;
             esac

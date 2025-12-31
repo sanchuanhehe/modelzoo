@@ -94,10 +94,11 @@ mode_name = [
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |                                                     |  -                                                            |
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -132,7 +133,7 @@ mode_name = [
 
 2. 数据预处理，将原始数据集转换为模型的输入数据。
 
-    2.1. SS928V100 SVP_NNN上的数据预处理命令
+    2.1. Hi3403V100 SVP_NNN上的数据预处理命令
 	```
 	python3 ./script/vit_preprocess.py --data_path ../../../../datasets/ImageNet/val --store_path data/img --image_size 224
 	```
@@ -141,7 +142,7 @@ mode_name = [
     - --store_path：转化完后的数据保存路径， 默认在./data路径下
     - --image_size： 图像缩放后的尺寸
 
-    2.2. SS928V100 NNN上的数据预处理命令
+    2.2. Hi3403V100 NNN上的数据预处理命令
 
     执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
     
@@ -195,7 +196,7 @@ mode_name = [
 3. 使用ATC工具将ONNX模型转OM模型。
 
     执行ATC命令。
-    1. SS928V100 SVP_NNN上的om模型转换命令
+    1. Hi3403V100 SVP_NNN上的om模型转换命令
 
         ```
         atc --framework=5                                   \
@@ -211,7 +212,7 @@ mode_name = [
         --fusion_switch_file=TransformerFusion:on 
         ```
 
-    2. SS928V100 NNN上的om模型转换命令
+    2. Hi3403V100 NNN上的om模型转换命令
 
         ```
         atc --framework=5                                   \
@@ -256,17 +257,21 @@ mode_name = [
     ```
 
 2.  切换到“build“目录，执行**cmake**生成编译文件。
-
     “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器有aarch64-mix210-linux-gcc版本，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据平台选择使用。
+
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
 	  
-    ```
+	  ```
     cd build
-    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+	  ```
+    比如
     ```
-    
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
+
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
 	```
@@ -284,13 +289,13 @@ mode_name = [
     ```
 
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
-    1. SS928V100 SVP_NNN上的命令
+    1. Hi3403V100 SVP_NNN上的命令
 
     ```
     ./main --acl ../src/acl.json --model ../model/vit_base_patch16_224.om --input ../data/file_list.txt
     ```
 
-    2. SS928V100 NNN上的命令
+    2. Hi3403V100 NNN上的命令
 
     ```
     ./main --acl ../src/acl.json --model ../model/vit_base_patch16_224.om --input ../data/file_list.json
@@ -298,10 +303,8 @@ mode_name = [
 
 **步骤3：输出后处理**
 
-本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。
-
 1. 精度验证。
-    1. SS928V100 SVP_NNN上的命令
+    1. Hi3403V100 SVP_NNN上的命令
 
     调用脚本与数据集标签val_label.txt比对，可以获得Accuracy数据，结果保存在result_acc.json中。
 
@@ -320,7 +323,7 @@ mode_name = [
 	{'Top1 Acc': '82.48%', 'Top5 Acc': '96.60%'}
     ```
 
-    2. SS928V100 NNN上的命令
+    2. Hi3403V100 NNN上的命令
 
     ```
     python ./script/accuracy.py --output ./out/result/txt/ --label ../../../../datasets/ImageNet/val_label.txt --result ./out/accuracy.txt
@@ -339,13 +342,13 @@ mode_name = [
     ```
 
 2. 验证batch_size的om模型的性能，参考命令如下：
-    1. SS928V100 SVP_NNN上的命令
+    1. Hi3403V100 SVP_NNN上的命令
 
 	```
 	./main --acl ../src/acl.json --model ../model/vit_base_patch16_224.om --input ../data/file_list_1.txt --loop 100
 	```
 
-    2. SS928V100 NNN上的命令, file_list_1.json 中loop参数设置为 100
+    2. Hi3403V100 NNN上的命令, file_list_1.json 中loop参数设置为 100
 
     ```
 	./main --acl ../src/acl.json --model ../model/vit_base_patch16_224.om --input ../data/file_list_1.json
@@ -359,7 +362,7 @@ mode_name = [
 
 	SS928V100 SVP_NNN 性能结果如下：
 	```
-    [INFO] time: 28778476, fps: 34.748192
+    [INFO] time: 2351459, fps: 42.5268
 	```
 
     SS928V100 NNN 性能结果如下：
@@ -374,6 +377,6 @@ mode_name = [
 
 | 芯片型号    | Batch Size | 数据集   | 精度指标1（Acc@1） | 精度指标2（Acc@5）   | 性能（FPS）|
 | ----------- | ---------- | --------| ------------------ | ------------------ |---------- |
-| SS928V100 SVP_NNN | 1  | ImageNet  | 82.48%              | 96.60%             |   34.75  |
-| SS928V100 NNN | 1  | ImageNet  | 84.49%              | 97.3%             |   6.85  |
+| Hi3403V100 SVP_NNN | 1  | ImageNet  | 82.48%              | 96.60%             |   42.53  |
+| Hi3403V100 NNN | 1  | ImageNet  | 84.49%              | 97.3%             |   6.85  |
 

@@ -53,11 +53,9 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 ├── data
 │   ├── ...            //测试数据
 
-├── inc
-│   ├── ...            //声明头文件
-
 ├── script
-│   ├── accuracy.py         //推理精度脚本
+│   ├── accuracy.py         //ss928v100推理精度脚本
+│   ├── accuracy_optg.py         //optg推理精度脚本
 │   ├── drawRectangle.py        //画框脚本
 │   ├── preprocess.py     //数据预处理脚本
 │   ├── pth2onnx.py     //pt转onnx文件脚本
@@ -66,6 +64,7 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 │   ├── acl.json         //系统初始化的配置文件
 │   ├── CMakeLists.txt         //编译脚本
 │   ├── main.cpp     //资源初始化/销毁相关函数的实现文件
+│   ├── main_dlite.cpp     //资源初始化/销毁相关函数的实现文件
 
 ├── model
 │   ├── ...	//模型文件
@@ -96,10 +95,11 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |                                                     |  -                                                            |
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -111,14 +111,15 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
    ```
    git clone https://github.com/ultralytics/ultralytics
    cd ultralytics
+   git checkout e4d8550a0993f32b6124243e061ab03cf9023c5f
    pip3 install -e .
    cd  ..
    ```
 
 
 2. 安装依赖。
-
    ```
+   #建议使用Python 3.8
    pip3 install -r requirements.txt
    ```
 
@@ -140,7 +141,7 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
    ...
    ```
 
-2. 数据预处理，将原始数据集转换为模型的输入数据。
+2. (仅SVP_NNN需要)数据预处理，将原始数据集转换为模型的输入数据。
 
    执行preprocess.py 脚本，完成数据预处理。
 
@@ -152,8 +153,11 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
    - --input_dir：原数据集所在路径。
    - --output_dir：预处理后的图片保存路径，建议放置在coco目录下，与val2017同级；同时会在该目录下生成文件列表文件file_list.txt
-   
-   
+
+3. (仅NNN需要)生成数据集目录文件
+   ```
+   python3 ../../../../utils/generate_file_list.py coco/val2017
+   ``` 
 
 ## 模型转化<a name="section741711594517"></a>
 
@@ -163,7 +167,10 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
    在[链接](https://github.com/ultralytics/assets/releases/tag/v0.0.0)中找到所需版本下载，也可以使用下述命令下载。
       ```
+      mkdir model
+      cd model
       wget https://github.com/ultralytics/assets/releases/download/v0.0.0/${model}.pt
+      cd ../
       ```
    参数说明：
 
@@ -174,7 +181,9 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
       使用./script/pth2onnx.py导出onnx模型
 
       ```
+      cd script
       python pth2onnx.py
+      cd ../
       ```
       在安装ultralytics后，也可以使用下述命令直接导出onnx
       ```
@@ -187,6 +196,12 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
       ```
       atc --framework=5 --model="./model/yolo11s.onnx" --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_SVP_NNN/insert_op.cfg" --output="model/yolo11s" --image_list="./data/image_ref_list.txt" --soc_version=SS928V100 --compile_mode=6
       ```
+
+      SS928V100 NNN上的om模型转换命令
+      ```
+      atc --framework=5 --model="./model/yolo11s.onnx"  --input_shape="images:1,3,640,640" input_fp16_nodes="images" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/yolo11s" --enable_single_stream=true --soc_version=OPTG
+      ```
+
       运行成功后生成yolo11s.om模型文件。
     
       参数说明：
@@ -200,10 +215,6 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
       - --soc_version：处理器型号。
       - --compile_mode：编译模式，6代表数据量化使用16bit，权重量化使用8bit，且仅对CUBE算子进行量化，非CUBE算法使用fp16格式。注：选取其他编译模式可能导致精度下降
       
-      注意：如果出现命令找不到，配置环境变量。
-      ```
-      source /usr/local/Ascend/ascend-toolkit/set_env.sh
-      ```
 
 
 ## 模型推理<a name="section741711594518"></a>
@@ -216,18 +227,23 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
     mkdir -p build
     ```
 
-2.  切换到build目录，执行**cmake**生成编译文件。
+2.  切换到“build“目录，执行**cmake**生成编译文件。
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器有aarch64-mix210-linux-gcc
+
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
 	  
 	  ```
-      cd build
-      cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION="SS928V100"
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+	  ```
+    比如
     ```
-    ../src表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-    
-    
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
+
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_linux.cmake -DSOC_VERSION=OPTG
 
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
@@ -247,9 +263,14 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
+   SS928V100 SVP_NNN上的执行命令
     ```
     ./main ../../src/acl.json ../../model/yolo11s.om ../../coco/file_list.txt
     ```
+   SS928V100 NNN上的执行命令
+   ```
+    ./main --acl ../src/acl.json --model ../model/yolo11s.om --input ../data/file_list.json
+   ```
     结果会保存在数据集所在目录下的result目录下，推理结果会保存在result目录下的bin目录下，后处理后的box结果会保存在result目录下的txt目录下
 
 **步骤3：输出后处理**
@@ -258,8 +279,13 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
    调用脚本与数据集标签val_label.txt比对，可以获得Accuracy数据，结果保存在result.json中。
 
+   SS928V100 SVP_NNN上的执行命令
    ```
    python accuracy.py --bin_dir ../coco/result/bin --img_dir ../coco/val2017 --output_json ../coco/result.json --gt_annotations ../coco/annotations/instances_val2017.json
+   ```
+   SS928V100 NNN上的执行命令
+   ```
+   python3 script/accuracy_optg.py
    ```
 
    参数说明：
@@ -287,13 +313,32 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
    Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.656
    Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.758
    ```
-
+   NNN平台上精度结果：
+   ```
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.456
+   Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.624
+   Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.492
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.276
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.502
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.631
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.348
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.566
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.615
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.422
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.674
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.778
+   ```
      
 
 2. 验证batch_size的om模型的性能，参考命令如下：
 
+   SS928V100 SVP_NNN上的执行命令
    ```
    执行./main ../../src/acl.json ../../model/yolo11s.om ..data/file_list.txt 1000
+   ```
+   SS928V100 NNN上的执行命令,file_list_1.json中loop设为100
+   ```
+   ./main --acl ../src/acl.json --model ../model/yolo11s.om --input ../data/file_list_1.json
    ```
 
    参数说明：(此模式下，输入路径为一张图片)
@@ -308,10 +353,14 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
    在板端会输出显示，SVP_NNN平台上性能结果如下：
    ```
-   [INFO]  time: 23390203, fps: 42.752941
+   [INFO]  time: 2347052, fps: 42.606640
+   ```
+   NNN平台上性能结果如下：
+   ```
+   execution time: 43.43ms, frame rate: 23.02fps
    ```
 
-3. 可视化推理结果
+3. 可视化推理结果，SVP_NNN可用
    调用脚本，可以对推理结果进行可视化画框操作。
    ```
    python drawRectangle.py --image ../data/coco/val2017/000000006818.jpg --annotation ../data/coco/result/txt/00000006818_result.txt
@@ -330,4 +379,5 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 | 芯片型号    | Batch Size | 数据集   | AP（IoU=0.50） | AP（IoU=0.50:0.95） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | ImageNet  | 62.8%       | 45.3%         | 42.752941 |
+| SS928V100 SVP_NNN | 1          | ImageNet  | 62.8%       | 45.3%         | 42.607 |
+| SS928V100 NNN | 1          | coco2017  | 62.4%       | 43.6%         | 23.02 |

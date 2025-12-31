@@ -1,5 +1,5 @@
 
-# 基于**YOLOv3**网络实现图片分类
+# 基于**YOLOv3**网络实现目标检测
 - [概述](#ZH-CN_TOPIC_0000001172161501)
 
     - [输入输出数据](#section540883920406)
@@ -56,11 +56,10 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
 ├── data
 │   ├── ...            //测试数据
 
-├── inc
-│   ├── ...            //声明头文件
-
 ├── script
-│   ├── pth2onnx.py     //python执行脚本
+│   ├── accuracy.py     //模型精度测试脚本
+│   ├── yolov3_postprocess.py     //python后处理脚本
+│   ├── yolov3_preprocess.py     //python前处理脚本
 
 ├── src
 │   ├── acl.json         //系统初始化的配置文件
@@ -89,11 +88,11 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97.md#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97.md#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC022  |  aarch64-mix210-linux-gcc |  linux  |  SPC022  |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC022  |                                                    |  -                                                            |
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
@@ -112,22 +111,24 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
    cd yolov3
    git checkout v9.6.0  # 切换到所用版本
    git apply ../v9.6.0.patch
+   cd ../
    ```
 
 ## 准备数据集<a name="section183221994411"></a>
 
 1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
 
-   该模型使用 [coco2017 val数据集](https://cocodataset.org/#download) 进行精度评估，在`yolov3`源码根目录下新建`datasets`文件夹，数据集放到`datasets`里，文件结构如下：
+   该模型使用 [coco2017 val数据集](https://cocodataset.org/#download) 进行精度评估，在项目根目录下新建`datasets`文件夹，数据集放到`datasets`里，文件结构如下：
    
    ```
     datasets
         coco
-            ├── val2017
-                ├── 00000000139.jpg
-                ├── 00000000285.jpg
-                ……
-                └── 00000581781.jpg
+            ├── images
+                ├── val2017
+                    ├── 00000000139.jpg
+                    ├── 00000000285.jpg
+                    ……
+                    └── 00000581781.jpg
             ├── instances_val2017.json
             └── val2017.txt
         ...
@@ -141,7 +142,7 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
     ```
     例如:
     ```
-    python3 ../../../../utils/generate_file_list.py ./datasets/coco/val2017
+    python3 ../../../../utils/generate_file_list.py ../../../../datasets/coco/images/val2017
     ```
 
 
@@ -151,9 +152,12 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
 
 1. 获取权重文件。
 
-   在[链接](https://github.com/ultralytics/yolov3/tags)中找到所需版本下载，也可以使用下述命令下载。
+   在[链接](https://github.com/ultralytics/yolov3/tags)中找到所需版本下载并放置到model文件夹下（如果不存在，请在当前模型路径下创建），也可以使用下述命令下载。
       ```
+     mkdir model
+     cd model
      wget https://github.com/ultralytics/yolov3/releases/download/v9.6.0/yolov3.pt
+     cd
       ```
 
 2. 导出onnx文件。
@@ -170,11 +174,16 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
 3. 使用ATC工具将ONNX模型转OM模型。
 
     执行ATC命令。
-    1. SS928V100 SVP_NNN上的om模型转换命令
+    1. Hi3403V100 SVP_NNN上的om模型转换命令
         ```
+        python ./script/yolov3_preprocess.py
         atc --framework=5 --model="./model/yolov3.onnx" --input_shape="images:1,3,640,640" --output="./model/yolov3" --image_list="./data/prep_data_aipp/000000000139.bin" --soc_version=SS928V100
         ```
-   
+    2. Hi3403V100 NNN上的om模型转换命令
+
+        ```
+        atc --framework=5 --model="./model/yolov3.onnx" --input_format="NCHW" --input_shape="images:1,3,640,640" -input_fp16_nodes="images" -output="./model/yolov3" --enable_single_stream=true --soc_version=OPTG
+        ```
         运行成功后生成yolov3.om模型文件。
 
         参数说明：
@@ -187,11 +196,6 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
         - --image_list: 量化校准数据。
         - --enable_single_stream:推理时使用一条stream。
         - --soc_version：处理器型号。
-        
-        注意：如果出现命令找不到，配置环境变量。
-        ```
-        source /usr/local/Ascend/ascend-toolkit/set_env.sh
-        ```
 
 ## 模型推理<a name="section741711594518"></a>
 
@@ -204,18 +208,20 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
     ```
 
 2.  切换到“build“目录，执行**cmake**生成编译文件。
-
     “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
 
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器为aarch64-mix210-linux-gcc，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
     
     ```
     cd build
-    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
     ```
-    
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
     ```
@@ -235,7 +241,7 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
     ```
-    ./main --acl ../src/acl.json --model ../model/yolov3.om --input ../data/file_list.json
+    ./main --model ../model/yolov3.om --input ../data/file_list.json
     ```
 
 **步骤3：输出后处理**
@@ -247,7 +253,7 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
     调用脚本可以获得精度数据。
 
     ```
-    python yolov3_postprocess.py --ground_truth_json "./datasets/coco/" --output "./out/result/bin"
+    python ./script/accuracy.py --ground_truth_json "./datasets/coco/instances_val2017.json" --output "./out/result/txt"
     ```
 
     参数说明：
@@ -256,9 +262,9 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
 
     - --ground_truth_json：真值标签文件所在路径。
       
-    运行yolov3_postprocess.py脚本会输出文件，该文件中保存的是每一个图片的结果，平均结果为上述所有值求和输出：
+    运行accuracy.py脚本会输出推理的精度信息：
 
-    SVP_NNN平台上精度结果：
+    Hi3403V100 SVP_NNN平台上精度结果：
     ```
      Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.460
      Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.658
@@ -273,22 +279,40 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
      Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.693
      Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.788
     ```
+    Hi3403V100 NNN平台上精度结果：
+    ```
+     Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.465
+     Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.660
+     Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.503
+     Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.301
+     Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.514
+     Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.591
+     Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.362
+     Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.596
+     Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.652
+     Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.509
+     Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.698
+     Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.790
+    ```
 2. 验证batch_size的om模型的性能，参考命令如下：
 
     ```
-    执行./main --acl ../src/acl.json --model ../model/yolov3.om --input ../data/file_list_1.json --loop 100
+    执行./main --acl ../src/acl.json --model ../model/yolov3.om --input ../data/file_list_1.json
     ```
 
     参数说明：(此模式下，file_list_1.json只放一张图片)
 
+    - --acl:  ACL 配置文件路径
     - --model：om模型路径。
-    - --output:  后处理后结果所在位置
-    - --model: 模型所在位置
-    - --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
+    - --input：指定输入数据的列表文件路径（此场景下为单图路径的配置文件，注意：循环次数通过修改该文件中的loop变量即可,循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值）
 
-    在板端会输出显示，SVP_NNN平台上性能结果如下：
+    在板端会输出显示，Hi3403V100 SVP_NNN平台上性能结果如下：
     ```
      time: 5771126, fps: 17.3276
+    ```
+   Hi3403V100  NNN平台上性能结果如下：
+    ```
+     execution time: 130.05ms, frame rate: 7.69fps
     ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
@@ -297,4 +321,5 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
 
 | 芯片型号    | Batch Size | 数据集   | AP（IoU=0.50） | AP（IoU=0.50:0.95） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | coco2017  | 65.8%       | 46%         | 17.3276 |
+| Hi3403V100 SVP_NNN | 1          | coco2017  | 65.8%       | 46%         | 17.3276 |
+| Hi3403V100 NNN | 1          | coco2017  | 66.0%       | 46.5%         | 7.69 |

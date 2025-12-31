@@ -1,0 +1,7 @@
+numpy
+torch
+torchvision
+munkres
+opencv-python
+json_tricks
+pycocotools

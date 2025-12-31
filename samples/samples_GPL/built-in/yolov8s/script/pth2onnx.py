@@ -15,6 +15,5 @@
 from ultralytics import YOLO
 
 # 加载预训练模型
-model = YOLO("yolov8s.pt")
-model.eval()
+model = YOLO("../model/yolov8s.pt")
 model.export(format="onnx", dynamic=False, imgsz=(640, 640), opset=13)

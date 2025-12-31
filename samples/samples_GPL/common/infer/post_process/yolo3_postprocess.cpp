@@ -34,14 +34,14 @@
 namespace Infer
 {
 using namespace std;
-constexpr float CONF_THRES = 0.25f;
-constexpr float IOU_THRES = 0.45f;
+constexpr float CONF_THRES = 0.001f;
+constexpr float IOU_THRES = 0.6f;
 constexpr int BYTE_BIT_NUM = 8;
 constexpr uint8_t SCALE_SIZE = 3;
 constexpr uint8_t CLASS_NUM = 80;
 constexpr uint8_t OUT_PARM_NUM = 85; /* x, y, w,h, obj , class(80) */
 constexpr int IMG_SIZE = 640;
-#ifdef MODEL_CUST_CONIFG
+#ifdef SVP_ACL_PLATFORM
     const vector<uint32_t> EXPANDED_STRIDES = {32, 16, 8};
     const vector<uint32_t> H_SIZES = {20, 40, 80};
     const vector<uint32_t> W_SIZES = {20, 40, 80};
@@ -100,30 +100,33 @@ enum BoxValue
         BBOX_SIZE = 6
     };
 
+std::vector<int> cocoCategoryIdsChange{
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17,
+        18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 31, 32, 33, 34, 35, 36,
+        37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53,
+        54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 70, 72, 73,
+        74, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85, 86, 87, 88, 89, 90};
+
 static int ReadImgFileToBuf(const string &fileName, const TensorDesc &desc, TensorBuf &inBuf)
     {
         ifstream binFile(fileName, ifstream::binary);
-        if (binFile.is_open() == false)
-        {
+        if (binFile.is_open() == false) {
             LOG(ERROR) << "open file " << fileName << " failed";
             return -1;
         }
-        if (desc.defaultStride == 0)
-        {
+        if (desc.defaultStride == 0) {
             binFile.read(static_cast<char *>(inBuf.GetRawPtr()), desc.defaultSize);
             return 0;
         }
         size_t loopTimes = 1;
-        for (size_t loop = 0; loop < desc.dimCount - 1; loop++)
-        {
+        for (size_t loop = 0; loop < desc.dimCount - 1; loop++) {
             loopTimes *= desc.dims[loop];
         }
 
         size_t width = desc.dims[desc.dimCount - 1]; /* dims last dim is width */
         size_t lineSize = width * desc.typeSize / BYTE_BIT_NUM;
 
-        for (size_t loop = 0; loop < loopTimes; loop++)
-        {
+        for (size_t loop = 0; loop < loopTimes; loop++) {
             binFile.read((static_cast<char *>(inBuf.GetRawPtr()) + loop * desc.defaultStride), lineSize);
         }
 
@@ -138,11 +141,9 @@ inline static float Sigmod(float a)
 static void GetMaxScoreAndIdx(uint32_t objScoreIdx, uint32_t chnStep, const float *outData, float &maxClassScore, uint32_t &maxClassIdx)
     {
         uint32_t classScoreIdx = objScoreIdx + chnStep;
-        for (uint32_t c = 0; c < CLASS_NUM; c++)
-        {
+        for (uint32_t c = 0; c < CLASS_NUM; c++) {
             float classScoreVal = outData[classScoreIdx];
-            if (classScoreVal > maxClassScore)
-            {
+            if (classScoreVal > maxClassScore) {
                 maxClassScore = classScoreVal;
                 maxClassIdx = c;
             }
@@ -168,44 +169,36 @@ static void ProcessPerDectectionInner(const DetectionInnerParam &innerParam, con
                 offset = j + outHeightIdx * wStrideOffset + k * chnStep * OUT_PARM_NUM;
                 uint32_t objScoreIdx = offset + objScoreOffset;
                 float objScoreVal = Sigmod(outData[objScoreIdx]);
-                if (objScoreVal <= scoreThr)
-                {
-                    continue;
-                }
-                // max score
+                
                 float maxClassScore = -1000.0f;
                 uint32_t maxClassIdx = 0;
-                GetMaxScoreAndIdx(objScoreIdx, chnStep, outData, maxClassScore, maxClassIdx);
+               // GetMaxScoreAndIdx(objScoreIdx, chnStep, outData, maxClassScore, maxClassIdx);
 
-                float confidenceScore = Sigmod(maxClassScore) * objScoreVal;
-
-                if (confidenceScore > scoreThr)
+                uint32_t classScoreIdx = objScoreIdx + chnStep;
+                for (uint32_t c = 0; c < CLASS_NUM; c++)
                 {
-                    uint32_t xCenterIdx = offset;
-                    uint32_t yCenterIdx = xCenterIdx + chnStep;
-                    uint32_t boxWidthIdx = yCenterIdx + chnStep;
-                    uint32_t boxHeightIdx = boxWidthIdx + chnStep;
-                    // 解码公式x_center = (bbox_params[0, 0, :, :].sigmoid() + grid_x) / 80 * 640  # 假设原图640x640 ；y_center = (bbox_params[0, 1, :, :].sigmoid() + grid_y) / 80 * 640
-                    /**
-                    解码边界框
-                        grid_y, grid_x = torch.meshgrid(torch.arange(80), torch.arange(80))
-                        x_center = (torch.sigmoid(output[..., 0]) * 2 - 0.5 + grid_x) *640/ 80
-                        y_center = (torch.sigmoid(output[..., 1]) * 2 - 0.5 + grid_y)  *640/ 80
-                        width = (2 * torch.sigmoid(output[..., 2]))^2 * anchor_w  # 假设输入640x640
-                        height = (2 * torch.sigmoid(output[..., 3]))^2 * anchor_h
-                    */
+                    float classScoreVal = outData[classScoreIdx];
+                    float confidenceScore = Sigmod(classScoreVal) * objScoreVal;
+                    if (confidenceScore > scoreThr) {
+                        uint32_t xCenterIdx = offset;
+                        uint32_t yCenterIdx = xCenterIdx + chnStep;
+                        uint32_t boxWidthIdx = yCenterIdx + chnStep;
+                        uint32_t boxHeightIdx = boxWidthIdx + chnStep;
+                       
+                        float xCenter = (Sigmod(outData[xCenterIdx]) * 2 + gridsX[j]) * EXPANDED_STRIDES[innerParam.detectIdx];            // alg param
+                        float yCenter = (Sigmod(outData[yCenterIdx]) * 2 + gridsX[outHeightIdx]) * EXPANDED_STRIDES[innerParam.detectIdx]; // alg param
 
-                    float xCenter = (Sigmod(outData[xCenterIdx]) * 2 + gridsX[j]) * EXPANDED_STRIDES[innerParam.detectIdx];            // alg param
-                    float yCenter = (Sigmod(outData[yCenterIdx]) * 2 + gridsX[outHeightIdx]) * EXPANDED_STRIDES[innerParam.detectIdx]; // alg param
+                        float tmpValue = Sigmod(outData[boxWidthIdx]) * 2;
+                        float boxWidth = tmpValue * tmpValue * ANCHOR_GRIDS[innerParam.detectIdx][(k << 1)];
 
-                    float tmpValue = Sigmod(outData[boxWidthIdx]) * 2;
-                    float boxWidth = tmpValue * tmpValue * ANCHOR_GRIDS[innerParam.detectIdx][(k << 1)];
+                        tmpValue = Sigmod(outData[boxHeightIdx]) * 2;
+                        float boxHeight = tmpValue * tmpValue * ANCHOR_GRIDS[innerParam.detectIdx][(k << 1) + 1];
 
-                    tmpValue = Sigmod(outData[boxHeightIdx]) * 2;
-                    float boxHeight = tmpValue * tmpValue * ANCHOR_GRIDS[innerParam.detectIdx][(k << 1) + 1];
-
-                    vaildBox.push_back({confidenceScore, xCenter, yCenter, boxWidth, boxHeight, static_cast<float>(maxClassIdx)});
+                        vaildBox.push_back({confidenceScore, xCenter, yCenter, boxWidth, boxHeight, static_cast<float>(c)});
+                    }
+                    classScoreIdx += chnStep;
                 }
+                float confidenceScore = Sigmod(maxClassScore) * objScoreVal;
             }
         }
     }
@@ -224,20 +217,17 @@ static int ProcessPerDectection(size_t detectIdx, const TensorDesc &desc, Tensor
         vector<float> gridsX(W_SIZES[detectIdx]);
         vector<float> gridsY(H_SIZES[detectIdx]);
 
-        for (uint32_t i = 0; i < H_SIZES[detectIdx]; i++)
-        {
+        for (uint32_t i = 0; i < H_SIZES[detectIdx]; i++) {
             gridsY[i] = i - 0.5;
         }
 
-        for (uint32_t i = 0; i < W_SIZES[detectIdx]; i++)
-        {
+        for (uint32_t i = 0; i < W_SIZES[detectIdx]; i++) {
             gridsX[i] = i - 0.5;
         }
 
         innerParam.objScoreOffset = 4 * innerParam.chnStep; // 4
 
-        for (uint32_t i = 0; i < outHeight; i++)
-        {
+        for (uint32_t i = 0; i < outHeight; i++) {
             innerParam.outHeightIdx = i;
             ProcessPerDectectionInner(innerParam, gridsX, gridsY, vaildBox);
         }
@@ -263,47 +253,68 @@ static float CalcIou(const vector<float> &box1, const vector<float> &box2)
     }
 
 static void MulticlassNms(vector<vector<float>> &bboxes, const vector<vector<float>> &vaildBox, float nmsThr)
-    {
-        for (auto &item : vaildBox)
-        {
-            float boxXCenter = item[XCENTER_IDX];
-            float boxYCenter = item[YCENTER_IDX];
-            float boxWidth = item[W_IDX];
-            float boxHeight = item[H_IDX];
-
-            float x1 = (boxXCenter - boxWidth / 2);
-            float y1 = (boxYCenter - boxHeight / 2);
-            float x2 = (boxXCenter + boxWidth / 2);
-            float y2 = (boxYCenter + boxHeight / 2);
-
-            float area = (x2 - x1 + 1) * (y2 - y1 + 1);
-
-            bool keep = true;
-
-            vector<float> bbox{x1, y1, x2, y2, item[SCORE_IDX], item[CLASS_ID_IDX], area};
-            for (size_t j = 0; j < bboxes.size(); j++)
-            {
-                if (CalcIou(bbox, bboxes[j]) > nmsThr)
-                {
-                    keep = false;
-                    break;
-                }
-            }
-            if (keep)
-            {
-                bboxes.push_back(bbox);
-            }
+    {   
+        // 按类别分组
+        map<int, vector<vector<float>>> classBoxes;
+        for (const auto& box : vaildBox) {
+            classBoxes[box[CLASS_ID_IDX]].push_back(box);
         }
+        
+        for (map<int, vector<vector<float>>>::iterator it = classBoxes.begin(); it != classBoxes.end(); ++it) {
+            vector<vector<float>>& clsBoxes = it->second;  // 只获取需要的value，不定义key变量
+            sort(clsBoxes.begin(), clsBoxes.end(), [](const vector<float> &veci, const vector<float> &vecj)
+                {
+                if (veci[SCORE_IDX] > vecj[SCORE_IDX]) {
+                    return true;
+                }
+                return false; });
+            vector<bool> keep(clsBoxes.size(), true);
+            for (size_t i = 0; i < clsBoxes.size(); ++i) {
+                    if (!keep[i]) continue;
+                    vector<float> item = clsBoxes[i];
+                    float boxXCenter = item[XCENTER_IDX];
+                    float boxYCenter = item[YCENTER_IDX];
+                    float boxWidth = item[W_IDX];
+                    float boxHeight = item[H_IDX];
+
+                    float x1 = (boxXCenter - boxWidth / 2);
+                    float y1 = (boxYCenter - boxHeight / 2);
+                    float x2 = (boxXCenter + boxWidth / 2);
+                    float y2 = (boxYCenter + boxHeight / 2);
+
+                    float area = (x2 - x1 + 1) * (y2 - y1 + 1);
+
+
+                    vector<float> bbox{x1, y1, x2, y2, item[SCORE_IDX], item[CLASS_ID_IDX], area};
+                    bboxes.push_back(bbox);
+                    for (size_t j = i+1; j < clsBoxes.size(); j++) {
+                        if (!keep[j]) continue;
+                        // 转换候选框坐标
+                        vector<float> tmp = clsBoxes[j];
+                        float xc2 = tmp[XCENTER_IDX];
+                        float yc2 = tmp[YCENTER_IDX];
+                        float w2 = tmp[W_IDX];
+                        float h2 = tmp[H_IDX];
+                        float x1_2 = std::round(xc2 - w2 / 2);
+                        float y1_2 = std::round(yc2 - h2 / 2);
+                        float x2_2 = std::round(xc2 + w2 / 2);
+                        float y2_2 = std::round(yc2 + h2 / 2);
+                        float area2 = (x2_2 - x1_2 + 1) * (y2_2 - y1_2 + 1);
+                        if (CalcIou(bbox,  {x1_2, y1_2, x2_2, y2_2, 0, 0, area2}) > nmsThr)
+                        {
+                            keep[j] = false;
+                        }
+                    }
+                }
+        }
+
     }
 
 static bool Cmp(const vector<float> &veci, const vector<float> &vecj)
     {
-        if (veci[CLASS_ID] < vecj[CLASS_ID])
-        {
+        if (veci[CLASS_ID] < vecj[CLASS_ID]) {
             return true;
-        }
-        else if (veci[CLASS_ID] == vecj[CLASS_ID])
-        {
+        } else if (veci[CLASS_ID] == vecj[CLASS_ID]) {
             return veci[SCORE] > vecj[SCORE];
         }
         return false;
@@ -315,12 +326,11 @@ static void clipBoxes(vector<vector<float>> &bboxes, const cv::Size shape)
         int height = shape.height;
         int width = shape.width;
 
-        for (auto &box : bboxes)
-        {
+        for (auto &box : bboxes) {
             box[TOP_LEFT_X] = std::max(0.0f, std::min(box[TOP_LEFT_X], static_cast<float>(width)));
-            box[TOP_LEFT_Y] = std::max(0.0f, std::min(box[TOP_LEFT_Y], static_cast<float>(width)));
+            box[TOP_LEFT_Y] = std::max(0.0f, std::min(box[TOP_LEFT_Y], static_cast<float>(height)));
             box[BOTTOM_RIGHT_X] = std::max(0.0f, std::min(box[BOTTOM_RIGHT_X], static_cast<float>(width)));
-            box[BOTTOM_RIGHT_Y] = std::max(0.0f, std::min(box[BOTTOM_RIGHT_Y], static_cast<float>(width)));
+            box[BOTTOM_RIGHT_Y] = std::max(0.0f, std::min(box[BOTTOM_RIGHT_Y], static_cast<float>(height)));
         }
     }
 
@@ -351,16 +361,13 @@ static void scaleBoxes(vector<vector<float>> &bboxes, const string &filePath)
         double pad_y = (h1 - h0 * gain) / 2.0f;
         LOG(INFO) << "bboxes: " << bboxes.size();
         LOG(INFO) << "pad_x: " << pad_x << " pad_y:  " << pad_y;
-        clipBoxes(bboxes, shape);
-        for (vector<float> &box : bboxes)
-        {
+        for (vector<float> &box : bboxes) {
             // 检查边界框大小
-            if (box.size() < 4)
-            {
+            if (box.size() < 4) {
                 LOG(ERROR) << "Box " << " has insufficient elements: " << box.size();
                 return;
             }
-            // 减去填充
+                        // 减去填充
             box[TOP_LEFT_X] -= pad_x;
             box[BOTTOM_RIGHT_X] -= pad_x;
             box[TOP_LEFT_Y] -= pad_y;
@@ -372,8 +379,28 @@ static void scaleBoxes(vector<vector<float>> &bboxes, const string &filePath)
             box[TOP_LEFT_Y] /= gain;
             box[BOTTOM_RIGHT_Y] /= gain;
 
-            // 验证结果
-            // LOG(ERROR) << "Box " << box << " produced invalid values after scaling";
+            box[TOP_LEFT_X] = std::max(0.0f, std::min(box[TOP_LEFT_X], static_cast<float>(w0)));
+            box[TOP_LEFT_Y] = std::max(0.0f, std::min(box[TOP_LEFT_Y], static_cast<float>(h0)));
+            box[BOTTOM_RIGHT_X] = std::max(0.0f, std::min(box[BOTTOM_RIGHT_X], static_cast<float>(w0)));
+            box[BOTTOM_RIGHT_Y] = std::max(0.0f, std::min(box[BOTTOM_RIGHT_Y], static_cast<float>(h0)));
+
+            box[TOP_LEFT_X] = std::round(box[TOP_LEFT_X]);
+            box[BOTTOM_RIGHT_X] = std::round(box[BOTTOM_RIGHT_X]);
+            box[TOP_LEFT_Y] = std::round(box[TOP_LEFT_Y]);
+            box[BOTTOM_RIGHT_Y] = std::round(box[BOTTOM_RIGHT_Y]);
+
+            std::vector<float> xywh_box(4);
+            xywh_box[TOP_LEFT_X] = (box[TOP_LEFT_X] + box[BOTTOM_RIGHT_X]) / 2.0f; // x_center
+            xywh_box[TOP_LEFT_Y] = (box[TOP_LEFT_Y] + box[BOTTOM_RIGHT_Y]) / 2.0f; // y_center
+            xywh_box[BOTTOM_RIGHT_X] = box[BOTTOM_RIGHT_X] - box[TOP_LEFT_X];          // width
+            xywh_box[BOTTOM_RIGHT_Y] = box[BOTTOM_RIGHT_Y] - box[TOP_LEFT_Y];          // height
+
+            xywh_box[TOP_LEFT_X] -= xywh_box[BOTTOM_RIGHT_X] / 2.0f;
+            xywh_box[TOP_LEFT_Y] -= xywh_box[BOTTOM_RIGHT_Y] / 2.0f;
+            box[TOP_LEFT_X] = xywh_box[TOP_LEFT_X];
+            box[BOTTOM_RIGHT_X] = xywh_box[BOTTOM_RIGHT_X];
+            box[TOP_LEFT_Y] = xywh_box[TOP_LEFT_Y];
+            box[BOTTOM_RIGHT_Y] = xywh_box[BOTTOM_RIGHT_Y];
             LOG(INFO) << "After scaling: (" << box[TOP_LEFT_X] << ", " << box[TOP_LEFT_Y] << ", " << box[BOTTOM_RIGHT_X] << ", " << box[BOTTOM_RIGHT_Y] << ")";
         }
         return;
@@ -387,16 +414,21 @@ static void SaveResult(const vector<vector<float>> &bboxes, std::vector<TensorBu
         string resultPath = "../out/result";
         string binPath = resultPath + "/bin";
         string txtPath = resultPath + "/txt";
-        for (auto &path : {resultPath, binPath, txtPath})
-        {
-            if (stat(path.c_str(), nullptr) != 0)
-            {
-                mkdir(path.c_str(), 0755);
-            }
+        struct stat info; 
+        if (stat(resultPath.c_str(), &info) != 0) {
+            mkdir(resultPath.c_str(), 0777);
+            INFO_LOG("create file success");
         }
-        for (size_t j = 0; j < tensorBufs.size(); j++)
-        {
-#ifdef MODEL_CUST_CONIFG
+
+        if (stat(txtPath.c_str(), &info) != 0) {
+            mkdir(txtPath.c_str(), 0777);
+        }
+
+        if (stat(binPath.c_str(), &info) != 0) {
+            mkdir(binPath.c_str(), 0777);
+        }
+        for (size_t j = 0; j < tensorBufs.size(); j++) {
+#ifdef SVP_ACL_PLATFORM
             string outputFileName = binPath + outputName + "_" + to_string(2 - j) + ".bin";
 #else
             string outputFileName = binPath + outputName + "_" + to_string(j) + ".bin";
@@ -409,9 +441,8 @@ static void SaveResult(const vector<vector<float>> &bboxes, std::vector<TensorBu
 
         string txtFile = txtPath + outputName + ".txt";
         ofstream txtfout(txtFile, std::ios::out);
-        for (auto &box : bboxes)
-        {
-            txtfout << "Class " << static_cast<int>(box[CLASS_ID]) << " | Score: " << box[SCORE]
+        for (auto &box : bboxes) {
+            txtfout << "Class " << cocoCategoryIdsChange[static_cast<int>(box[CLASS_ID])] << " | Score: " << box[SCORE]
                     << " | Box: [" << box[TOP_LEFT_X] << ", " << box[TOP_LEFT_Y] << ", "
                     << box[BOTTOM_RIGHT_X] << ", " << box[BOTTOM_RIGHT_Y] << "]\n";
         }
@@ -420,31 +451,21 @@ static void SaveResult(const vector<vector<float>> &bboxes, std::vector<TensorBu
 
 bool GetYolo3Box(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs)
     {
-        if (tensorBufs.size() == 0 || fileList.size() == 0)
-        {
+        if (tensorBufs.size() == 0 || fileList.size() == 0) {
             LOG(INFO) << " modelOuput.size() == 0 || inputFileList.size() == 0  NO OUT";
             return false;
         }
         vector<vector<float>> bboxes;
         vector<vector<float>> vaildBox;
-        for (size_t i = 0; i < tensorBufs.size(); i++)
-        {
+        for (size_t i = 0; i < tensorBufs.size(); i++) {
             TensorDesc desc = tensorDescs[i];
             TensorBuf buf = tensorBufs[i];
-            if (desc.defaultStride == 0)
-            {
+            if (desc.defaultStride == 0) {
                 desc.defaultStride = desc.dims[desc.dimCount - 1] * desc.typeSize / BYTE_BIT_NUM;
                 buf.stride = desc.defaultStride;
             }
             ProcessPerDectection(i, desc, buf, vaildBox);
         }
-        sort(vaildBox.begin(), vaildBox.end(), [](const vector<float> &veci, const vector<float> &vecj)
-             {
-                if (veci[0] > vecj[0]){
-                    return true;
-                }
-                return false; });
-
         MulticlassNms(bboxes, vaildBox, IOU_THRES);
         sort(bboxes.begin(), bboxes.end(), Cmp);
         scaleBoxes(bboxes, fileList[0]);

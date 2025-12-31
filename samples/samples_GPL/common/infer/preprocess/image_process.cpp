@@ -231,9 +231,6 @@ static cv::Mat ProcessSingleImage(const std::string& imgPath, const Imageprocess
 
 bool ImageProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs, const ImageprocessOptions& options)
 {
-    if (fileList.size() != tensorBufs.size()) {
-        return false;
-    }
     for (size_t i = 0; i < fileList.size(); ++i) {
         cv::Mat image = ProcessSingleImage(fileList[i], options);
         if (image.empty()) {

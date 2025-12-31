@@ -32,6 +32,8 @@ namespace Infer {
 namespace Yolo11sPoseNS {
 
     constexpr int BYTE_BIT_NUM = 8;
+    constexpr int FP16_BIT_NUM = 16;
+    constexpr int FP32_BIT_NUM = 32;
     constexpr int PIXEL_CHANNEL_NUM = 3;
     constexpr float PAD_ADJUST_OFFSET = 0.1;
     constexpr int PAD_COLOR_BLUE = 114;
@@ -40,18 +42,43 @@ namespace Yolo11sPoseNS {
     constexpr int FILE_PERMISSION = 0755;
     constexpr float PIXEL_NORMALIZE_FACTOR = 255.0f;
 
+
     static Result ReadImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc, TensorBuf &inBuf)
     {
         LOG(INFO) << "ReadImgFileToBuf: desc.dimCount " << desc.dimCount;
+        const float *srcData = chwImg.ptr<float>();
+        // for dlite
+        if (desc.defaultStride == 0) {
+            if(desc.typeSize == FP32_BIT_NUM){
+                memcpy(static_cast<float *>(inBuf.GetRawPtr()), srcData, desc.defaultSize);
+                return SUCCESS;
+            }else if(desc.typeSize == FP16_BIT_NUM){
+                // 计算数据量
+                size_t dataCount = chwImg.total();
+
+                // 转换为FP16
+                std::vector<uint16_t> fp16Data(dataCount);
+                for (size_t i = 0; i < dataCount; ++i) {
+                    fp16Data[i] = FloatToHalf(srcData[i]);
+                }
+
+                memcpy(static_cast<void*>(inBuf.GetRawPtr()), fp16Data.data(), desc.defaultSize);
+                return SUCCESS;
+            }else{
+                LOG(ERROR) << "dlite core unsupported desc.typeSize: " << desc.typeSize;
+                return FAILED;
+            }
+        }
+
+        // dpico核，需要处理字节对齐
         int64_t loopTimes = 1;
         for (size_t loop = 0; loop < desc.dimCount - 1; loop++) {
             loopTimes *= desc.dims[loop];
         }
 
-        const int64_t width = desc.dims[desc.dimCount - 1]; /* dims last dim is width */
-        const size_t dataSize = desc.typeSize / BYTE_BIT_NUM;
-        const size_t strideElemNum = inBuf.stride / dataSize;
-        const float *srcData = chwImg.ptr<float>();
+        int64_t width = desc.dims[desc.dimCount - 1]; /* dims last dim is width */
+        size_t dataSize = desc.typeSize / BYTE_BIT_NUM;
+        size_t strideElemNum = inBuf.stride / dataSize;
 
         for (int64_t loop = 0; loop < loopTimes; loop++) {
             float *destPtr = static_cast<float *>(inBuf.GetRawPtr()) + loop * strideElemNum;

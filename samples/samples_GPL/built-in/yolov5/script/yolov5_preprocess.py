@@ -34,7 +34,7 @@ def main(opt, cfg):
         h0, w0, _ = im0.shape
         shapes_kv[paths_name] = (h0, w0)
         
-        im = letterbox(im0, scaleup=False)  # padded resize
+        im = letterbox(im0)  # padded resize
         im = np.array(im)
         im = im.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         img = np.expand_dims(im, axis=0)

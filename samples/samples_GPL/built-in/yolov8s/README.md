@@ -53,13 +53,9 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 ├── data
 │   ├── ...            //测试数据
 
-├── inc
-│   ├── ...            //声明头文件
-
 ├── script
 │   ├── accuracy.py         //推理精度脚本
 │   ├── drawRectangle.py        //画框脚本
-│   ├── preprocess.py     //数据预处理脚本
 │   ├── pth2onnx.py     //pt转onnx文件脚本
 
 ├── src
@@ -96,10 +92,12 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |                                                     |  -                                                            |
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
+
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -127,32 +125,25 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
 
-   该模型使用 [coco2017 val数据集](https://cocodataset.org/#download) 进行精度评估，在`yolov8`源码根目录下新建`coco`文件夹，数据集放到`coco`里，文件结构如下：
+   该模型使用 [coco2017 val数据集](https://cocodataset.org/#download) 进行精度评估，在`modelzoo/datasets`目录下新建`coco`文件夹，数据集放到`coco`里，文件结构如下：
 
    ```
-   coco
-      ├── val2017
-         ├── 00000000139.jpg
-         ├── 00000000285.jpg
-         ……
-         └── 00000581781.jpg
-      ├── instances_val2017.json
-      └── val2017.txt
+   datasets
+      ├──coco
+         ├── val2017
+            ├── 00000000139.jpg
+            ├── 00000000285.jpg
+            ……
+            └── 00000581781.jpg
+         ├── instances_val2017.json
+         └── val2017.txt
    ...
    ```
-
-2. 数据预处理，将原始数据集转换为模型的输入数据。
-
-   执行preprocess.py 脚本，完成数据预处理。
-
+2. 生成数据集目录文件
    ```
-   python preprocess.py --input_dir ../coco/val2017/ --output_dir ../coco
+   python3 ../../../../utils/generate_file_list.py ../../../../datasets/coco/val2017
    ```
-
-   参数说明：
-
-   - --input_dir：原数据集所在路径。
-   - --output_dir：预处理后的图片保存路径，建议放置在coco目录下，与val2017同级；同时会在该目录下生成文件列表文件file_list.txt
+   
    
    
 
@@ -162,20 +153,19 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 1. 获取权重文件。
 
-   在[链接](https://github.com/ultralytics/assets/releases/tag/v0.0.0)中找到所需版本下载，也可以使用下述命令下载。
+   在[链接](https://github.com/ultralytics/assets/releases/tag/v0.0.0)中找到yolov8s.pt下载，存储至 model。
       ```
-      wget https://github.com/ultralytics/assets/releases/download/v0.0.0/${model}.pt
+      mkdir model
       ```
-   参数说明：
-
-   - {model}:可选yolov8[n/s/m/l/x]
 
 2. 导出onnx文件。
 
       使用./script/pth2onnx.py导出onnx模型
 
       ```
-      python pth2onnx.py
+      cd script
+      python3 pth2onnx.py
+      cd ../
       ```
       在安装ultralytics后，也可以使用下述命令直接导出onnx
       ```
@@ -185,9 +175,16 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 3. 使用ATC工具将ONNX模型转OM模型。
 
       执行ATC命令。
+      SS928V100 SVP_NNN上的om模型转换命令
       ```
       atc --framework=5 --model="./model/yolov8s.onnx" --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_SVP_NNN/insert_op.cfg" --output="model/yolov8s" --image_list="./data/image_ref_list.txt" --soc_version=SS928V100 --compile_mode=6
       ```
+
+      SS928V100 NNN上的om模型转换命令
+       ```
+       atc --framework=5 --model="./model/yolov8s.onnx"  --input_shape="images:1,3,640,640" --input_fp16_nodes="images" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/yolov8s" --enable_single_stream=true --soc_version=OPTG
+       ```
+       
       运行成功后生成yolov8s.om模型文件。
     
       参数说明：
@@ -198,13 +195,10 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
       - --insert_op_conf：插入图像预处理的配置
       - --output：输出的OM模型路径。
       - --image_list：转换模型生成量化参数时用的校准数据
+      - --enable_single_stream：推理时使用一条stream。
       - --soc_version：处理器型号。
       - --compile_mode：编译模式，6代表数据量化使用16bit，权重量化使用8bit，且仅对CUBE算子进行量化，非CUBE算法使用fp16格式。注：选取其他编译模式可能导致精度下降
       
-      注意：如果出现命令找不到，配置环境变量。
-      ```
-      source /usr/local/Ascend/ascend-toolkit/set_env.sh
-      ```
 
 
 ## 模型推理<a name="section741711594518"></a>
@@ -217,18 +211,23 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
     mkdir -p build
     ```
 
-2.  切换到build目录，执行**cmake**生成编译文件。
+2.  切换到“build“目录，执行**cmake**生成编译文件。
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器有aarch64-mix210-linux-gcc
+
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
 	  
 	  ```
-      cd build
-      cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION="SS928V100"
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+	  ```
+    比如
     ```
-    ../src表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-    
-    
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    cd ../
+    ```
+ 
 
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
@@ -248,54 +247,57 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
-    ```
-    ./main ../../src/acl.json ../../model/yolov8s.om ../../coco/file_list.txt
-    ```
+   ```
+   ./main --acl ../src/acl.json --model ../model/yolov8s.om --input ../data/file_list.json
+   ```
     结果会保存在数据集所在目录下的result目录下，推理结果会保存在result目录下的bin目录下，后处理后的box结果会保存在result目录下的txt目录下
 
 **步骤3：输出后处理**
 
 1. 精度验证。
 
-   调用脚本与数据集标签val_label.txt比对，可以获得Accuracy数据，结果保存在result.json中。
-
    ```
-   python accuracy.py --bin_dir ../coco/result/bin --img_dir ../coco/val2017 --output_json ../coco/result.json --gt_annotations ../coco/annotations/instances_val2017.json
+   python3 script/accuracy.py --ground_truth_json ${ground_truth_json}
    ```
 
    参数说明：
-
-   - --bin_dir：推理结果文件路径
-
-   - --img_dir：原数据集所在路径
-
-   - --output_json：脚本推理结果的json文件路径
-
-   - --gt_annotations：数据集标注文件路径
+   - --ground_truth_json：数据集标注文件路径, 比如../../../../datasets/coco/instances_val2017.json
 
    SVP_NNN平台上精度结果：
    ```
-   Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.437
-   Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.611
-   Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.470
-   Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.243
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.435
+   Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.604
+   Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.471
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.236
    Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.483
-   Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.596
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.602
    Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.340
-   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.551
-   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.593
-   Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.387
-   Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.652
-   Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.741
-
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.553
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.602
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.386
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.666
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.758
    ```
 
-     
+   NNN平台上精度结果：
+   ```
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.439
+   Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.604
+   Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.474
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.241
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.487
+   Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.604
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.342
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.558
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.607
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.390
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.673
+   Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.761
+   ```
 
 2. 验证batch_size的om模型的性能，参考命令如下：
-
    ```
-   执行./main ../../src/acl.json ../../model/yolov8s.om ..data/file_list.txt 1000
+   ./main --acl ../src/acl.json --model ../model/yolov8s.om --input ../data/file_list_1.json
    ```
 
    参数说明：(此模式下，输入路径为一张图片)
@@ -310,21 +312,26 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
    在板端会输出显示，SVP_NNN平台上性能结果如下：
    ```
-   [INFO]  time: 23302336, fps: 42.914152
+   [INFO]  time: 2346076, fps: 42.624365
+   ```
+   NNN平台上性能结果如下：
+   ```
+   execution time: 38.14ms, frame rate: 26.22fps
    ```
 
-3. 可视化推理结果
+3. 可视化推理结果，SVP_NNN可用
    调用脚本，可以对推理结果进行可视化画框操作。
    ```
-   python drawRectangle.py --image ../data/coco/val2017/000000006818.jpg --annotation ../data/coco/result/txt/00000006818_result.txt
+   cd script
+   python3 drawRectangle.py -i ../../../../../datasets/coco/val2017/000000000139.jpg -r ../out/result/txt/000000000139_result.txt -o ../out/000000000139_show.jpg --iou 0.45
+   cd ../
    ```
 
    参数说明：
-
-   - --image:原始图片路径
-
-   - --annotation：图片对应的推理结果文件路径
-
+      -i, --image：输入图片路径（必需）
+      -r, --result：检测结果文件路径（必需）
+      -t, --iou：IOU阈值（可选，默认0.45）
+      -o, --output：输出文件名（可选，默认demo_show.jpg）
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
 
@@ -332,4 +339,5 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 | 芯片型号    | Batch Size | 数据集   | AP（IoU=0.50） | AP（IoU=0.50:0.95） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | coco2017  | 61.1%       | 43.7%         | 42.914 |
+| SS928V100 SVP_NNN | 1          | coco2017  | 60.4%       | 43.5%         | 42.624 |
+| SS928V100 NNN | 1          | coco2017  | 60.4%       | 43.9%         | 26.22 |

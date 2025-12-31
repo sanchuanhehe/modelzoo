@@ -1,0 +1,10 @@
+{
+    "fileList": [
+        [
+            "../data/preprocess/lfw_cropped/Derek_Lowe/Derek_Lowe_0001.jpg"
+        ],
+        [
+            "../data/preprocess/lfw_cropped/Derek_Lowe/Derek_Lowe_0002.jpg"
+        ]
+    ]
+}

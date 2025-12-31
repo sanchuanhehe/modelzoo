@@ -188,11 +188,11 @@ def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='解析YOLO输出的bin文件并生成关键点检测结果TXT')
 
-    parser.add_argument('--bin_dir', default='../data/result_pc/bin',
+    parser.add_argument('--bin_dir', default='../out/result_pc/bin',
                         help='存放YOLO输出bin文件的目录')
     parser.add_argument('--img_dir', default='../../../../../datasets/coco2017/val2017',
                         help='存放原始图片的目录')
-    parser.add_argument('--output_dir', default='../data/result_pc/txt',
+    parser.add_argument('--output_dir', default='../out/result_pc/txt',
                         help='输出结果TXT文件目录')
     parser.add_argument('--nms_threshold', type=float, default=0.6,
                         help='NMS的IOU阈值，默认0.6')

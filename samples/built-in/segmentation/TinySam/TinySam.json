@@ -1,0 +1,96 @@
+{
+    "modelName": "TinySam",
+    "modelDesc": "TinySAM 通过全阶段知识蒸馏、在线硬提示采样、量化等系列优化策略，构建轻量级 “万物分割” 模型，解决了原始 SAM 模型计算量大、部署困难的痛点，助力高效分割任务在资源受限场景下的应用。",
+    "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/segmentation/TinySam",
+    "modelParameter": {
+      "输入": "448*448",
+      "参数量": "5.739M",
+      "计算量": "15.423GFLOPs"
+    },
+    "isBeta": true,
+    "betaDesc": "",
+    "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+    "modelUsageScenes": [
+      {
+        "task": "Vision",
+        "tags": [
+          "分割"
+        ]
+      }
+    ],
+    "modelFrame": [
+      "PyTorch"
+    ],
+    "modelDatasets": {
+      "desc": "coco2017 val数据集",
+      "link": "https://cocodataset.org/#download"
+    },
+    "srcModelLicense": [
+      {
+        "desc": "源模型",
+        "link": "https://github.com/xinghaochen/TinySAM/blob/main/LICENSE"
+      }
+    ],
+    "modelLicense": [
+      {
+        "desc": "部署模型",
+        "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/segmentation/TinySam/LICENSE"
+      }
+    ],
+    "quickStart": {
+      "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/segmentation/TinySam/doc/快速开始.md"
+    },
+    "modelChipset": [
+      {
+        "chipset": "Hi3403V100 SVP_NNN",
+        "tools": [
+          {
+            "name": "CANN配置",
+            "link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+            "desc": "AI异构计算架构，承上启下，提升计算效率的关键平台"
+          },
+          {
+            "name": "编译工具库",
+            "link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md",
+            "desc": "高效编译，精准适配AI性能优化，应用流畅运行"
+          },
+          {
+            "name": "SDK",
+            "link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/",
+            "desc": "稳定、易用的设计，支撑客户快速产品量产"
+          }
+        ],
+        "os": [
+          "OpenHarmony",
+          "Linux"
+        ],
+        "performance": [
+          {
+            "quantMode": "a8w8",
+            "detail": [
+              {
+                "performance": 250.58,
+                "performanceUnit": "耗时（ms）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 3.99,
+                "performanceUnit": "性能（fps）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 330.25,
+                "performanceUnit": "单帧内存带宽（MB）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 32.442,
+                "performanceUnit": "内存（MB）",
+                "performanceDesc": ""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }

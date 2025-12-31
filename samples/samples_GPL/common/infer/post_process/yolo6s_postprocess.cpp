@@ -44,6 +44,9 @@ const int BOX_H_IDX = 3;
 const int BOX_OBJ_CONF_IDX = 4;
 const int BOX_CLS_START_IDX = 5;
 const float HALF_VALUE = 2.0f;
+constexpr int BYTE_BIT_NUM = 8;
+constexpr int FP16_BIT_NUM = 16;
+constexpr int FP32_BIT_NUM = 32;
 
 struct BBox {
     float x1, y1, x2, y2, score;
@@ -186,6 +189,32 @@ void SaveTxtResults(const vector<BBox>& sortedResult, const string& saveTxt, con
     txtFile.close();
 }
 
+const float* GetOutDataAsFP32(const TensorBuf& buf, const TensorDesc& desc, std::vector<float>& preds) {
+    // 清空输出容器（确保数据干净）
+    preds.clear();
+    
+    // 获取Tensor基础信息
+    size_t typeSize = desc.typeSize;
+    size_t floatCount = buf.size / (typeSize / BYTE_BIT_NUM);
+
+    // 根据数据类型处理
+    if (typeSize == FP16_BIT_NUM) {
+        // FP16转FP32
+        const uint16_t* fp16Preds = reinterpret_cast<const uint16_t*>(buf.data.get());
+        preds.resize(floatCount);
+        for (size_t i = 0; i < floatCount; ++i) {
+            preds[i] = HalfToFloat(fp16Preds[i]);
+        }
+        return preds.data();
+    } else if (typeSize == FP32_BIT_NUM) {
+        // 直接返回FP32数据
+        return reinterpret_cast<const float*>(buf.data.get());
+    } else {
+        LOG(ERROR) << "output unsupported desc.typeSize: " << typeSize;
+        return nullptr;
+    }
+}
+
 // 核心后处理函数
 bool Yolov6sPostprocess(vector<string>& fileList,
                        vector<TensorBuf>& outBufs,
@@ -213,107 +242,92 @@ bool Yolov6sPostprocess(vector<string>& fileList,
         return false;
     }
 
-    for (size_t imgIdx = 0; imgIdx < fileList.size(); ++imgIdx) {
-        const string& imgPath = fileList[imgIdx];
-        string fileName = GetFileName(imgPath);
-
-        if (!saveBin.empty()) {
-            string binPath = saveBin + "/" + fileName + "_output_0.bin";
-            ofstream binFile(binPath, ios::binary);
-            if (binFile.is_open()) {
-                binFile.write(reinterpret_cast<char*>(outBufs[imgIdx].data.get()), outBufs[imgIdx].size);
-                binFile.close(); // 显式关闭，释放文件句柄
-            } else {
-                LOG(WARNING) << "无法打开bin文件: " << binPath;
-            }
-        }
-
-        // 解析模型输出
-        float* data = reinterpret_cast<float*>(outBufs[imgIdx].data.get());
-        if (data == nullptr) {
-            LOG(WARNING) << "模型输出缓冲区为空: " << fileName;
-            continue;
-        }
-        int64_t bufSize = outBufs[imgIdx].size;
-        const int floatSize = sizeof(float);
-        int totalElements = bufSize / floatSize;
-        int actualBoxDim = totalElements / NUM_BOXES;
-
-        if (actualBoxDim != BOX_DIM_85 && actualBoxDim != BOX_DIM_88) {
-            LOG(ERROR) << "步长异常: " << actualBoxDim;
-            continue;
-        }
-
-        vector<BBox> boxes;
-        for (int j = 0; j < NUM_BOXES; ++j) {
-            int baseIdx = j * actualBoxDim;
-
-            float cx = data[baseIdx + BOX_CX_IDX];
-            float cy = data[baseIdx + BOX_CY_IDX];
-            float w = data[baseIdx + BOX_W_IDX];
-            float h = data[baseIdx + BOX_H_IDX];
-            float objConf = data[baseIdx + BOX_OBJ_CONF_IDX];
-
-            if (objConf < confThres) continue;
-
-            int classId = 0;
-            float maxClsScore = MIN_VALUE;
-            for (int c = 0; c < YOLO80_CLASS_COUNT; ++c) {
-                int clsIdx = baseIdx + BOX_CLS_START_IDX + c;
-                if (clsIdx >= (j + 1) * actualBoxDim) break;
-                float clsScore = data[clsIdx];
-                if (clsScore > maxClsScore) {
-                    maxClsScore = clsScore;
-                    classId = c;
-                }
-            }
-
-            float finalScore = objConf * maxClsScore;
-            if (finalScore < confThres) continue;
-
-            BBox box;
-            box.x1 = cx - w / HALF_VALUE;
-            box.y1 = cy - h / HALF_VALUE;
-            box.x2 = cx + w / HALF_VALUE;
-            box.y2 = cy + h / HALF_VALUE;
-            box.score = finalScore;
-            box.classId = classId;
-            box.cocoClassId = -1;
-
-            boxes.push_back(box);
-        }
-
-        vector<BBox> nmsResult = BatchedNMS(boxes, nmsThres);
-
-        cv::Mat img = cv::imread(imgPath);
-        if (img.empty()) {
-            LOG(WARNING) << "无法读取图像: " << imgPath;
-            continue;
-        }
-        int originalHeight = img.rows;
-        int originalWidth = img.cols;
-
-        float scale;
-        int padWidth, padHeight;
-        CalculateScaleAndPad(originalHeight, originalWidth, targetWidth, targetHeight, scale, padWidth, padHeight);
-        ScaleBoxes(nmsResult, originalWidth, originalHeight, scale, padWidth, padHeight);
-
-        // 映射COCO类别ID
-        const size_t cocoSize = yolo80ToCoco90.size();
-        for (auto& box : nmsResult) {
-            if (box.classId >= 0 && static_cast<size_t>(box.classId) < cocoSize) {
-                box.cocoClassId = yolo80ToCoco90[box.classId];
-            } else {
-                box.cocoClassId = -1;
-            }
-        }
-
-        SortResults(nmsResult);
-
-        if (!saveTxt.empty()) {
-            SaveTxtResults(nmsResult, saveTxt, fileName);
+    size_t imgIdx = 0;
+    const string& imgPath = fileList[imgIdx];
+    string fileName = GetFileName(imgPath);
+    if (!saveBin.empty()) {
+        string binPath = saveBin + "/" + fileName + "_output_0.bin";
+        ofstream binFile(binPath, ios::binary);
+        if (binFile.is_open()) {
+            binFile.write(reinterpret_cast<char*>(outBufs[imgIdx].data.get()), outBufs[imgIdx].size);
+            binFile.close(); // 显式关闭，释放文件句柄
+        } else {
+            LOG(WARNING) << "无法打开bin文件: " << binPath;
         }
     }
+    // 解析模型输出
+    std::vector<float> detectionsPreds;  
+    const float* data = GetOutDataAsFP32(outBufs[imgIdx], outDescs[imgIdx], detectionsPreds);
+    if (data == nullptr) {
+        LOG(WARNING) << "模型输出缓冲区为空: " << fileName;
+        return false;
+    }
+    int64_t bufSize = outBufs[imgIdx].size;
+    const int floatSize = sizeof(float);
+    int totalElements = bufSize / floatSize;
+    int actualBoxDim = totalElements / NUM_BOXES;
+    if (actualBoxDim != BOX_DIM_85 && actualBoxDim != BOX_DIM_88) {
+        LOG(ERROR) << "步长异常: " << actualBoxDim;
+        return false;
+    }
+    vector<BBox> boxes;
+    for (int j = 0; j < NUM_BOXES; ++j) {
+        int baseIdx = j * actualBoxDim;
+        float cx = data[baseIdx + BOX_CX_IDX];
+        float cy = data[baseIdx + BOX_CY_IDX];
+        float w = data[baseIdx + BOX_W_IDX];
+        float h = data[baseIdx + BOX_H_IDX];
+        float objConf = data[baseIdx + BOX_OBJ_CONF_IDX];
+        if (objConf < confThres) continue;
+        int classId = 0;
+        float maxClsScore = MIN_VALUE;
+        for (int c = 0; c < YOLO80_CLASS_COUNT; ++c) {
+            int clsIdx = baseIdx + BOX_CLS_START_IDX + c;
+            if (clsIdx >= (j + 1) * actualBoxDim) break;
+            float clsScore = data[clsIdx];
+            if (clsScore > maxClsScore) {
+                maxClsScore = clsScore;
+                classId = c;
+            }
+        }
+        float finalScore = objConf * maxClsScore;
+        if (finalScore < confThres) continue;
+        BBox box;
+        box.x1 = cx - w / HALF_VALUE;
+        box.y1 = cy - h / HALF_VALUE;
+        box.x2 = cx + w / HALF_VALUE;
+        box.y2 = cy + h / HALF_VALUE;
+        box.score = finalScore;
+        box.classId = classId;
+        box.cocoClassId = -1;
+        boxes.push_back(box);
+    }
+    vector<BBox> nmsResult = BatchedNMS(boxes, nmsThres);
+    cv::Mat img = cv::imread(imgPath);
+    if (img.empty()) {
+        LOG(WARNING) << "无法读取图像: " << imgPath;
+        return false;
+    }
+    int originalHeight = img.rows;
+    int originalWidth = img.cols;
+    float scale;
+    int padWidth, padHeight;
+    CalculateScaleAndPad(originalHeight, originalWidth, targetWidth, targetHeight, scale, padWidth, padHeight);
+    ScaleBoxes(nmsResult, originalWidth, originalHeight, scale, padWidth, padHeight);
+    // 映射COCO类别ID
+    const size_t cocoSize = yolo80ToCoco90.size();
+    for (auto& box : nmsResult) {
+        if (box.classId >= 0 && static_cast<size_t>(box.classId) < cocoSize) {
+            box.cocoClassId = yolo80ToCoco90[box.classId];
+        } else {
+            box.cocoClassId = -1;
+        }
+    }
+    SortResults(nmsResult);
+    if (!saveTxt.empty()) {
+        SaveTxtResults(nmsResult, saveTxt, fileName);
+    }
+
 
     LOG(INFO) << "====== 图像后处理完成 ======";
     return true;

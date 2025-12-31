@@ -30,7 +30,7 @@ using json = nlohmann::json;
 constexpr int BYTE_BIT_NUM = 8;
 namespace Infer
 {
-static Result readImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc, TensorBuf &inBuf)
+static Result ReadImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc, TensorBuf &inBuf)
     {
         LOG(INFO) << "ReadImgFileToBuf: desc.dimCount " << desc.dimCount;
         int64_t loopTimes = 1;
@@ -89,12 +89,9 @@ static cv::Mat letterbox(const cv::Mat &img, const cv::Size &target_size, bool s
         double h = (target_size.height - unpad.height) / 2.0f;
         LOG(INFO) << "w r: " << w << "  " << h;
         cv::Mat resized;
-        if (shape != unpad)
-        {
+        if (shape != unpad) {
             cv::resize(img, resized, unpad, 0, 0, cv::INTER_LINEAR);
-        }
-        else
-        {
+        } else {
             resized = img.clone();
         }
 
@@ -129,7 +126,29 @@ static cv::Mat hwcToChw(const cv::Mat &hwcImg)
         return chwMat; // 返回 3 × (高度*宽度) 的CHW矩阵
     }
 
-bool Yolo3Preprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs)
+  static  Result ReadImgToBufDlite(const cv::Mat &mat, const TensorDesc &desc,
+                             TensorBuf &inBuf)
+    {
+        cv::Mat chwImg_f16;
+        if (mat.type() == CV_32F)
+        {
+            mat.convertTo(chwImg_f16, CV_16F);
+        }
+        else
+        {
+            // 如果不是 32 位浮点，先转换到 32 位浮点再转 16 位
+            cv::Mat temp;
+            mat.convertTo(temp, CV_32F);
+            temp.convertTo(chwImg_f16, CV_16F);
+        }
+        size_t matTotalBytes = chwImg_f16.total() * chwImg_f16.elemSize();
+
+        memcpy(inBuf.GetRawPtr(), chwImg_f16.data, matTotalBytes);
+
+        return SUCCESS;
+    }
+
+bool Yolo3Preprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs, bool isDpico)
     {
         // 进度显示（简化版）
         LOG(INFO) << "Processing " << fileList.size();
@@ -163,7 +182,11 @@ bool Yolo3Preprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> 
             chwImg.convertTo(double_temp, CV_64FC3); // 先转为double
             double_temp /= 255.0;                    // double精度除法
             double_temp.convertTo(chwImg, CV_32FC3); // 截断为float32
-            readImgFileToBuf(chwImg, tensorDescs[i], tensorBufs[i]);
+            if(isDpico) {
+                ReadImgFileToBuf(chwImg, tensorDescs[i], tensorBufs[i]);
+            } else {
+                ReadImgToBufDlite(chwImg, tensorDescs[i], tensorBufs[i]);
+            }
             LOG(INFO) << "read end: " << imgPath;
         }
 

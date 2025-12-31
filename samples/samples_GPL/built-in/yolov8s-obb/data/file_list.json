@@ -1,0 +1,13 @@
+{
+    "fileList": [
+        [
+            "../datasets/DOTAv1-split/images/val/P0146__1024__0___0.jpg"
+        ],
+        [
+            "../datasets/DOTAv1-split/images/val/P1005__1024__2620___0.jpg"
+        ],
+        [
+            "../datasets/DOTAv1-split/images/val/P2570__682__349___783.jpg"
+        ]
+    ]
+}

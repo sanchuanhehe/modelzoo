@@ -1,5 +1,5 @@
 
-# 基于**YOLOv7**网络实现图片分类
+# 基于**YOLOv7**网络实现目标检测
 - [概述](#ZH-CN_TOPIC_0000001172161501)
 
     - [输入输出数据](#section540883920406)
@@ -19,7 +19,7 @@
   ------
 
 # 概述<a name="ZH-CN_TOPIC_0000001172161501"></a>
-YOLOv7在速度与精度方面均超越现有已知目标检测器：在5-160 FPS范围内表现最优，并在GPU V100上以30+ FPS实现56.8% AP的最高精度。其YOLOv7-E6模型在V100上达到56 FPS和55.9% AP，相比基于Transformer的SWIN-L Cascade-Mask R-CNN（A100 9.2 FPS，53.9% AP）速度提升509%且精度提高2%；相较基于卷积的ConvNeXt-XL Cascade-Mask R-CNN（A100 8.6 FPS，55.2% AP）速度提升551%且精度提高0.7%。此外，YOLOv7在速度与精度上均优于YOLOR、YOLOX、YOLOv5等主流检测器，且仅使用MS COCO数据集从头训练，未借助任何预训练权重。
+YOLOv7是一款聚焦实时目标检测的深度学习模型，通过ELAN系列模块优化骨干与特征融合网络，结合复合模型缩放、深度监督训练及重参数化技术，在兼顾高精度与高效推理速度的同时支持多尺度部署，广泛适配计算机视觉实时检测场景。
 - 参考实现：
 
   ```
@@ -90,10 +90,12 @@ YOLOv7在速度与精度方面均超越现有已知目标检测器：在5-160 FP
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
+
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -167,14 +169,14 @@ YOLOv7在速度与精度方面均超越现有已知目标检测器：在5-160 FP
 3. 使用ATC工具将ONNX模型转OM模型。
 
     执行ATC命令。
-    1. SS928V100 SVP_NNN上的om模型转换命令
+    1. Hi3403V100 SVP_NNN上的om模型转换命令
 
         ```
         python3 ./script/generate_quant_bin.py --data_path "./datasets/coco/val2017/000000000139.jpg" --img_format NCHW
 
         atc --framework=5 --model="./model/yolov7.onnx" --input_shape="images:1,3,640,640" --output="./model/yolov7" --image_list="./data/000000000139.bin" --soc_version=SS928V100 --compile_mode=6
         ```
-    2. SS928V100 NNN上的om模型转换命令
+    2. Hi3403V100 NNN上的om模型转换命令
 
         ```
         atc --framework=5 --model="./model/yolov7.onnx" --input_format="NCHW" --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/yolov7" --enable_single_stream=true --soc_version=OPTG
@@ -305,7 +307,7 @@ YOLOv7在速度与精度方面均超越现有已知目标检测器：在5-160 FP
 
     在板端会输出显示，SVP_NNN平台上性能结果如下：
     ```
-     execution time: 74.39ms, frame rate: 13.44fps
+     execution time: 74.19ms, frame rate: 13.48fps
     ```
     NNN平台上性能结果如下：
     ```
@@ -318,5 +320,5 @@ YOLOv7在速度与精度方面均超越现有已知目标检测器：在5-160 FP
 
 | 芯片型号    | Batch Size | 数据集   | AP（IoU=0.50） | AP（IoU=0.50:0.95） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | coco2017  | 69.0%       | 49.9%         | 13.45 |
-| SS928V100 NNN | 1          | coco2017  | 69.1%       | 50.6%         | 7.65 |
+| Hi3403V100 SVP_NNN | 1          | coco2017  | 69.0%       | 49.9%         | 13.48 |
+| Hi3403V100 NNN | 1          | coco2017  | 69.1%       | 50.6%         | 7.65 |

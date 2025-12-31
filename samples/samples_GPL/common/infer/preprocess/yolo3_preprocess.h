@@ -23,5 +23,5 @@ struct ImageprocessParams {
     int width;
     int height;
 };
-bool Yolo3Preprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs);
+bool Yolo3Preprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs, bool isDpico);
 }
