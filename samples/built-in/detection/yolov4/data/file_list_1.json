@@ -1,5 +1,5 @@
 {
-    "loop": 50,
+    "loop": 25,
     "fileList": [
         [
             "../../../../../datasets/coco2017/val2017/000000006818.jpg"

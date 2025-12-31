@@ -1,0 +1,17 @@
+# 预处理后的二进制文件，设置为空字符串则不保存，节约磁盘空间可以不保存
+save_preprocess_bin="../data/preprocess/bin"
+
+# 预处理后二进制文件列表，为空则不保存
+save_preprocess_txt="../data/preprocess"
+
+# 模型预测的人数文件保存目录，为空则不保存
+save_result_dir="../out/result"
+
+# 模型推理原始二进制结果，设置为空字符串则不保存，节约磁盘空间可以不保存
+save_result_bin="../out/result/bin"
+
+# 后处理得到的密度图，设置为空字符串则不保存，节约磁盘空间可以不保存
+save_density_maps_dir="../out/result/density_maps"
+
+# 密度图阈值过滤，默认0.06
+threshold=0.06

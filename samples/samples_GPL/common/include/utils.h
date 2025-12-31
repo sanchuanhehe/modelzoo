@@ -28,4 +28,6 @@ bool PathToRealPath(const std::string &path, std::string &realPath);
 bool ParseParamFromCmd(int argc, char *argv[], InferParam &inferParam);
 std::unordered_map<std::string, std::string> ReadCfgFile(const std::string& cfgPath);
 bool CreateDirectoryRecursive(const std::string& path);
+uint16_t FloatToHalf(float value);
+float HalfToFloat(uint16_t value);
 }

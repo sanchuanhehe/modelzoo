@@ -1,0 +1,96 @@
+{
+	"modelName": "PaddleOCRv4-rec",
+	"modelDesc": "PP-OCRv4识别模型在PP-OCRv3的基础上进一步升级。整体的框架保持了与PP-OCRv3识别模型相同的pipeline，分别进行了数据、网络结构、训练策略等方面的优化。",
+	"modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/PaddleOCRv4-rec",
+	"modelParameter": {
+		"输入": "48x320",
+		"参数量": "6.584M",
+		"计算量": "5.766GFLOPS"
+	},
+	"isBeta": true,
+	"betaDesc": "Hi3403V100 SVP_NNN引擎上模型性能待优化",
+	"modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+	"modelUsageScenes": [
+		{
+			"task": "Vision",
+			"tags": [
+				"文字识别"
+			]
+		}
+	],
+	"modelFrame": [
+		"PyTorch"
+	],
+	"modelDatasets": {
+		"desc": "数据集XFUND",
+		"link": "https://github.com/doc-analysis/XFUND/releases/tag/v1.0"
+	},
+	"srcModelLicense": [
+		{
+			"desc": "源模型",
+			"link": "https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.10/LICENSE"
+		}
+	],
+	"modelLicense": [
+		{
+			"desc": "部署模型",
+			"link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/PaddleOCRv4-rec/LICENSE"
+		}
+	],
+	"quickStart": {
+		"md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/PaddleOCRv4-rec/doc/快速开始.md"
+	},
+	"modelChipset": [
+		{
+			"chipset": "Hi3403V100 SVP_NNN",
+			"tools": [
+				{
+					"name": "CANN工具",
+					"link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+					"desc": ""
+				},
+				{
+					"name": "编译工具链",
+					"link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8",
+					"desc": ""
+				},
+				{
+					"name": "SDK",
+					"link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/ ",
+					"desc": ""
+				}
+			],
+			"os": [
+				"OpenHarmony",
+				"Linux"
+			],
+			"performance": [
+				{
+					"quantMode": "a8w8",
+					"detail": [
+						{
+							"performance": 2178.649,
+							"performanceUnit": "耗时（ms）",
+							"performanceDesc": ""
+						},
+						{
+							"performance": 0.459,
+							"performanceUnit": "性能（fps）",
+							"performanceDesc": ""
+						},
+						{
+							"performance": 917.897,
+							"performanceUnit": "单帧内存带宽（MB）",
+							"performanceDesc": ""
+						},
+						{
+							"performance": 13.301,
+							"performanceUnit": "内存（MB）",
+							"performanceDesc": ""
+						}
+					]
+				}
+			]
+		}
+	]
+}

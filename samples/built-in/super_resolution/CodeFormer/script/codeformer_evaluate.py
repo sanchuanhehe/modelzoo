@@ -46,9 +46,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gt_dir', type=str, default='../../../../../datasets/celeba-512/celeba-512-300/hq',
                         help='GT图像目录（512x512）')
-    parser.add_argument('--restored_dir', type=str, default='../data/result/img',
+    parser.add_argument('--restored_dir', type=str, default='../out/result/img',
                         help='CodeFormer修复结果目录')
-    parser.add_argument('--output_file', type=str, default='../data/result/metrics_results.txt',
+    parser.add_argument('--output_file', type=str, default='../out/result/metrics_results.txt',
                         help='评估结果保存文件')
     args = parser.parse_args()
 

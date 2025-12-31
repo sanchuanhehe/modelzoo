@@ -98,10 +98,11 @@
 
     **表 1** 版本配套表
 
-    | 芯片型号  | npu  | soc_version | 环境准备指导     |
-    | --------- | ---- | ----------- | ---------------- |
-    | SS928V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-    | SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+     | 芯片型号   | npu     | soc_version | 环境准备指导                                                 | cann包版本                                                   | 编译工具链                                                   | os                                                           | sdk                                                          |
+    | ---------- | ------- | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md#241安装clang交叉编译器) | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md) | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | SPC022                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
+    | Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | 5.30.t11.7.b110                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -112,7 +113,7 @@
    git clone https://github.com/eric-yyjau/pytorch-superpoint.git
    cd pytorch-superpoint
    git reset --hard 5eb75d74df27c07f6e7311df8f167e2a9c01a798
-   patch -p3 < sp.patch
+   patch -p3 < ../sp.patch
    ```
 
 2. 安装依赖  
@@ -129,10 +130,10 @@
    tar –zxvf  *.tar.gz
    unzip *.zip
    ```
-   数据集存放在datasets文件夹中
+   数据集存放在当前路径下的datasets文件夹(如果没有，请新建)中
 
    ```
-   data/
+   datasets/
    |-- hpatches
    |   |-- i_ajuntament
    |   |-- ...
@@ -156,7 +157,7 @@
     
     例如执行如下命令后，在./data/hpatches_preprocessed 生成预处理后的数据集
     ```
-    python ./script/superpoint_preprocess.py --img_path ./data/hpatches --result_path ./data/hpatches_preprocessed
+    python ./script/superpoint_preprocess.py --img_path ./datasets/hpatches --result_path ./data/hpatches_preprocessed
     ```
     
 
@@ -189,7 +190,7 @@
    
 3. 使用ATC工具将ONNX模型转OM模型。
 
-    SS928V100 SVP_NNN上的om模型转换命令:
+    1). Hi3403V100 SVP_NNN上的om模型转换命令:
     ```
     atc --framework=5 \
     --model=./model/superpoint_bs1.onnx  \
@@ -200,6 +201,11 @@
     --image_list="./data/hpatches_preprocessed/i_ajuntament_1.bin"    \
     --soc_version=SS928V100
     ```
+    2). Hi3403V100 NNN上的om模型转换命令
+
+        ```
+        atc --framework=5 --model="./model/superpoint_bs1.onnx" --input_format="NCHW" --input_shape="image:1,1,240,320" --output="./model/superpoint_bs1_dlite" --enable_single_stream=true --soc_version=OPTG
+        ```
     运行成功后生成superpoint_bs1.om模型文件。
 
     参数说明：
@@ -236,12 +242,16 @@
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
 
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器有aarch64-mix210-linux-gcc版本，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
-	  
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
+    
     ```
     cd build
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
     ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
 **步骤2：运行应用。**
@@ -255,8 +265,13 @@
     ```
 
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
+    Hi3403V100 SVP_NNN平台的如下：
     ```
-    ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list.txt
+    ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list.txt --loop 100 
+    ```
+    Hi3403V100 NNN平台的如下：
+    ```
+    ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list.json 
     ```
     执行如果报错找不到 opencv.so动态库，需要在板端将opencv路径加到环境变量，
     ```
@@ -264,8 +279,7 @@
     ```
 
 
-**步骤3：输出后处理**
-本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。   
+**步骤3：输出后处理**  
 
 1. 精度验证。
     在代码主目录进行精度计算
@@ -280,17 +294,28 @@
 
     例如执行: `python ./script/superpoint_postprocess.py --img_path=./pytorch-superpoint/configs/magicpoint_repeatability_heatmap.yaml --result_path=./out/result/bin`
     
-    SVP_NNN平台上精度结果如下：
+    备注：./pytorch-superpoint/configs/magicpoint_repeatability_heatmap.yaml 中的pretrained: 'logs/superpoint_coco_heat2_0/checkpoints/superPointNet_170000_checkpoint.pth.tar'地址需要修改为：./pytorch-superpoint/logs/superpoint_coco_heat2_0/checkpoints/superPointNet_170000_checkpoint.pth.tar
+
+    Hi3403V100 SVP_NNN平台上精度结果如下：
     ```
     mean AP 0.8017776076290524
     end
+    ```
+    Hi3403V100 NNN平台上精度结果如下：
+    ```
+    mean AP 0.8009278098804761
     ```
 
 2. 性能验证。
 
    验证om模型的性能，在板端执行参考命令如下：
+   Hi3403V100 SVP_NNN平台的如下：
    ```
-   ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list_1.txt --loop 100
+   ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list_1.txt --loop 100 
+   ```
+   Hi3403V100 NNN平台的如下：
+   ```
+   ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list_1.json 
    ```
 
    参数说明：(此模式下，输入路径文本文件file_list_1.txt内容为一张图片路径)
@@ -298,19 +323,16 @@
    - --model：om模型路径。
    - --acl: acl.json文件的路径，默认放在src目录下。
    - --input: 输入的图像数据列表路径
-   - --loop： 循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
+   - --loop： 循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值。NNN平台修改json里面的loop值
    
-   在板端会输出显示，SVP_NNN平台上性能结果如下：
+   在板端会输出显示，Hi3403V100 SVP_NNN平台上性能结果如下：
    ```
    [INFO] time: 311917, fps: 320.598108
    ```
-
-3. 效果查看
-    验证om模型的特征提取的效果，在板端执行参考命令如下：
-    ```
-    ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --picture img_320x240.jpg
-    ```
-    img_320x240.jpg为一张320x240的图片，执行后生成 img_320x240_draw_keypoints.jpg 图片，即可查看特征点提取效果
+   Hi3403V100 NNN平台上性能结果如下：
+   ```
+   15.21ms, frame rate: 65.76fps
+   ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
 
@@ -318,4 +340,5 @@
 
 | 芯片型号    | Batch Size | 数据集   |  精度          |    性能(FPS)|
 | ----------- | --------- | -------- |  ------------ | ------------|
-| SS928V100 SVP_NNN | 1   | hpatches |  80.17%       | 320.60      |
+| Hi3403V100 SVP_NNN | 1   | hpatches |  80.17%       | 320.60      |
+| Hi3403V100 NNN | 1   | hpatches |  80.09%       | 65.76      |

@@ -27,21 +27,41 @@
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
-constexpr int BYTE_BIT_NUM = 8;
+
 namespace Infer {
 namespace Yolo6s {
     // 新增像素值归一化系数常量，替代魔鬼数字255.0
     constexpr float PIXEL_NORMALIZE_FACTOR = 255.0f;
     constexpr int CHANNEL_COUNT = 3;
+    constexpr int BYTE_BIT_NUM = 8;
+    constexpr int FP16_BIT_NUM = 16;
+    constexpr int FP32_BIT_NUM = 32;
 
     static Result ReadImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc, TensorBuf &inBuf)
     {
         LOG(INFO) << "ReadImgFileToBuf: desc.dimCount " << desc.dimCount;
         const float *srcData = chwImg.ptr<float>();
-        // dlite核，不需要处理字节对齐，直接读取数据
+        // for dlite
         if (desc.defaultStride == 0) {
-            memcpy(static_cast<float *>(inBuf.GetRawPtr()), srcData, desc.defaultSize);
-            return SUCCESS;
+            if(desc.typeSize == FP32_BIT_NUM){
+                memcpy(static_cast<float *>(inBuf.GetRawPtr()), srcData, desc.defaultSize);
+                return SUCCESS;
+            }else if(desc.typeSize == FP16_BIT_NUM){
+                // 计算数据量
+                size_t dataCount = chwImg.total();
+
+                // 转换为FP16
+                std::vector<uint16_t> fp16Data(dataCount);
+                for (size_t i = 0; i < dataCount; ++i) {
+                    fp16Data[i] = FloatToHalf(srcData[i]);
+                }
+
+                memcpy(static_cast<void*>(inBuf.GetRawPtr()), fp16Data.data(), desc.defaultSize);
+                return SUCCESS;
+            }else{
+                LOG(ERROR) << "dlite core unsupported desc.typeSize: " << desc.typeSize;
+                return FAILED;
+            }
         }
 
         // dpico核，需要处理字节对齐

@@ -1,0 +1,146 @@
+{
+  "modelName": "VDSR",
+  "modelDesc": "VDSR（Very Deep Super-Resolution Network）是一种20层深度卷积神经网络，通过残差学习实现图像超分辨率重建。",
+  "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/super_resolution/VDSR",
+  "modelParameter": {
+    "输入": "516x516",
+    "参数量": "664.704 M",
+    "计算量": "354.611 GFLOPs"
+  },
+  "isBeta": false,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "Vision",
+      "tags": [
+        "图像超分"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "Pytorch"
+  ],
+  "modelDatasets": {
+    "desc": "Set5",
+    "link": "https://github.com/Lornatang/VDSR-PyTorch#download-datasets"
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/Lornatang/VDSR-PyTorch/blob/master/LICENSE"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/super_resolution/VDSR/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/super_resolution/VDSR/doc/快速开始.md/"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3403V100 SVP_NNN",
+      "tools": [
+        {
+          "name": "CANN配置",
+          "link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+          "desc": ""
+        },
+        {
+          "name": "编译工具库",
+          "link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md",
+          "desc": ""
+        },
+        {
+          "name": "SDK",
+          "link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/",
+          "desc": ""
+        }
+      ],
+      "os": [
+        "OpenHarmony",
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "a8w8",
+          "detail": [
+            {
+              "performance": 66.28,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 15.09,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 38.72,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 22.332,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chipset": "Hi3403V100 NNN",
+      "tools": [
+        {
+          "name": "CANN工具包 SPC022 (请联系FAE获取)",
+          "link": "",
+          "desc": ""
+        },
+        {
+          "name": "编译工具链 aarch64-mix210-linux-gcc (请联系FAE获取)",
+          "link": "",
+          "desc": ""
+        },
+        {
+          "name": "SDK SPC022 (请联系FAE获取)",
+          "link": "",
+          "desc": ""
+        }
+      ],
+      "os": [
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "fp16",
+          "detail": [
+            {
+              "performance": 228.43,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 4.38,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 1714.531,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 120.004,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

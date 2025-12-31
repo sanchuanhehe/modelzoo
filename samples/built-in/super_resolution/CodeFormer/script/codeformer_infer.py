@@ -110,7 +110,7 @@ def main():
     parser = argparse.ArgumentParser(description='CodeFormer推理脚本')
     parser.add_argument('--preprocess_bin_dir', default='../data/preprocess/bin',
                         help='预处理后二进制文件目录')
-    parser.add_argument('--infer_bin_dir', default='../data/result_pc/bin',
+    parser.add_argument('--infer_bin_dir', default='../out/result_pc/bin',
                         help='推理结果二进制文件输出目录')
     parser.add_argument('--file_list_path', default='../data/preprocess/file_list.txt',
                         help='预处理生成的文件列表路径')

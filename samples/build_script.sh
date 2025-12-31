@@ -17,7 +17,20 @@ function ss928v100_svp_nnn_build()
     echo "Conda env: $CONDA_DEFAULT_ENV"
     source /home/build/Ascend/ascend-toolkit/svp_latest/x86_64-linux/script/setenv.sh
 
-    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=$DEF
+    export NPU_INCLUDE_PATH=/home/build/Ascend/ascend-toolkit/svp_latest/acllib/include/acl
+    export NPU_LIB_PATH=/home/build/Ascend/ascend-toolkit/svp_latest/acllib/lib64/stub
+
+    if [ -f "../../../../common/cmake/toolchain_aarch64_linux.cmake" ]; then
+        TOOLCHAIN_FILE="../../../../common/cmake/toolchain_aarch64_linux.cmake"
+    elif [ -f "../../../common/cmake/toolchain_aarch64_linux.cmake" ]; then
+        TOOLCHAIN_FILE="../../../common/cmake/toolchain_aarch64_linux.cmake"
+    else
+        echo "ERROR: 未找到工具链文件！"
+    fi
+
+    # 第二步：执行cmake命令（变量加双引号，避免路径含特殊字符）
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" -DSOC_VERSION=$DEF
+
     make
     make_exit_status=$?
 }
@@ -35,7 +48,19 @@ function ss928v100_nnn_build()
     export DDK_PATH=/home/build/Ascend/ascend-toolkit/latest
     export NPU_HOST_LIB=$DDK_PATH/acllib/lib64/stub
 
-    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=$DEF
+    export NPU_INCLUDE_PATH=/home/build/Ascend/ascend-toolkit/latest/acllib/include/acl
+    export NPU_LIB_PATH=/home/build/Ascend/ascend-toolkit/latest/acllib/lib64/stub
+
+    if [ -f "../../../../common/cmake/toolchain_aarch64_linux.cmake" ]; then
+        TOOLCHAIN_FILE="../../../../common/cmake/toolchain_aarch64_linux.cmake"
+    elif [ -f "../../../common/cmake/toolchain_aarch64_linux.cmake" ]; then
+        TOOLCHAIN_FILE="../../../common/cmake/toolchain_aarch64_linux.cmake"
+    else
+        echo "ERROR: 未找到工具链文件！"
+    fi
+
+    # 第二步：执行cmake命令（变量加双引号，避免路径含特殊字符）
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" -DSOC_VERSION=$DEF
     make
     make_exit_status=$?
 }

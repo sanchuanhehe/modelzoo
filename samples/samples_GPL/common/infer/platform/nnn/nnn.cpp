@@ -440,12 +440,21 @@ int32_t AclMdl::UpdateDatasetBuffer(size_t index, TensorBuf& tensorBuf, aclmdlDa
 
 int32_t AclMdl::Execute(std::vector<TensorBuf>& inBufs, std::vector<TensorBuf>& outBufs, RunMode runMode)
 {
-    if (inBufs.size() != GetInTensorNum() || outBufs.size() != GetOutTensorNum()) {
+    size_t inputBufSize = inBufs.size();
+    bool timeCostFlag = false;
+    static std::chrono::microseconds dur(0);
+    std::chrono::high_resolution_clock::time_point start;
+    if (inputBufSize == GetInTensorNum()  + 1) {
+        inputBufSize--;
+        timeCostFlag = true;
+    }
+
+    if (inputBufSize != GetInTensorNum() || outBufs.size() != GetOutTensorNum()) {
         LOG(ERROR) << "numbers of model inputs or outputs are not correct";
         return -1;
     }
     std::lock_guard<std::mutex> lock(executeMtx_);
-    for (size_t i = 0; i < inBufs.size(); ++i) {
+    for (size_t i = 0; i < inputBufSize; ++i) {
          if (UpdateDatasetBuffer(i, inBufs[i], input_) != 0) {
             LOG(ERROR) << "update input buf failed";
             return -1;
@@ -458,9 +467,17 @@ int32_t AclMdl::Execute(std::vector<TensorBuf>& inBufs, std::vector<TensorBuf>& 
         }
     }
     aclrtSetDevice(0);
-    aclError ret;
+    aclError ret = ACL_SUCCESS;
     if (runMode == RunMode::Sync) {
+        if (timeCostFlag) {
+            start = std::chrono::high_resolution_clock::now();
+        }
         ret = aclmdlExecute(modelId_, input_, output_);
+        if (timeCostFlag) {
+            auto end = std::chrono::high_resolution_clock::now();
+            dur += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            *(static_cast<float*>(inBufs[inBufs.size() - 1].GetRawPtr())) = dur.count();
+        }
     } else if (runMode == RunMode::Async) {
         ret = aclmdlExecuteAsync(modelId_, input_, output_, NULL);
     }

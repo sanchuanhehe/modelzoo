@@ -62,9 +62,6 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 ├── data
 │   ├── ...            //测试数据
 
-├── inc
-│   ├── ...            //声明头文件
-
 ├── script
 │   ├── pth2onnx.py     //pth转onnx脚本
 │   ├── accurary.py     //精度验证脚本
@@ -103,10 +100,12 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 
     **表 1** 版本配套表
 
-    | 芯片型号  | npu  | soc_version | 环境准备指导     |
-    | --------- | ---- | ----------- | ---------------- |
-    | SS928V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-    | SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
+
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -145,13 +144,13 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
     ```
     python3 ../../../../utils/preprocess.py ${input_path} ${output_path}
     ```
-    2.1 SS928V100 SVP_NNN上的数据预处理命令
+    2.1 Hi3403V100 SVP_NNN上的数据预处理命令
     
     ```
     python3 ../../../../utils/preprocess.py --input_path ../../../../datasets/ImageNet/val/ --output_path ./data --resize 256 --center_crop 224
     ```
     
-    2.2 SS928V100 NNN上的的数据预处理命令
+    2.2 Hi3403V100 NNN上的的数据预处理命令
     
     ```
     python3 ../../../../utils/preprocess.py --input_path ../../../../datasets/ImageNet/val/ --output_path ./data --resize 256 --center_crop 224 --transpose 1
@@ -190,11 +189,11 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 
 3. 使用ATC工具将ONNX模型转OM模型。
     
-    SS928V100 SVP_NNN上的om模型转换命令:
+    Hi3403V100 SVP_NNN上的om模型转换命令:
     ```
     atc --framework=5  --model="./model/densenet121.onnx" --input_shape="input_0:1,3,224,224" --insert_op_conf="./model_cfg/SS928V100_SVP_NNN/insert_op.cfg" --output="./model/densenet121" --image_list="./data/image_ref_list.txt" --compile_mode=1 --soc_version=SS928V100
     ```
-    SS928V100 NNN上的om模型转换命令:
+    Hi3403V100 NNN上的om模型转换命令:
     ```
     atc --framework=5  --model="./model/densenet121.onnx" --input_shape="input_0:1,3,224,224" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/densenet_original" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
     ```
@@ -235,12 +234,17 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
 
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器有aarch64-mix210-linux-gcc版本，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
 	  
 	  ```
     cd build
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
 	  ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
+
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
 
@@ -306,7 +310,7 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 
     在板端会输出显示，SVP_NNN平台上性能结果如下：
     ```
-    [INFO] time: 586060, fps: 170.630993
+    [INFO] time: 593506, fps: 168.49
     ```
 
     NNN平台上性能结果如下：
@@ -320,6 +324,6 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 
 | 芯片型号    | Batch Size | 数据集   |  精度指标1（Acc@1） | 精度指标2（Acc@5） |      性能(FPS)|
 | ----------- | ---------- | -------- |  ------------------ | ------------------ |-----------------|
-| SS928V100 SVP_NNN | 1          | ImageNet |  74.45%            | 91.91%            | 170.63   |
-| SS928V100 NNN     | 1          | ImageNet |  74.44%            | 91.96%            | 108.01   |
+| Hi3403V100 SVP_NNN | 1          | ImageNet |  74.45%            | 91.91%            | 168.49   |
+| Hi3403V100 NNN     | 1          | ImageNet |  74.44%            | 91.96%            | 108.01   |
 

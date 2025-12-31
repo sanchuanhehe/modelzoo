@@ -1,0 +1,20 @@
+# 预处理后二进制文件保存路径，为空则不保存
+save_preprocess_bin="../data/preprocess/bin"
+
+# 模型推理原始二进制结果路径（供Python精度评估用），为空则不保存
+save_result_bin="../out/result/bin"
+
+# 推理结果json文件保存路径
+save_result_json="../out/result/json"
+
+# 模型输入图像高度（预处理resize目标值）
+img_height=640
+
+# 模型输入图像宽度（预处理resize目标值）
+img_width=640
+
+# 置信度阈值（过滤低置信度候选框，默认设置为0.001是为了在评估精度时提供尽可能全的检测框计算ROC曲线，实际推理时conf_threshold一般设置为0.25）
+conf_threshold=0.001
+
+# NMS交并比阈值（过滤重复检测框）
+nms_threshold=0.7

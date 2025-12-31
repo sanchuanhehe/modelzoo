@@ -1,0 +1,8 @@
+# 预处理后的二进制文件，设置为空字符串则不保存，节约磁盘空间可以不保存
+save_preprocess_bin="../data/preprocess/bin"
+
+# 模型推理结果
+save_result_txt="../out/result/txt"
+
+# 模型推理原始二进制结果，设置为空字符串则不保存，节约磁盘空间可以不保存
+save_result_bin="../out/result/bin"

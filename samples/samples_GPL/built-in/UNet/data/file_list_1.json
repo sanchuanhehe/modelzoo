@@ -3,5 +3,6 @@
         [
             "../datasets/carvana/train_hq/1aba91a601c6_06.jpg"
         ]
-    ]
+    ],
+    "loop":20
 }

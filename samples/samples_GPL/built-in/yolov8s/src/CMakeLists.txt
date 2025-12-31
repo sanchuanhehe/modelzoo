@@ -16,33 +16,15 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(ACL_INFER_SAMPLE)
 
-add_subdirectory(../../../common/ ./infer_utils_build)
-
-# Compile options
-add_compile_options(
-    -std=c++11
-    -fPIC
-    -fstack-protector-all
-    -D_FORTIFY_SOURCE=2 -O2
-)
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY  "../out")
-set(CMAKE_CXX_FLAGS_DEBUG "-fPIC -O0 -g -Wall")
-set(CMAKE_CXX_FLAGS_RELEASE "-fPIC -O2 -Wall")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro,-z,now,-z,noexecstack -fPIE -pie")
-set(CMAKE_SKIP_RPATH TRUE)
 
-set(INC_PATH $ENV{DDK_PATH})
-set(LIB_PATH $ENV{NPU_HOST_LIB})
-if (NOT DEFINED ENV{NPU_HOST_LIB})
-    message(FATAL_ERROR "need set NPU_HOST_LIB")
-else()
-    message(STATUS "set LIB_PATH: ${LIB_PATH}")
-endif ()
+set(COMMON_PATH "../../../common/")
+
+add_subdirectory(${COMMON_PATH} ./common_build)
 
 include_directories(
-    ../../../common/infer/platform
-    ../../../common/include
+    ${COMMON_PATH}/infer/platform
+    ${COMMON_PATH}/include
 )
 
 link_directories(
@@ -50,7 +32,5 @@ link_directories(
 )
 
 add_executable(main main.cpp)
-
-target_link_libraries(main infer_utils_static stdc++)
-
+target_link_libraries(main infer_common)
 install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

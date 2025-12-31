@@ -117,7 +117,7 @@ def run_evaluation(args):
 def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='根据TXT检测结果进行COCO关键点评估')
-    parser.add_argument('--result_dir', default='../data/result/txt',
+    parser.add_argument('--result_dir', default='../out/result/txt',
                         help='存放检测结果TXT文件的目录')
     parser.add_argument('--gt_annotations',
                         default="../../../../../datasets/coco2017/annotations/person_keypoints_val2017.json",

@@ -38,7 +38,7 @@ using json = nlohmann::json;
 #include <iostream>
 #define INFO_LOG(fmt, ...) fprintf(stdout, "[INFO]  " fmt "\n", ##__VA_ARGS__)
 #define WARN_LOG(fmt, ...) fprintf(stdout, "[WARN]  " fmt "\n", ##__VA_ARGS__)
-#define ERROR_LOG(fmt, ...)fprintf(stdout, "[ERROR] " fmt "\n", ##__VA_ARGS__)
+#define ERROR_LOG(fmt, ...) fprintf(stdout, "[ERROR] " fmt "\n", ##__VA_ARGS__)
 
 typedef enum Result {
     SUCCESS = 0,
@@ -53,22 +53,22 @@ typedef enum ModelType {
 static const int BYTE_BIT_NUM = 8; // 1 byte = 8 bit
 static int loop = 1;
 
-Result ReadInputListFile(const std::string& fileName, std::vector<std::string>& inputLists)
+Result ReadInputListFile(const std::string &fileName, std::vector<std::string> &inputLists)
 {
     struct stat sBuf;
     int fileStatus = stat(fileName.data(), &sBuf);
     if (fileStatus == -1) {
-        ERROR_LOG("failed to get file %s", fileName.c_str());
+        ERROR_LOG("failed to get file ");
         return FAILED;
     }
 
     if (S_ISREG(sBuf.st_mode) == 0) {
-        ERROR_LOG("%s is not a file, please enter a file", fileName.c_str());
+        ERROR_LOG(" is not a file, please enter a file");
         return FAILED;
     }
     std::ifstream imglistFile(fileName, std::ios::in);
     if (imglistFile.is_open() == false) {
-        ERROR_LOG("open file %s failed", fileName.c_str());
+        ERROR_LOG("open file  failed");
         return FAILED;
     }
     char absPath[PATH_MAX];
@@ -91,11 +91,11 @@ Result ReadInputListFile(const std::string& fileName, std::vector<std::string>& 
     return SUCCESS;
 }
 
-Result ReadImgFileToBuf(const std::string& fileName, Infer::TensorDesc desc, Infer::TensorBuf inBuf)
+Result ReadImgFileToBuf(const std::string &fileName, Infer::TensorDesc desc, Infer::TensorBuf inBuf)
 {
     std::ifstream binFile(fileName, std::ifstream::binary);
     if (binFile.is_open() == false) {
-        ERROR_LOG("open file %s failed", fileName.c_str());
+        ERROR_LOG("open file failed");
         binFile.close();
         return FAILED;
     }
@@ -118,9 +118,9 @@ Result ReadImgFileToBuf(const std::string& fileName, Infer::TensorDesc desc, Inf
 
 Result GetOutputWithBin(Infer::TensorBuf &outBuf, Infer::TensorDesc &outDesc, std::string outputBinFileName, std::vector<float> &noStrideBuf)
 {
-    INFO_LOG(" GetOutputWithBin : %s", outputBinFileName);
+    INFO_LOG(" GetOutputWithBin ");
     int64_t lastDim = outDesc.dims[outDesc.dimCount - 1];
-    size_t dataSize = outDesc.typeSize / BYTE_BIT_NUM; 
+    size_t dataSize = outDesc.typeSize / BYTE_BIT_NUM;
     size_t lastDimSize = dataSize * lastDim;
     size_t loopNum = outBuf.size / outBuf.stride;
     size_t strideElemNum = outBuf.stride / dataSize;
@@ -134,12 +134,10 @@ Result GetOutputWithBin(Infer::TensorBuf &outBuf, Infer::TensorDesc &outDesc, st
         std::vector<float> tempBuf(outData, outData + outSize);
         noStrideBuf.assign(tempBuf.begin(), tempBuf.end());
     } else {
-        /** */
         std::vector<float> tempBuf(outData, outData + outSize);
         for (size_t i = 0; i < loopNum; ++i) {
             size_t offset = i * strideElemNum;
             for (int64_t index = 0; index < lastDim; index++) {
-                // int8_t* outOffset = outData + ;
                 noStrideBuf.push_back(tempBuf[offset + index]);
             }
         }
@@ -148,12 +146,12 @@ Result GetOutputWithBin(Infer::TensorBuf &outBuf, Infer::TensorDesc &outDesc, st
         INFO_LOG(" noStrideBuf malloc fail");
         return FAILED;
     }
-    std::ofstream fout(outputBinFileName, std::ios::out|std::ios::binary);
+    std::ofstream fout(outputBinFileName, std::ios::out | std::ios::binary);
     if (fout.good() == false) {
-        INFO_LOG(" create output file [%s] failed ", outputBinFileName.c_str());
+        INFO_LOG(" create output file failed ");
         return FAILED;
     }
-    fout.write((char*)&noStrideBuf[0], noStrideBuf.size() * sizeof(float));
+    fout.write((char *)&noStrideBuf[0], noStrideBuf.size() * sizeof(float));
     fout.close();
     return SUCCESS;
 }
@@ -164,9 +162,9 @@ Result PostProcess(std::vector<Infer::TensorBuf> &outBufs, std::vector<Infer::Te
     size_t start = filePath.find_last_of("/");
     size_t end = filePath.find_last_of(".");
 
-    std::string fileName = filePath.substr(start , end-start);
+    std::string fileName = filePath.substr(start, end - start);
     std::string resultPath = filePath.substr(0, start) + "/../../out/result";
-    struct stat info; 
+    struct stat info;
     if (stat(resultPath.c_str(), &info) != 0) {
         // 文件夹不存在，尝试创建
         mkdir(resultPath.c_str(), 0777);
@@ -182,10 +180,10 @@ Result PostProcess(std::vector<Infer::TensorBuf> &outBufs, std::vector<Infer::Te
         // 文件夹不存在，尝试创建
         mkdir(binPath.c_str(), 0777);
     }
-    
+
     // 保存bin文件
     std::string binFile = binPath + fileName + "_0.bin";
-    if(modelType) {
+    if (modelType) {
         binFile = binPath + fileName + "_0.bin";
     } else {
         binFile = jpgPath + fileName + "_0.bin";
@@ -202,26 +200,26 @@ bool PathToRealPath(const std::string &path, std::string &realPath)
         return false;
     }
     if (path.length() > PATH_MAX) {
-        ERROR_LOG("illegal path len , the len is %zu", path.length());
+        ERROR_LOG("illegal path len , the len is");
         return false;
     }
     char tmpPath[PATH_MAX] = {};
     if (realpath(path.c_str(), tmpPath) == nullptr) {
-        ERROR_LOG("path[%s] to realpath error", path.c_str());
+        ERROR_LOG("path to realpath error");
         return false;
     }
     realPath = tmpPath;
     return true;
 }
 
-
-int InferModel(std::string modelPath, ModelType modelType, std::string inputPath) {
+int InferModel(std::string modelPath, ModelType modelType, std::string inputPath)
+{
     int ret;
     /* load model */
     std::shared_ptr<Infer::MdlBase> model = Infer::MdlCreate();
     ret = model->LoadModel(modelPath);
     if (ret != SUCCESS) {
-        ERROR_LOG("load model [%s] failed", modelPath.c_str());
+        ERROR_LOG("load model failed");
         Infer::DevDeInit();
         return FAILED;
     }
@@ -229,7 +227,7 @@ int InferModel(std::string modelPath, ModelType modelType, std::string inputPath
     /* read img list file, write abs img file path to vector inputLists */
     std::vector<std::string> inputLists;
     std::string realPath;
-    if(modelType) {
+    if (modelType) {
         realPath = inputPath + "/txt_list.txt";
     } else {
         realPath = inputPath + "/img_list.txt";
@@ -247,9 +245,9 @@ int InferModel(std::string modelPath, ModelType modelType, std::string inputPath
     std::vector<Infer::TensorDesc> inDescs, outDescs;
     Infer::TensorDesc desc;
     size_t inputNum = model->GetInTensorNum();
-    size_t  outputNum = model->GetOutTensorNum();
+    size_t outputNum = model->GetOutTensorNum();
     if (inputNum != 1) {
-        ERROR_LOG("only support single-input model, [%s] has %zu input", modelPath.c_str(), inputNum);
+        ERROR_LOG("only support single-input model");
         model->UnLoadModel();
         Infer::DevDeInit();
         return FAILED;
@@ -269,9 +267,9 @@ int InferModel(std::string modelPath, ModelType modelType, std::string inputPath
 
     model->GetInTensorDescByIdx(0, desc);
 
-
     /* model execute */
     std::chrono::microseconds dur(0);
+    std::chrono::microseconds dur1(0);
     for (size_t i = 0; i < inputLists.size(); ++i) {
         /* read img to inBuf */
         ret = ReadImgFileToBuf(inputLists[i], desc, inBufs[0]);
@@ -293,8 +291,6 @@ int InferModel(std::string modelPath, ModelType modelType, std::string inputPath
         }
         auto end = std::chrono::high_resolution_clock::now();
         dur += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        INFO_LOG("execute %s success", inputLists[i].c_str());
-
         (void)PostProcess(outBufs, outDescs, inputLists[i], modelType);
     }
     INFO_LOG("time: %d, fps: %f", dur.count(), 1000.0 * 1000.0 * (loop * inputLists.size()) / (float)dur.count());
@@ -312,63 +308,71 @@ int main(int argc, char *argv[])
         {"acl", required_argument, NULL, 'a'},
         {"input", required_argument, NULL, 'i'},
         {"loop", required_argument, NULL, 'l'},
-        {0, 0, 0, 0}
-    };
+        {0, 0, 0, 0}};
 
     std::string aclConfigPath;
     std::string imgModelPath;
     std::string txtModelPath;
     std::string inputPath;
-    while ((opt = getopt_long(argc, argv, optstring, long_options, NULL)) != -1) {
-        switch (opt) {
-            case 'h':
-                INFO_LOG("Usage: %s [--help] [--model OM_MODEL_PATH] [--acl ACL_CONFIG_PATH] [--input IMAGE_DIR] [--loop LOOP_COUNT]", argv[0]);
-                return 0;
-            case 'j':
+    while ((opt = getopt_long(argc, argv, optstring, long_options, NULL)) != -1)
+    {
+        switch (opt)
+        {
+        case 'h':
+            INFO_LOG("Usage: [--help] [--model OM_MODEL_PATH] [--acl ACL_CONFIG_PATH] [--input IMAGE_DIR] [--loop LOOP_COUNT]");
+            return 0;
+        case 'j':
+            if (optarg) {
                 if (!PathToRealPath(optarg, imgModelPath)) {
                     ERROR_LOG("parse model path error");
                     return 0;
                 }
-                break;
-            case 't':
-                if (optarg) {
-                    if (!PathToRealPath(optarg, txtModelPath)) {
-                        ERROR_LOG("parse text model path error");
-                        return 0;
-                    }
-                } else {
-                    // 如果没有提供参数，设置为空字符串或默认值
-                    txtModelPath = ""; // 或者设置为默认模型路径
-                    INFO_LOG("No text model specified, using default behavior");
-                }
-                break;
-            case 'a':
-                if (!PathToRealPath(optarg, aclConfigPath)) {
-                    ERROR_LOG("parse acl config path error");
-                    return 0;
-                }
-                break;
-            case 'i':
-                if (!PathToRealPath(optarg, inputPath)) {
-                    ERROR_LOG("parse image dir error");
-                    return 0;
-                }
-                break;
-            case 'l': {
-                char *endptr = nullptr;
-                loop = strtoull(optarg, &endptr, 0);
-                if (*endptr != '\0') {
-                    ERROR_LOG("incorrect input after -l/--loop, %s", endptr);
-                    return 0;
-                }
-                break;
+            } else {
+                // 如果没有提供参数，设置为空字符串或默认值
+                imgModelPath = ""; // 或者设置为默认模型路径
+                INFO_LOG("No img model specified, using default behavior");
             }
-            case '?':
-                ERROR_LOG("unknown option: -%c", optopt);
+            break;
+        case 't':
+            if (optarg) {
+                if (!PathToRealPath(optarg, txtModelPath)) {
+                    ERROR_LOG("parse text model path error");
+                    return 0;
+                }
+            } else {
+                // 如果没有提供参数，设置为空字符串或默认值
+                txtModelPath = ""; // 或者设置为默认模型路径
+                INFO_LOG("No text model specified, using default behavior");
+            }
+            break;
+        case 'a':
+            if (!PathToRealPath(optarg, aclConfigPath)) {
+                ERROR_LOG("parse acl config path error");
                 return 0;
-            default:
-                ERROR_LOG("unexpected error");
+            }
+            break;
+        case 'i':
+            if (!PathToRealPath(optarg, inputPath)) {
+                ERROR_LOG("parse image dir error");
                 return 0;
+            }
+            break;
+        case 'l':
+        {
+            char *endptr = nullptr;
+            loop = strtoull(optarg, &endptr, 0);
+            if (*endptr != '\0') {
+                ERROR_LOG("incorrect input after -l/--loop");
+                return 0;
+            }
+            break;
+        }
+        case '?':
+            ERROR_LOG("unknown option:");
+            return 0;
+        default:
+            ERROR_LOG("unexpected error");
+            return 0;
         }
     }
 
@@ -380,8 +384,11 @@ int main(int argc, char *argv[])
         ERROR_LOG("dev init failed");
         return FAILED;
     }
-    InferModel(imgModelPath, IMAGE, inputPath);
-    if(txtModelPath != "") {
+    if (imgModelPath != "") {
+        INFO_LOG(" start image model");
+        InferModel(imgModelPath, IMAGE, inputPath);
+    }
+    if (txtModelPath != "") {
         INFO_LOG(" start txt model");
         InferModel(txtModelPath, TXT, inputPath);
     }

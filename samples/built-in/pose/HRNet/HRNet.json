@@ -1,0 +1,146 @@
+{
+    "modelName": "HRNet",
+    "modelDesc": "HigherHRNet 是一种新型的自下而上人体姿态估计算法，它在训练阶段引入多分辨率监督机制，在推理阶段采用多分辨率聚合策略，不仅能有效应对自下而上多人姿态估计任务中的尺度变化难题，还可实现关键点的高精度定位，尤其在小尺寸人体目标的处理上表现突出。",
+    "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/pose/HRNet",
+    "modelParameter": {
+      "输入": "512x768",
+      "参数量": "28.618M",
+      "计算量": "70.645GFLOPs"
+    },
+    "isBeta": false,
+    "betaDesc": "",
+    "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+    "modelUsageScenes": [
+      {
+        "task": "Vision",
+        "tags": [
+          "人体姿态估计"
+        ]
+      }
+    ],
+    "modelFrame": [
+      "PyTorch"
+    ],
+    "modelDatasets": {
+      "desc": "coco2017 val数据集",
+      "link": "https://cocodataset.org/#download"
+    },
+    "srcModelLicense": [
+      {
+        "desc": "源模型",
+        "link": "https://github.com/HRNet/HigherHRNet-Human-Pose-Estimation/blob/master/LICENSE"
+      }
+    ],
+    "modelLicense": [
+      {
+        "desc": "部署模型",
+        "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/pose/HRNet/LICENSE"
+      }
+    ],
+    "quickStart": {
+      "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/pose/HRNet/doc/快速开始.md"
+    },
+    "modelChipset": [
+      {
+        "chipset": "Hi3403V100 SVP_NNN",
+        "tools": [
+          {
+            "name": "CANN配置",
+            "link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+            "desc": "AI异构计算架构，承上启下，提升计算效率的关键平台"
+          },
+          {
+            "name": "编译工具库",
+            "link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md",
+            "desc": "高效编译，精准适配AI性能优化，应用流畅运行"
+          },
+          {
+            "name": "SDK",
+            "link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/",
+            "desc": "稳定、易用的设计，支撑客户快速产品量产"
+          }
+        ],
+        "os": [
+          "OpenHarmony",
+          "Linux"
+        ],
+        "performance": [
+          {
+            "quantMode": "a16w8",
+            "detail": [
+              {
+                "performance": 72.28,
+                "performanceUnit": "耗时（ms）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 13.84,
+                "performanceUnit": "性能（fps）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 323.933,
+                "performanceUnit": "单帧内存带宽（MB）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 82.879,
+                "performanceUnit": "内存（MB）",
+                "performanceDesc": ""
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "chipset": "Hi3403V100 NNN",
+        "tools": [
+          {
+            "name": "CANN工具",
+            "link": "",
+            "desc": "5.30.t11.7.b110 (请联系FAE获取)"
+          },
+          {
+            "name": "编译工具链",
+            "link": "",
+            "desc": "aarch64-mix210-linux-gcc (请联系FAE获取)"
+          },
+          {
+            "name": "SDK",
+            "link": "",
+            "desc": "SPC022 (请联系FAE获取)"
+          }
+        ],
+        "os": [
+          "Linux"
+        ],
+        "performance": [
+          {
+            "quantMode": "fp16",
+            "detail": [
+              {
+                "performance": 181.16,
+                "performanceUnit": "耗时（ms）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 5.52,
+                "performanceUnit": "性能（fps）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 1278.445,
+                "performanceUnit": "单帧内存带宽（MB）",
+                "performanceDesc": ""
+              },
+              {
+                "performance": 307.164,
+                "performanceUnit": "内存（MB）",
+                "performanceDesc": ""
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }

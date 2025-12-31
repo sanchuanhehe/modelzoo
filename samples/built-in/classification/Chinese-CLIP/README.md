@@ -1,4 +1,4 @@
-# 基于Chinese-CLIP网络实现图片分类
+# 基于Chinese-CLIP网络实现跨模态检索
 
 - [概述](#ZH-CN_TOPIC_0000001172161501)
 
@@ -42,8 +42,8 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 
   | 输出数据 | 数据类型 | 大小   |
   | -------- | -------- | ------ |
-  | unnorm_image_features    | FP32     | 1x512 |
-  | unnorm_text_features    | FP32     | 1x512 |
+  | image_features    | FP32     | 1x512 |
+  | text_features    | FP32     | 1x512 |
 
 
 
@@ -54,9 +54,6 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 ```
 ├── data
 │   ├── ...            //测试数据
-
-├── inc
-│   ├── ...            //声明头文件
 
 ├── script
 │   ├── zeroshot.sh     //shell脚本，调用前后处理python文件
@@ -91,10 +88,11 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 
     **表 1** 版本配套表
 
-    | 芯片型号  | npu  | soc_version | 环境准备指导     |
-    | --------- | ---- | ----------- | ---------------- |
-    | SS928V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-    | SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+    | 芯片型号   | npu     | soc_version | 环境准备指导                                                 | cann包版本                                                   | 编译工具链                                                   | os                                                           | sdk                                                          |
+    | ---------- | ------- | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md#241安装clang交叉编译器) | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md) | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | SPC022                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
+    | Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | SPC022                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -106,6 +104,7 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 2. 安装依赖。
 
    ```
+   #Python 3.8.20
    pip3 install -r requirements.txt
    ```
 2. 开源源码获取。
@@ -143,13 +142,14 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
    ```
 
 2. 数据预处理，将原始数据集转换为模型的输入数据。
-    
+   
     执行 ./script/zeroshot.sh 脚本，完成数据预处理。
     
     ```
     bash ./script/zeroshot.sh ./script/preprocess.py data cifar-100 ViT-B-16 RoBERTa-wwm-ext-base-chinese ../models/clip_cn_vit-b-16.pt
     ```
-    执行后会在data目录下生成txt和img文件夹，需要将文件列表分别读入到txt_list.txt和img_list.txt
+    执行后会在data目录下生成txt和img文件夹，需要将文件列表分别读入到txt_list.txt和img_list.txt.
+    备注：如果报错，将zeroshot.sh文件的行尾序列修改为LF
 
 ## 模型转化<a name="section741711594517"></a>
 
@@ -177,20 +177,20 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 
 3. 使用 onnx-simplifier 简化 onnx 模型。
       1. 文本模型
-    
+      
             ```
             onnxsim model/vit-b-16.img.fp32.onnx model/vit-b-16_img_sim.onnx --overwrite-input-shape "image:1,3,224,224"
             ```
-    
+        
       2. 图像模型
-    
+      
             ```
             onnxsim model/vit-b-16.txt.fp32.onnx model/vit-b-16_txt_sim.onnx --overwrite-input-shape "text:1,512"
             ```
 
 4. 使用ATC工具将ONNX模型转OM模型。
-    
-    SS928V100 SVP_NNN上的om模型转换命令:
+   
+    Hi3403V100 SVP_NNN上的om模型转换命令:
     1、图像
     ```
     atc --framework=5  --model="./model/vit-b-16_img_sim.onnx" --input_shape="image:1,3,224,224" --output="./model/clip_img" --image_list="./data/img/0.bin" --compile_mode=6 --matmul_per_channel_enable=1 --softmax_optimize_enable=1 --fusion_switch_file=TransformerFusion:on --soc_version=SS928V100
@@ -214,11 +214,6 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
     - --enable_small_channel:使能small channel优化。
     - --enable_single_stream:推理时使用一条stream。
     - --soc_version：处理器型号。
-    
-    注意：如果出现命令找不到，配置环境变量。
-    ```
-    source /usr/local/Ascend/ascend-toolkit/set_env.sh
-    ```
 
 ## 模型推理<a name="section741711594518"></a>
 
@@ -235,12 +230,15 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
 
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器有aarch64-mix210-linux-gcc版本，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
-	  
-	  ```
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
+    
+    ```
     cd build
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
-	  ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+    ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
 
@@ -256,11 +254,20 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
     ```
-    ./main -a ../src/acl.json -j ../model/clip_img.om  -t ../model/clip_text.om   -i ../data/  -l 1
+    ./main -a ../src/acl.json -j ../model/clip_img.om -i ../data/  -l 1
+    ./main -a ../src/acl.json -t ../model/clip_text.om   -i ../data/  -l 1
     ```
+    参数说明：
+
+    - -j：img模型路径。
+    - -t：txt模型路径。
+    - --acl: acl.json文件的路径，默认放在src目录下。
+    - --input: 输入的列表路径../data
+            图片会取该路径下的img_list.txt
+            文本会取该路径下的txt_list.txt        
+    - --loop： 循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
 **步骤3：输出后处理**
-本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。
 
 1. 精度验证。
 
@@ -270,7 +277,7 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
     bash ./script/zeroshot.sh ./script/postprocess.py data cifar-100 ViT-B-16 RoBERTa-wwm-ext-base-chinese ../models/clip_cn_vit-b-16.pt
     ```
 
-    SVP_NNN平台上精度结果：
+    Hi3403V100 SVP_NNN平台上精度结果：
       ```
        accurary: 0.6341
       ```
@@ -288,7 +295,7 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
     - --input: 输入的图像数据列表路径
     - --loop： 循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
-    在板端会输出显示，SVP_NNN平台上性能结果如下：
+    在板端会输出显示，Hi3403V100 SVP_NNN平台上性能结果如下：
     ```
     [INFO]  time: 8975423, fps: 11.141536
     ```
@@ -299,5 +306,5 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 
 | 芯片型号    | Batch Size | 数据集   |  Zero-shot Image Classification |       性能(FPS)|
 | ----------- | ---------- | -------- |  ------------------ |-----------------|
-| SS928V100 SVP_NNN | 1          | CIFAR100 |  0.6341            | 11.142   |
+| Hi3403V100 SVP_NNN | 1          | CIFAR100 |  0.6341            | 11.142   |
 

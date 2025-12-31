@@ -69,7 +69,6 @@ def postprocess(opt):
             top_pad:518 - bottom_pad,  # 高度方向
             left_pad:518 - right_pad   # 宽度方向
         ]
-        cropped_array.numpy().tofile("./data/res/" + out_path + '.bin')
         #还原图像大小
         depth = F.interpolate(cropped_array[:, None], (h, w), mode="bilinear", align_corners=True)[0, 0]
         

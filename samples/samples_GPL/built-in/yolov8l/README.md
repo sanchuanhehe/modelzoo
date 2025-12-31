@@ -53,9 +53,6 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 ├── data
 │   ├── ...            //测试数据
 
-├── inc
-│   ├── ...            //声明头文件
-
 ├── script
 │   ├── accuracy.py         //推理精度脚本
 │   ├── drawRectangle.py        //画框脚本
@@ -96,10 +93,12 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |                                                     |  -                                                            |
+
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
+
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -201,10 +200,6 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
       - --soc_version：处理器型号。
       - --compile_mode：编译模式，6代表数据量化使用16bit，权重量化使用8bit，且仅对CUBE算子进行量化，非CUBE算法使用fp16格式。注：选取其他编译模式可能导致精度下降
       
-      注意：如果出现命令找不到，配置环境变量。
-      ```
-      source /usr/local/Ascend/ascend-toolkit/set_env.sh
-      ```
 
 
 ## 模型推理<a name="section741711594518"></a>
@@ -217,17 +212,21 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
     mkdir -p build
     ```
 
-2.  切换到build目录，执行**cmake**生成编译文件。
+2.  切换到“build“目录，执行**cmake**生成编译文件。
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器有aarch64-mix210-linux-gcc
+
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
 	  
 	  ```
-      cd build
-      cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION="SS928V100"
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+	  ```
+    比如
     ```
-    ../src表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-    
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
     
 
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
@@ -290,8 +289,6 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
    ```
 
-     
-
 2. 验证batch_size的om模型的性能，参考命令如下：
 
    ```
@@ -310,7 +307,7 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
    在板端会输出显示，SVP_NNN平台上性能结果如下：
    ```
-   [INFO]  time: 9621531, fps: 10.393356
+   [INFO]  time: 9384209, fps: 10.656199
    ```
 
 3. 可视化推理结果
@@ -332,4 +329,4 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 | 芯片型号    | Batch Size | 数据集   | AP（IoU=0.50） | AP（IoU=0.50:0.95） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | coco2017  | 51.5%       | 69.0%         | 10.390 |
+| Hi3403V100 SVP_NNN | 1          | coco2017  | 51.5%       | 69.0%         | 10.656 |

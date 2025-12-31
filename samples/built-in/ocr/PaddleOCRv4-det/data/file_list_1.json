@@ -1,0 +1,8 @@
+{
+    "fileList": [
+        [
+            "../datasets/xfund_ppocr/images/zh_val_0.jpg"
+        ]
+    ],
+    "loop": 100
+}

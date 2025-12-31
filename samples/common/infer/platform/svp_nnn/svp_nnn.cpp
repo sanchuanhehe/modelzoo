@@ -24,59 +24,59 @@ int32_t DevInit(const std::string& configPath)
     int ret;
     svp_acl_rt_run_mode runMode;
     ret = svp_acl_init(configPath.c_str());
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("acl init failed");
-        return FAILED;
+        return -1;
     }
 
     ret = svp_acl_rt_set_device(0);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("acl set device failed");
-        return FAILED;
+        return -1;
     }
 
     ret = svp_acl_rt_get_run_mode(&runMode);
-    if (ret != SUCCESS || runMode != SVP_ACL_DEVICE) {
+    if (ret != 0 || runMode != SVP_ACL_DEVICE) {
         ERROR_LOG("get runmode failed");
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 
 int32_t DevDeInit()
 {
     int ret = svp_acl_rt_reset_device(0);
-    if (ret != SUCCESS && ret != SVP_ACL_ERROR_UNINITIALIZE) {
+    if (ret != 0 && ret != SVP_ACL_ERROR_UNINITIALIZE) {
         ERROR_LOG("acl reset device failed");
-        return FAILED;
+        return -1;
     }
 
     ret = svp_acl_finalize();
-    if (ret != SUCCESS && ret != SVP_ACL_ERROR_REPEAT_FINALIZE) {
+    if (ret != 0 && ret != SVP_ACL_ERROR_REPEAT_FINALIZE) {
         ERROR_LOG("acl deinit failed");
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 
 int32_t DevMalloc(void **devPtr, size_t size)
 {
     int ret = svp_acl_rt_malloc(devPtr, size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("malloc mem failed. size is %u", size);
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 
 int32_t DevFree(void *devPtr)
 {
     int ret = svp_acl_rt_free(devPtr);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("free mem failed");
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 int32_t DevMemcpy(void *dst, size_t destMax, const void *src, size_t count)
 {
@@ -144,16 +144,16 @@ int32_t SvpAclMdl::CreateDesc()
     modelDesc_ = svp_acl_mdl_create_desc();
     if (modelDesc_ == nullptr) {
         ERROR_LOG("svp_acl_mdl_create_desc failed");
-        return FAILED;
+        return -1;
     }
 
     int ret = svp_acl_mdl_get_desc(modelDesc_, modelId_);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("svp_acl_mdl_get_desc failed");
-        return FAILED;
+        return -1;
     }
 
-    return SUCCESS;
+    return 0;
 }
 
 void SvpAclMdl::DestroyDesc()
@@ -172,7 +172,7 @@ int32_t SvpAclMdl::CreateDataset()
     inputDataset_ = svp_acl_mdl_create_dataset();
     if (inputDataset_ == nullptr) {
         ERROR_LOG("create input dataset failed");
-        return FAILED;
+        return -1;
     }
 
     outputDataset_ = svp_acl_mdl_create_dataset();
@@ -180,7 +180,7 @@ int32_t SvpAclMdl::CreateDataset()
         ERROR_LOG("create output dataset failed");
         (void)svp_acl_mdl_destroy_dataset(inputDataset_);
         inputDataset_ = nullptr;
-        return FAILED;
+        return -1;
     }
 
     // add dataBuf to dataset
@@ -189,13 +189,13 @@ int32_t SvpAclMdl::CreateDataset()
         if (dataBuf == nullptr) {
             ERROR_LOG("get input data buffer failed");
             DestroyDataset();
-            return FAILED;
+            return -1;
         }
         ret = svp_acl_mdl_add_dataset_buffer(inputDataset_, dataBuf);
-        if (ret != SUCCESS) {
+        if (ret != 0) {
             ERROR_LOG("add input data buffer failed");
             DestroyDataset();
-            return FAILED;
+            return -1;
         }
     }
 
@@ -205,17 +205,17 @@ int32_t SvpAclMdl::CreateDataset()
         if (dataBuf == nullptr) {
             ERROR_LOG("get output data buffer failed");
             DestroyDataset();
-            return FAILED;
+            return -1;
         }
         ret = svp_acl_mdl_add_dataset_buffer(outputDataset_, dataBuf);
-        if (ret != SUCCESS) {
+        if (ret != 0) {
             ERROR_LOG("add output data buffer failed");
             DestroyDataset();
-            return FAILED;
+            return -1;
         }
     }
 
-    return SUCCESS;
+    return 0;
 }
 
 void SvpAclMdl::DestroyDataset()
@@ -247,19 +247,19 @@ int32_t SvpAclMdl::GetInOutputNum()
 {
     if (modelDesc_ == nullptr) {
         ERROR_LOG("no model desc, get input and output num failed");
-        return FAILED;
+        return -1;
     }
     inputNum_ = svp_acl_mdl_get_num_inputs(modelDesc_);
     if (inputNum_ <= 2) { /* 2：workBuf taskBuf */
         ERROR_LOG("svp_acl_mdl_get_num_inputs failed");
-        return FAILED;
+        return -1;
     }
     outputNum_ = svp_acl_mdl_get_num_outputs(modelDesc_);
     if (outputNum_ <= 0) {
         ERROR_LOG("svp_acl_mdl_get_num_outputs failed");
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::CreateWorkAndTaskBuf()
@@ -268,7 +268,7 @@ int32_t SvpAclMdl::CreateWorkAndTaskBuf()
     void *taskBuf, *workBuf;
     if (modelDesc_ == nullptr) {
         ERROR_LOG("no model desc, create workBuf and taskBuf failed");
-        return FAILED;
+        return -1;
     }
     // create task buf
     taskBufSize_ = svp_acl_mdl_get_input_size_by_index(modelDesc_, inputNum_ - workTaskBufNum);
@@ -280,7 +280,7 @@ int32_t SvpAclMdl::CreateWorkAndTaskBuf()
     workBufStride_ = svp_acl_mdl_get_input_default_stride(modelDesc_, inputNum_ - 1);
     workBuf_ = TensorBuf(workBufSize_, workBufStride_);
 
-    return SUCCESS;
+    return 0;
 
 }
 
@@ -289,66 +289,66 @@ int32_t SvpAclMdl::ReadFile(const std::string& filePath, void *&ptr, uint32_t &s
     std::ifstream file(filePath, std::ifstream::binary);
     if (!file.is_open()) {
         ERROR_LOG("open model file[%s] failed", filePath.c_str());
-        return FAILED;
+        return -1;
     }
     file.seekg(0, file.end);
     size = file.tellg();
     if (size == 0) {
         ERROR_LOG("model file:%s size is 0", filePath.c_str());
         file.close();
-        return FAILED;
+        return -1;
     }
 
     auto ret = svp_acl_rt_malloc(&ptr, size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("svp_acl_rt_malloc model buffer failed. size is %u", size);
         file.close();
-        return FAILED;
+        return -1;
     }
 
     file.seekg(0, file.beg);
     file.read(static_cast<char *>(ptr), size);
     file.close();
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::LoadModelFromMem(const void* modelBuf, size_t modelSize)
 {
     int ret;
     ret = svp_acl_mdl_load_from_mem(modelBuf, modelSize, &modelId_);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         svp_acl_rt_free(modelBuf);
         ERROR_LOG("svp_acl_mdl_load_from_mem call failed");
-        return FAILED;
+        return -1;
     }
 
     ret = CreateDesc();
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("create desc failed");
-        return FAILED;
+        return -1;
     }
 
     ret = GetInOutputNum();
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         DestroyDesc();
         ERROR_LOG("get input and output Num failed");
-        return FAILED;
+        return -1;
     }
 
     ret = CreateWorkAndTaskBuf();
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         DestroyDesc();
         ERROR_LOG("CreateWorkAndTaskBuf failed");
-        return FAILED;
+        return -1;
     }
 
     ret = CreateDataset();
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         DestroyDesc();
         ERROR_LOG("CreateDataset failed");
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::LoadModel(const std::string& modelPath)
@@ -356,25 +356,25 @@ int32_t SvpAclMdl::LoadModel(const std::string& modelPath)
     std::lock_guard<std::mutex> lock(loadFlagMtx_);
     if (loadFlag_) {
         ERROR_LOG("has already loaded a model");
-        return FAILED;
+        return -1;
     }
 
     void *modelBuf = nullptr;
     uint32_t modelSize = 0;
-    if (ReadFile(modelPath, modelBuf, modelSize) != SUCCESS) {
+    if (ReadFile(modelPath, modelBuf, modelSize) != 0) {
         ERROR_LOG("read model file failed");
-        return FAILED;
+        return -1;
     }
     // modelPtr_ = UniquePtr{modelBuf, &deleter};
     modelBuf_.ResetData(modelBuf);
 
-    if (LoadModelFromMem(modelBuf, modelSize) != SUCCESS) {
+    if (LoadModelFromMem(modelBuf, modelSize) != 0) {
         ERROR_LOG("load model:[%s] failed", modelPath.c_str());
-        return FAILED;
+        return -1;
     }
     loadFlag_ = true;
     PrintModelDesc();
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::LoadModel(const char* modelBuf, size_t modelSize)
@@ -382,15 +382,15 @@ int32_t SvpAclMdl::LoadModel(const char* modelBuf, size_t modelSize)
     std::lock_guard<std::mutex> lock(loadFlagMtx_);
     if (loadFlag_) {
         ERROR_LOG("has already loaded a model");
-        return FAILED;
+        return -1;
     }
-    if (LoadModelFromMem(modelBuf, modelSize) != SUCCESS) {
+    if (LoadModelFromMem(modelBuf, modelSize) != 0) {
         ERROR_LOG("load model failed");
-        return FAILED;
+        return -1;
     }
     loadFlag_ = true;
     PrintModelDesc();
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::UnLoadModel()
@@ -399,25 +399,25 @@ int32_t SvpAclMdl::UnLoadModel()
 
     if (!loadFlag_) {
         WARN_LOG("model had been unloaded or is not loaded");
-        return FAILED;
+        return -1;
     }
 
     DestroyDataset();
     DestroyDesc();
-
     int ret = svp_acl_mdl_unload(modelId_);
-    if (ret != SUCCESS) {
-        ERROR_LOG("unload model failed, modelId is %u, errorCode is %d",
-            modelId_, static_cast<int32_t>(ret));
+    if (ret != 0) {
+        LOG(ERROR) << "unload model failed, modelId is " << modelId_ << ", errorCode is " << ret;
+        return -1;
     }
     loadFlag_ = false;
+    return 0;
 }
 
 size_t SvpAclMdl::GetInTensorNum()
 {
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
-        return FAILED;
+        return -1;
     }
     return static_cast<size_t>(inputNum_ - workTaskBufNum);
 }
@@ -426,7 +426,7 @@ size_t SvpAclMdl::GetOutTensorNum()
 {
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
-        return FAILED;
+        return -1;
     }
     return static_cast<size_t>(outputNum_);
 }
@@ -437,12 +437,12 @@ int32_t SvpAclMdl::GetInTensorDescByIdx(size_t index, TensorDesc& desc)
     svp_acl_mdl_io_dims ioDims;
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
-        return FAILED;
+        return -1;
     }
     ret = svp_acl_mdl_get_input_dims(modelDesc_, index, &ioDims);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("get model input dims failed");
-        return FAILED;  
+        return -1;  
     }
     desc.dimCount = ioDims.dim_count;
     for (size_t i = 0; i < ioDims.dim_count && i < MAX_TENSOR_DIM; i++) {
@@ -458,7 +458,7 @@ int32_t SvpAclMdl::GetInTensorDescByIdx(size_t index, TensorDesc& desc)
 
     desc.defaultSize = svp_acl_mdl_get_input_size_by_index(modelDesc_, index);
 
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::GetInTensorDescByName(const std::string& name, TensorDesc& desc)
@@ -467,19 +467,20 @@ int32_t SvpAclMdl::GetInTensorDescByName(const std::string& name, TensorDesc& de
     size_t index;
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
-        return FAILED;
+        return -1;
     }
     ret = svp_acl_mdl_get_input_index_by_name(modelDesc_, name.c_str(), &index);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("get input index by name failed");
-        return FAILED;
+        return -1;
     }
 
     ret = GetInTensorDescByIdx(index, desc);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("get in tensor desc by idx failed");
-        return FAILED;
+        return -1;
     }
+    return 0;
 }
 
 int32_t SvpAclMdl::GetOutTensorDescByIdx(size_t index, TensorDesc& desc)
@@ -488,12 +489,12 @@ int32_t SvpAclMdl::GetOutTensorDescByIdx(size_t index, TensorDesc& desc)
     svp_acl_mdl_io_dims ioDims;
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
-        return FAILED;
+        return -1;
     }
     ret = svp_acl_mdl_get_output_dims(modelDesc_, index, &ioDims);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("get model output dims failed");
-        return FAILED;  
+        return -1;  
     }
     desc.dimCount = ioDims.dim_count;
     for (size_t i = 0; i < ioDims.dim_count && i < MAX_TENSOR_DIM; i++) {
@@ -509,7 +510,7 @@ int32_t SvpAclMdl::GetOutTensorDescByIdx(size_t index, TensorDesc& desc)
 
     desc.defaultSize = svp_acl_mdl_get_output_size_by_index(modelDesc_, index);
 
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::GetOutTensorDescByName(const std::string& name, TensorDesc& desc)
@@ -518,19 +519,20 @@ int32_t SvpAclMdl::GetOutTensorDescByName(const std::string& name, TensorDesc& d
     size_t index;
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
-        return FAILED;
+        return -1;
     }
     ret = svp_acl_mdl_get_output_index_by_name(modelDesc_, name.c_str(), &index);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("get output index by name failed");
-        return FAILED;
+        return -1;
     }
 
     ret = GetOutTensorDescByIdx(index, desc);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("get Out tensor desc by idx failed");
-        return FAILED;
+        return -1;
     }
+    return 0;
 }
 
 int32_t SvpAclMdl::SetInBuf(size_t index, TensorBuf& buf)
@@ -542,26 +544,26 @@ int32_t SvpAclMdl::SetInBuf(size_t index, TensorBuf& buf)
     inputSize = svp_acl_mdl_get_input_size_by_index(modelDesc_, index);
     if (buf.size != inputSize) {
         ERROR_LOG("buf size[%zu] is small than model %zuth input size[%zu]", buf.size, index, inputSize);
-        return FAILED;
+        return -1;
     }
 
     inputStride = svp_acl_mdl_get_input_default_stride(modelDesc_, index);
     if (buf.stride != inputStride) {
         ERROR_LOG("buf stride[%zu] is small than model %zuth input stride[%zu]", buf.stride, index, inputStride);
-        return FAILED;
+        return -1;
     }
 
     dataBuf = svp_acl_mdl_get_dataset_buffer(inputDataset_, index);
     if (dataBuf == nullptr) {
         ERROR_LOG("get input dataset %zuth buffer failed", index);
-        return FAILED;
+        return -1;
     }
     ret = svp_acl_update_data_buffer(dataBuf, buf.data.get(), buf.size, buf.stride);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("update input %zuth databuffer failed", index);
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::SetOutBuf(size_t index, TensorBuf& buf)
@@ -573,26 +575,26 @@ int32_t SvpAclMdl::SetOutBuf(size_t index, TensorBuf& buf)
     outputSize = svp_acl_mdl_get_output_size_by_index(modelDesc_, index);
     if (buf.size != outputSize) {
         ERROR_LOG("buf size[%zu] is small than model %zuth output size[%zu]", buf.size, index, outputSize);
-        return FAILED;
+        return -1;
     }
 
     outputStride = svp_acl_mdl_get_output_default_stride(modelDesc_, index);
     if (buf.stride != outputStride) {
         ERROR_LOG("buf stride[%zu] is small than model %zuth output stride[%zu]", buf.stride, index, outputStride);
-        return FAILED;
+        return -1;
     }
 
     dataBuf = svp_acl_mdl_get_dataset_buffer(outputDataset_, index);
     if (dataBuf == nullptr) {
         ERROR_LOG("get output dataset %zuth buffer failed", index);
-        return FAILED;
+        return -1;
     }
     ret = svp_acl_update_data_buffer(dataBuf, buf.data.get(), buf.size, buf.stride);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("update output %zuth databuffer failed", index);
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 
 int32_t SvpAclMdl::Execute(std::vector<TensorBuf> &inBufs, std::vector<TensorBuf> &outBufs,
@@ -603,78 +605,88 @@ int32_t SvpAclMdl::Execute(std::vector<TensorBuf> &inBufs, std::vector<TensorBuf
 
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
-        return FAILED;
+        return -1;
     }
 
-    if (inBufs.size() != (inputNum_ - workTaskBufNum)) {
-        ERROR_LOG("input Tensor Buf size[%zu] is not equal to model inputNum[%u]", inBufs.size(), inputNum_);
-        return FAILED;
+    size_t inputBufSize = inBufs.size();
+    if (inputBufSize == (inputNum_  + 1 - workTaskBufNum)) {
+        inputBufSize--;
     }
+
+    if (inputBufSize != (inputNum_ - workTaskBufNum)) {
+        ERROR_LOG("input Tensor Buf size[%zu] is not equal to model inputNum[%u]", inputBufSize, inputNum_);
+        return -1;
+    }
+
     if (outBufs.size() != (outputNum_)) {
         ERROR_LOG("output Tensor Buf size[%zu] is not equal to model outputNum[%u]", inBufs.size(), outputNum_);
-        return FAILED;
+        return -1;
     }
 
     /* 加锁保证多线程安全 */
     std::lock_guard<std::mutex> locker(executeMtx_);
-    for (size_t i = 0; i < inBufs.size(); i++) {
+    for (size_t i = 0; i < inputBufSize; i++) {
         ret = SetInBuf(i, inBufs[i]);
-        if (ret != SUCCESS) {
+        if (ret != 0) {
             ERROR_LOG("set %zuth input buf faile", i);
-            return FAILED;
+            return -1;
         }
     }
     // set task buf
     ret = SetInBuf(inputNum_ - workTaskBufNum, taskBuf_);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("set taskbuf faile");
-        return FAILED;
+        return -1;
     }
 
     for (size_t i = 0; i < outBufs.size(); i++) {
         ret = SetOutBuf(i, outBufs[i]);
-        if (ret != SUCCESS) {
+        if (ret != 0) {
             ERROR_LOG("set %zuth output buf faile", i);
-            return FAILED;
+            return -1;
         }
     }
-
+    static std::chrono::microseconds dur(0);
     (void)svp_acl_rt_set_device(0);
     if (runMode == RunMode::Sync) {
+        auto start = std::chrono::high_resolution_clock::now();
         int ret = svp_acl_mdl_execute(modelId_, inputDataset_, outputDataset_);
+        auto end = std::chrono::high_resolution_clock::now();
         (void)svp_acl_rt_reset_device(0);
-        if (ret != SUCCESS) {
+        if (ret != 0) {
             ERROR_LOG("model execute failed");
-            return FAILED;
+            return -1;
         }
+        dur += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        *(static_cast<float*>(inBufs[inBufs.size() - 1].GetRawPtr())) = dur.count();
     } else if (runMode == RunMode::Async) {
         int ret = svp_acl_mdl_execute_async(modelId_, inputDataset_, outputDataset_, nullptr);
         (void)svp_acl_rt_reset_device(0);
-        if (ret != SUCCESS) {
+        if (ret != 0) {
             ERROR_LOG("model execute async failed");
-            return FAILED;
+            return -1;
         }
     } else {
         ERROR_LOG("invalid runmode");
-        return FAILED;
+        return -1;
     }
-
+    return 0;
 }
 
 int32_t SvpAclMdl::Wait()
 {
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
-        return FAILED;
+        return -1;
     }
     std::lock_guard<std::mutex> locker(executeMtx_);
     (void)svp_acl_rt_set_device(0);
     int ret = svp_acl_rt_synchronize_stream(nullptr);
     (void)svp_acl_rt_reset_device(0);
-    if (ret != SUCCESS) {
+    if (ret != 0) {
         ERROR_LOG("synchronize stream failed");
-        return FAILED;
+        return -1;
     }
-    return SUCCESS;
+    return 0;
 }
 }

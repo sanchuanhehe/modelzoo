@@ -1,4 +1,4 @@
-# 基于**UNet**网络实现图片分类
+# 基于**UNet**网络实现图像分割
 - [概述](#ZH-CN_TOPIC_0000001172161501)
 
     - [输入输出数据](#section540883920406)
@@ -85,10 +85,11 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+    | 芯片型号   | npu     | soc_version | 环境准备指导                                                 | cann包版本                                                   | 编译工具链                                                   | os                                                           | sdk                                                          |
+    | ---------- | ------- | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md#241安装clang交叉编译器) | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md) | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | SPC022                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
+    | Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | SPC022                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -135,7 +136,7 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
     ```
     例如:
     ```
-    python ../../../../utils/generate_file_list.py ../../../../datasets/carvana/train_hq/
+    python ../../../../utils/generate_file_list.py ./datasets/carvana/train_hq/
     ```
     
     参数说明：
@@ -176,6 +177,8 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
     执行ATC命令。
     1. SS928V100 SVP_NNN上的om模型转换命令
         ```
+        python ../../../../utils/preprocess.py --input_path ./datasets/carvana/train_hq/ --output_path ./data/ --resize 572 --resize_mode 1 --type float32 --mean 255
+
         atc --framework=5 --model="./model/UNet_dynamic_sim.onnx" --input_shape="actual_input_1:1,3,572,572" --output="./model/unet" --image_list="./data/img/0cdf5b5d0ce1_01.bin" --soc_version=SS928V100
         ```
     2. SS928V100 NNN上的om模型转换命令
@@ -196,11 +199,6 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
         - --enable_small_channel:使能small channel优化。
         - --enable_single_stream:推理时使用一条stream。
         - --soc_version：处理器型号。
-        
-        注意：如果出现命令找不到，配置环境变量。
-        ```
-        source /usr/local/Ascend/ascend-toolkit/set_env.sh
-        ```
 
 ## 模型推理<a name="section741711594518"></a>
 
@@ -218,11 +216,15 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
 
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器为aarch64-mix210-linux-gcc，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
     
     ```
     cd build
-    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+    ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
     ```
     
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
@@ -246,12 +248,10 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
     LD_LIBRARY_PATH=XXX/samples/opensource/opencv/lib/:$LD_LIBRARY_PATH
 
     ```
-    ./main --acl ../src/acl.json --model ../model/unet.om --input ../data/file_list.txt
+    ./main --acl ../src/acl.json --model ../model/unet.om --input ../data/file_list.json
     ```
 
 **步骤3：输出后处理**
-
-本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。
 
 1. 精度验证。
 
@@ -270,7 +270,7 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
     - --result：输出精度结果所在的位置。
 
-    例如：  `python ./script/accuracy.py --output ./out/result/bin/ --label ../../../../datasets/carvana/train_masks/ --result ./Pytorch_UNet/accuracy.txt`
+    例如：  `python ./script/accuracy.py --output ./out/result/bin/ --label ./datasets/carvana/train_masks/ --result ./Pytorch_UNet/accuracy.txt`
       
     SVP_NNN平台上精度结果：
      文件中保存的是每一个图片的结果，平均结果为上述所有值求和输出：
@@ -288,22 +288,21 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 2. 验证batch_size的om模型的性能，参考命令如下：
 
     ```
-    执行./main --acl ../src/acl.json --model ../model/unet.om --input ../data/file_list_1.txt --loop 100
+    执行./main --acl ../src/acl.json --model ../model/unet.om --input ../data/file_list_1.json
     ```
 
     参数说明：(此模式下，file_list_1.txt只放一张图片)
 
     - --model：om模型路径。
     - --output:  后处理后结果所在位置
-    - --model: 模型所在位置
     - --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
     在板端会输出显示
-    SVP_NNN平台上性能结果如下：
+    Hi3403V100 SVP_NNN平台上性能结果如下：
     ```
      [INFO] time: 10374899, fps: 9.638646
     ```
-    NNN平台上性能结果如下：
+    Hi3403V100 NNN平台上性能结果如下：
     ```
      [INFO] time: 46724082, fps: 2.14022
     ```
@@ -314,5 +313,5 @@ UNet是由FCN改进而来的图像分割模型，其网络结构像U型，分为
 
 | 芯片型号    | Batch Size | 数据集   | 开源精度                                              | 精度指标IOU |性能 |
 | ----------- | ---------- | -------- | ----------------------------------------------------- | ------------------ |------------------ |
-| SS928V100_SVP_NNN | 1          | carvana | [链接](https://pytorch.org/vision/stable/models.html) | 0.9863       | 9.6386|
-| SS928V100_NNN | 1          | carvana | [链接](https://pytorch.org/vision/stable/models.html) | 0.9858       | 2.14|
+| Hi3403V100 SVP_NNN | 1          | carvana | [链接](https://pytorch.org/vision/stable/models.html) | 0.9863       | 9.6386|
+| Hi3403V100 NNN | 1          | carvana | [链接](https://pytorch.org/vision/stable/models.html) | 0.9858       | 2.14|

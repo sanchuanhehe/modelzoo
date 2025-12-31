@@ -1,0 +1,12 @@
+natsort==8.4.0
+numpy==1.21.6
+onnx==1.14.1
+onnx_tool==0.9.0
+onnxruntime==1.14.1
+opencv_contrib_python==3.4.4.19
+opencv_python==4.12.0.88
+opencv_python_headless==4.12.0.88
+setuptools==41.2.0
+torch==1.8.0
+torchvision==0.9.0
+tqdm==4.67.1

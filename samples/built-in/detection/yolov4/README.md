@@ -33,7 +33,7 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
 
   | 输入数据 | 数据类型 | 大小             | 数据排布格式 |
   | -------- | -------- | ---------------- | ------------ |
-  | images  | RGB_FP32 | 1 x 3 x 608 x 608 | NCHW         |
+  | input  | RGB_FP32 | 1 x 3 x 608 x 608 | NCHW         |
 
 - 输出数据
 
@@ -91,10 +91,11 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |                                                     |  -                                                            |
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97.md#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97.md#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC022  |  aarch64-mix210-linux-gcc |  linux  |  SPC022  |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  Hi3403V100  |  aarch64-mix210-linux-gcc |  linux  |  SPC022  |                                                  |  -                                                            |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -193,11 +194,16 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
 3. 使用ATC工具将ONNX模型转OM模型。
 
       执行ATC命令。
-      1. SS928V100 SVP_NNN上的om模型转换命令
+      1. Hi3403V100 SVP_NNN上的om模型转换命令
          ```bash
          # 如果您没有现成的bin文件，您需要参考后面的python脚本使用说明，使用preprocess.py脚本先生成bin文件。如果您想使用多个bin文件进行数据校准，多个文件间请使用;分割，例如a.bin;b.bin。
-         atc --framework=5 --model="./model/yolov4.onnx" --input_shape="images:1,3,640,640" --output="./model/yolov4" --soc_version=SS928V100 --image_list="./data/preprocess/bin/000000006818.bin" --compile_mode=6
+         atc --framework=5 --model="./model/yolov4.onnx" --input_shape="input:1,3,608,608" --output="./model/yolov4" --soc_version=SS928V100 --image_list="./data/preprocess/bin/000000006818.bin" --compile_mode=6
          ```
+      2. Hi3403V100 NNN上的om模型转换命令
+         ```bash
+         atc --framework=5 --model="model/yolov4.onnx" --input_shape="input:1,3,608,608" --output="model/yolov4" --enable_single_stream=true --input_fp16_nodes="input" --soc_version=OPTG
+         ```
+
          运行成功后生成yolov4.om模型文件。
     
          参数说明：
@@ -223,18 +229,22 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
     mkdir -p build
     ```
 
-2. 切换到build目录，执行**cmake**生成编译文件。
+2.  切换到“build“目录，执行**cmake**生成编译文件。
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器为aarch64-mix210-linux-gcc，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
+
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
 	  
-      ```bash
-      cd build
-      cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
-      ```
-    ../src表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-    
-    
+	  ```
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+	  ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
+
 
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
@@ -253,15 +263,23 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
     ```
 4. 修改配置文件cfg.txt。
 
-    main函数执行时，前后处理函数会读取data/cfg.txt获取一些配置参数，cfg.txt中默认配置了推理时保存前处理和模型推理生成的原始bin文件，会占据较大的磁盘空间，您可以将该配置改为空字符串不保存节约磁盘空间。
+    main函数执行时，前后处理函数会读取data/cfg.txt获取一些配置参数，cfg.txt中默认配置了推理时保存前处理和模型推理生成的原始bin文件，会占据较大的磁盘空间，您可以将该配置改为空字符串节约磁盘空间。
     ```bash
-    #### 两个主要消耗磁盘空间的参数如下 ####
-    
+    ######################### 建议按照如下配置修改配置文件 #########################
     # 预处理后的二进制文件，设置为空字符串则不保存，节约磁盘空间可以不保存
-    save_preprocess_bin="../data/preprocess/bin"
-
+    save_preprocess_bin=""
+    
     # 模型推理原始二进制结果，设置为空字符串则不保存，节约磁盘空间可以不保存
-    save_result_bin="../data/result/bin"
+    save_result_bin=""
+    
+    # 推理结果（类别ID等）文本文件保存路径
+    save_result_txt="../out/result/txt"
+    
+    # 置信度阈值（过滤低置信度候选框，默认设置为0.001，是为了为精度评估脚本提供尽可能全的检测框计算ROC曲线，实际推理时conf_threshold一般设置为0.25）
+    conf_threshold=0.001
+    
+    # NMS交并比阈值（过滤重复检测框）
+    nms_threshold=0.6
     ```
 
 5. 切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
@@ -269,7 +287,7 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
     ```bash
     ./main --acl ../src/acl.json --model ../model/yolov4.om  --input ../data/file_list.json
     ```
-    结果会保存在数据集所在目录下的result目录下，推理结果会保存在result目录下的bin目录下
+    推理结果会保存在../out/result目录下
 
 **步骤3：验证精度和性能**
 
@@ -280,7 +298,7 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
    ```bash
    cd script # 切换到script目录
    python3 yolo4_evaluate.py \
-      --result_dir "../data/result/txt" \
+      --result_dir "../out/result/txt" \
       --gt_annotations "../../../../../datasets/coco2017/annotations/instances_val2017.json"
    ```
 
@@ -305,8 +323,22 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
     Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.677
     Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.761
    ```
+   NNN平台上精度结果：
+   ```
+    Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.494
+    Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.732
+    Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.543
+    Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.313
+    Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.556
+    Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.627
+    Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.358
+    Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.578
+    Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.621
+    Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.448
+    Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.680
+    Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.767
+   ```
 
-     
 
 2. 验证batch_size的om模型的性能，参考命令如下：
 
@@ -325,7 +357,11 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
 
    在板端会输出显示，SVP_NNN平台上性能结果如下：
    ```bash
-   execution time: 260.417ms, frame rate: 3.84fps
+   execution time: 252.58ms, frame rate: 3.96fps
+   ```
+   在板端会输出显示，NNN平台上性能结果如下：
+   ```bash
+   execution time: 415.57ms, frame rate: 2.41fps
    ```
 
 **步骤4（可选）：使用python脚本在PC上进行数据预处理、模型推理、输出后处理（可以跟CPP版本在开发板上的推理结果进行对比）**
@@ -351,7 +387,7 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
    cd script # 切换到script目录
    python3 yolo4_infer.py \
       --preprocess_bin_dir "../data/preprocess/bin" \
-      --infer_bin_dir "../data/result_pc/bin" \
+      --infer_bin_dir "../out/result_pc/bin" \
       --file_list_path "../data/preprocess/file_list.txt" \
       --onnx_model_path "../model/yolov4.onnx" \
       --input_size 608 608
@@ -373,9 +409,9 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
    ```bash
    cd script # 切换到script目录
    python3 yolo4_postprocess.py \
-      --bin_dir "../data/result/bin" \
+      --bin_dir "../out/result/bin" \
       --img_dir "../../../../../datasets/coco2017/val2017" \
-      --output_dir "../data/result/txt" \
+      --output_dir "../out/result/txt" \
       --nms_threshold 0.6 \
       --conf_threshold 0.001 \
       --target_size 608 608
@@ -401,4 +437,5 @@ YOLOv4 是一种高性能的 one-stage 目标检测模型。相比 YOLOv3，YOLO
 
 | 芯片型号    | Batch Size | 数据集   | mAP（IoU=0.50:0.95） | mAP（IoU=0.50） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | coco2017  | 49.2%       | 73.2%         | 3.84 |
+| Hi3403V100 SVP_NNN | 1          | coco2017  | 49.2%       | 73.2%         | 3.96 |
+| Hi3403V100 NNN | 1          | coco2017  | 49.4%       | 73.2%         | 2.41 |

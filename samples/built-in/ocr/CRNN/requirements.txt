@@ -1,0 +1,14 @@
+easydict==1.13
+matplotlib==3.5.3
+numpy==1.21.6
+onnx_tool==0.9.0
+opencv_contrib_python==3.4.4.19
+opencv_python==4.12.0.88
+opencv_python_headless==4.12.0.88
+python_box==7.0.1
+PyYAML==6.0.1
+PyYAML==6.0.3
+tensorboardX==2.6.2.2
+tensorboardX==2.6.4
+torch==1.8.0
+tqdm==4.67.1

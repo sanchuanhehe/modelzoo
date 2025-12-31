@@ -103,11 +103,11 @@ def run_postprocess(args):
 
 def main():
     parser = argparse.ArgumentParser(description='CodeFormer后处理脚本')
-    parser.add_argument('--bin_dir', default='../data/result_pc/bin',
+    parser.add_argument('--bin_dir', default='../out/result_pc/bin',
                         help='存放推理输出bin文件的目录')
     parser.add_argument('--img_dir', default='../../../../../datasets/celeba-512/celeba-512-300/hq/',
                         help='原始图像目录')
-    parser.add_argument('--output_dir', default='../data/result_pc/img',
+    parser.add_argument('--output_dir', default='../out/result_pc/img',
                         help='输出结果图像目录')
     parser.add_argument('--target_size', type=int, nargs=2, default=[512, 512],
                         help='模型输入尺寸，格式为 高 宽，默认512 512')

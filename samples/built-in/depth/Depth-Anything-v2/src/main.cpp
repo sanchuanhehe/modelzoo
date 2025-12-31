@@ -105,7 +105,7 @@ Result ReadImgFileToBuf(const std::string& fileName, Infer::TensorDesc desc, Inf
 
 Result GetOutputWithBin(Infer::TensorBuf &outBuf, Infer::TensorDesc &outDesc, std::string outputBinFileName, std::vector<float> &noStrideBuf)
 {
-    INFO_LOG("GetOutputWithBin %s", outputBinFileName);
+    INFO_LOG("GetOutputWithBin");
     int64_t lastDim = outDesc.dims[outDesc.dimCount - 1];
     size_t dataSize = outDesc.typeSize / BYTE_BIT_NUM;
     size_t lastDimSize = dataSize * lastDim;
@@ -180,9 +180,7 @@ Result GetPad(std::map<std::string, std::tuple<int, int, int, int, int, int, int
             );
         }
     }
-    
-    // 假设 out_path 是一个字符串变量
-    std::string out_path = "example_file"; // 替换为实际的 out_path 值
+    return SUCCESS;
 }
 
 void SaveResultBin(std::vector<Infer::TensorBuf> &outBufs, std::vector<Infer::TensorDesc> &outDescs, const std::string& filePath, std::vector<float>& temp)
@@ -301,7 +299,7 @@ cv::Mat VisualizeDepthMap(const cv::Mat& depth_map,
     // 保存图像（如果指定了输出路径）
     if (!output_path.empty()) {
         cv::imwrite(output_path, depth_colored);
-        INFO_LOG("save jpg to %s", output_path);
+        INFO_LOG("save jpg sucess ");
     }
     
     return depth_colored;
@@ -320,11 +318,10 @@ Result PostProcess(std::vector<Infer::TensorBuf> &outBufs, std::vector<Infer::Te
      // 获取保存文件路径和文件名
     size_t start = filePath.find_last_of("/");
     size_t end = filePath.find_last_of(".");
-
     std::string fileName = filePath.substr(start+1 , end-start-1);
     auto it = shapes_data.find(fileName);
     if (it == shapes_data.end()) {
-        ERROR_LOG("key error: %s", fileName);
+        ERROR_LOG("key error");
         return FAILED;
     }
     // 解包元组到各个变量
@@ -345,11 +342,9 @@ Result PostProcess(std::vector<Infer::TensorBuf> &outBufs, std::vector<Infer::Te
     // 还原图像大小 - 使用双线性插值
     cv::Mat resized_depth;
     cv::resize(cropped_array, resized_depth, cv::Size(w, h), 0, 0, cv::INTER_LINEAR);
-    
-    INFO_LOG("=======================result===============================");
     // 获取保存文件路径和文件名
     std::string jpgName = filePath.substr(0, start) + "/../../out/result/jpg/" + fileName + ".jpg";
-    INFO_LOG("resultPath: %s", jpgName);
+    
     VisualizeDepthMap(resized_depth,  jpgName  );
     return SUCCESS;
 }
@@ -509,8 +504,6 @@ int main(int argc, char *argv[])
         }
         auto end = std::chrono::high_resolution_clock::now();
         dur += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        INFO_LOG("execute %s success", imglists[i].c_str());
-
         (void)PostProcess(outBufs, outDescs, imglists[i]);
     }
     INFO_LOG("time: %d, fps: %f", dur.count(), 1000.0 * 1000.0 * (loop * imglists.size()) / (float)dur.count());

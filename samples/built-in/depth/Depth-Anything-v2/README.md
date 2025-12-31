@@ -83,10 +83,10 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+     | 芯片型号   | npu     | soc_version | 环境准备指导                                                 | cann包版本                                                   | 编译工具链                                                   | os                                                           | sdk                                                          |
+    | ---------- | ------- | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md#241安装clang交叉编译器) | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md) | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang) |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | SPC022                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -152,18 +152,19 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
 
 2. 导出onnx文件。
 
-    将pth2onnx.py和deploy文件夹复制到下载好的源码Depth-Anything-V2中，执行下面命令完成完成模型转换到onnx。
+    将pth2onnx.py复制到下载好的源码Depth-Anything-V2中，执行下面命令完成完成模型转换到onnx。
 
     ```
     cd Depth-Anything-V2
-    python ./load_model.py
+    python ./pth2onnx.py
+    cd ..
     ```
     生成模型depth_anything_v2_vits.onnx。在model目录下
 
 3. 使用ATC工具将ONNX模型转OM模型。
 
     执行ATC命令。
-    1. SS928V100 SVP_NNN上的om模型转换命令
+    1. Hi3403V100 SVP_NNN上的om模型转换命令
         ```
         atc --framework=5 --model="./model/depth_anything_v2_vits.onnx" --input_shape="input:1,3,518,518" --output="./model/depthanything" --image_list="./data/img/123949917_fd08c80d60_b.bin" --compile_mode=1 --softmax_optimize_enable=1 --fusion_switch_file=TransformerFusion:on --soc_version=SS928V100 
         ```
@@ -181,11 +182,6 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
         - --enable_small_channel:使能small channel优化。
         - --enable_single_stream:推理时使用一条stream。
         - --soc_version：处理器型号。
-        
-        注意：如果出现命令找不到，配置环境变量。
-        ```
-        source /usr/local/Ascend/ascend-toolkit/set_env.sh
-        ```
 
 ## 模型推理<a name="section741711594518"></a>
 
@@ -236,8 +232,6 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
 
 **步骤3：输出后处理**
 
-本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。
-
 1. 精度验证。
 
     调用脚本与数据集标签val_label.txt比对，可以获得Accuracy数据。
@@ -281,4 +275,4 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
 
 | 芯片型号    | Batch Size | 数据集   | 精度指标 |性能(fps) |
 | ----------- | ---------- | -------- | ------------------ |----------- |
-| SS928V100 SVP_NNN | 1          | DA-2K  |  0.93           |3.756    |
+| Hi3403V100 SVP_NNN | 1          | DA-2K  |  0.93           |3.756    |

@@ -14,29 +14,57 @@
  */
 
 #include "yolo4_preprocess.h"
-#include "log.h"
 #include "dev_interface_adapter.h"
+#include "log.h"
 #include "utils.h"
-#include <opencv2/opencv.hpp>
-#include <fstream>
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <fstream>
+#include <nlohmann/json.hpp>
+#include <opencv2/opencv.hpp>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <nlohmann/json.hpp>
+#include <vector>
 
 using json = nlohmann::json;
-constexpr int BYTE_BIT_NUM = 8;
+
 namespace Infer {
 // 新增子命名空间：将YOLO4相关代码全部放入Infer::Yolo4
 namespace Yolo4 {
     // 新增像素值归一化系数常量，替代魔鬼数字255.0
     constexpr float PIXEL_NORMALIZE_FACTOR = 255.0f;
+    constexpr int BYTE_BIT_NUM = 8;
+    constexpr int FP16_BIT_NUM = 16;
+    constexpr int FP32_BIT_NUM = 32;
 
-    static Result ReadImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc, TensorBuf &inBuf)
+    static Result ReadImgFileToBuf(cv::Mat& chwImg, TensorDesc& desc, TensorBuf& inBuf)
     {
         LOG(INFO) << "ReadImgFileToBuf: desc.dimCount " << desc.dimCount;
+        const float* srcData = chwImg.ptr<float>();
+        // for dlite
+        if (desc.defaultStride == 0) {
+            if (desc.typeSize == FP32_BIT_NUM) {
+                memcpy(static_cast<float*>(inBuf.GetRawPtr()), srcData, desc.defaultSize);
+                return SUCCESS;
+            } else if (desc.typeSize == FP16_BIT_NUM) {
+                // 计算数据量
+                size_t dataCount = chwImg.total();
+
+                // 转换为FP16
+                std::vector<uint16_t> fp16Data(dataCount);
+                for (size_t i = 0; i < dataCount; ++i) {
+                    fp16Data[i] = FloatToHalf(srcData[i]);
+                }
+
+                memcpy(static_cast<void*>(inBuf.GetRawPtr()), fp16Data.data(), desc.defaultSize);
+                return SUCCESS;
+            } else {
+                LOG(ERROR) << "dlite core unsupported desc.typeSize: " << desc.typeSize;
+                return FAILED;
+            }
+        }
+
+        // dpico核，需要处理字节对齐
         int64_t loopTimes = 1;
         for (size_t loop = 0; loop < desc.dimCount - 1; loop++) {
             loopTimes *= desc.dims[loop];
@@ -45,11 +73,10 @@ namespace Yolo4 {
         int64_t width = desc.dims[desc.dimCount - 1]; /* dims last dim is width */
         size_t dataSize = desc.typeSize / BYTE_BIT_NUM;
         size_t strideElemNum = inBuf.stride / dataSize;
-        const float *srcData = chwImg.ptr<float>();
 
         for (int64_t loop = 0; loop < loopTimes; loop++) {
-            float *destPtr = static_cast<float *>(inBuf.GetRawPtr()) + loop * strideElemNum;
-            const float *srcPtr = srcData + loop * width;
+            float* destPtr = static_cast<float*>(inBuf.GetRawPtr()) + loop * strideElemNum;
+            const float* srcPtr = srcData + loop * width;
 
             if (destPtr == nullptr || srcPtr == nullptr) {
                 LOG(ERROR) << "Null pointer detected";
@@ -62,16 +89,16 @@ namespace Yolo4 {
     }
 
     // Letterbox函数实现
-    static cv::Mat Letterbox(const cv::Mat &img, const cv::Size &target_size, bool scaleup)
+    static cv::Mat Letterbox(const cv::Mat& img, const cv::Size& target_size, bool scaleup)
     {
         cv::Size shape = img.size();
 
         double r = std::min(static_cast<double>(target_size.width) / shape.width,
-                            static_cast<double>(target_size.height) / shape.height);
+            static_cast<double>(target_size.height) / shape.height);
 
         LOG(INFO) << "read r: " << r;
         cv::Size unpad(static_cast<int>(std::round(shape.width * r)),
-                       static_cast<int>(std::round(shape.height * r)));
+            static_cast<int>(std::round(shape.height * r)));
 
         LOG(INFO) << "unpad r: " << unpad.width << "  " << unpad.height;
         double w = (target_size.width - unpad.width) / 2.0f;
@@ -81,8 +108,7 @@ namespace Yolo4 {
         cv::Mat resized;
         if (shape != unpad) {
             cv::resize(img, resized, unpad, 0, 0, cv::INTER_LINEAR);
-        }
-        else {
+        } else {
             resized = img.clone();
         }
 
@@ -93,12 +119,12 @@ namespace Yolo4 {
 
         cv::Mat padded;
         cv::copyMakeBorder(resized, padded, top, bottom, left, right,
-                           cv::BORDER_CONSTANT, cv::Scalar(114, 114, 114));
+            cv::BORDER_CONSTANT, cv::Scalar(114, 114, 114));
 
         return padded;
     }
 
-    static cv::Mat HwcToChw(const cv::Mat &hwcImg)
+    static cv::Mat HwcToChw(const cv::Mat& hwcImg)
     {
         CV_Assert(!hwcImg.empty() && hwcImg.channels() == 3);
         std::vector<cv::Mat> channels;
@@ -137,7 +163,7 @@ namespace Yolo4 {
         LOG(INFO) << "Processing " << fileList.size() << " images...";
 
         // 处理每个图像
-        std::vector<int> img_size = {imgWidth, imgHeight};
+        std::vector<int> img_size = { imgWidth, imgHeight };
         for (size_t i = 0; i < fileList.size(); ++i) {
             std::string imgPath = fileList[i];
             LOG(INFO) << "imgPath: " << imgPath;
@@ -187,8 +213,7 @@ namespace Yolo4 {
                         LOG(WARNING) << "Failed to set permissions for bin file: " << binPath;
                     }
                     LOG(INFO) << "Saved preprocess bin: " << binPath;
-                }
-                else {
+                } else {
                     LOG(WARNING) << "Failed to open bin file: " << binPath;
                 }
             }

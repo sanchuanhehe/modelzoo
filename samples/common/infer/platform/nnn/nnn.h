@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <thread>
-#include "acl/acl.h"
+#include "acl.h"
 
 namespace Infer {
 class AclMdl : public MdlBase {

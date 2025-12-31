@@ -8,9 +8,36 @@
 #include <algorithm>
 #include <sys/stat.h>
 #include <errno.h>
+#include <fstream>
+#include "nlohmann/json.hpp"
+#include <cstring>
+
+using json = nlohmann::json;
+
 
 namespace Infer {
 using namespace std;
+
+// FP32 (单精度浮点数) 标准定义常量
+constexpr uint32_t FP32_SIGN_SHIFT = 31;          // 符号位偏移（第31位）
+constexpr uint32_t FP32_SIGN_MASK = 0x1;          // 符号位掩码（仅最低1位）
+constexpr uint32_t FP32_EXP_SHIFT = 23;           // 指数位偏移（第23-30位）
+constexpr uint32_t FP32_EXP_MASK = 0xFF;          // 指数位掩码（8位）
+constexpr uint32_t FP32_MANTISSA_MASK = 0x7FFFFF; // 尾数位掩码（23位）
+constexpr int32_t FP32_EXP_BIAS = 127;            // 指数偏移量（FP32标准定义）
+
+// FP16 (半精度浮点数) 标准定义常量
+constexpr uint16_t FP16_SIGN_SHIFT = 15;          // 符号位偏移（第15位）
+constexpr uint16_t FP16_SIGN_MASK = 0x1;          // 符号位掩码（仅最低1位）
+constexpr uint16_t FP16_EXP_SHIFT = 10;           // 指数位偏移（第10-14位）
+constexpr uint16_t FP16_EXP_MASK = 0x1F;          // 指数位掩码（5位）
+constexpr uint16_t FP16_MANTISSA_MASK = 0x3FF;    // 尾数位掩码（10位）
+constexpr int32_t FP16_EXP_BIAS = 15;             // 指数偏移量（FP16标准定义）
+constexpr int32_t FP16_EXP_MAX = 31;              // 指数位最大值（5位无符号数上限）
+constexpr int32_t FP16_EXP_MIN = 0;               // 指数位最小值（5位无符号数下限）
+constexpr uint32_t FP16_MANTISSA_EXTEND_SHIFT = 13; // FP16尾数转FP32时的左移位数（23-10=13）
+constexpr uint32_t FP32_MANTISSA_TRUNC_SHIFT = 13; // FP32尾数转FP16时的右移位数（23-10=13）
+
 bool PathToRealPath(const std::string &path, std::string &realPath)
 {
     if (path.empty()) {
@@ -103,6 +130,7 @@ std::unordered_map<std::string, std::string> ReadCfgFile(const std::string& cfgP
 
     std::string line;
     while (std::getline(file, line)) {
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end()); // 移除\r
         // 跳过注释和空行
         if (line.empty() || line[0] == '#') continue;
         size_t eqPos = line.find('=');
@@ -160,4 +188,128 @@ bool CreateDirectoryRecursive(const std::string& path) {
     return true;
 }
 
+std::vector<std::vector<std::string>> ParseFileList(const std::string& fileListPaths)
+{
+    std::vector<std::vector<std::string>> result;
+    std::ifstream file(fileListPaths);
+    if (!file.is_open()) {
+        return result;
+    }
+    try {
+        json config;
+        file >> config;
+
+        auto& fileList = config["fileList"];
+        if (!fileList.is_array()) {
+            throw std::runtime_error("'fileList' 必须是数组类型");
+        }
+        for (const auto& array : fileList) {
+            if (!array.is_array() || array.empty()) {
+                continue;
+            }
+            std::vector<std::string> row;
+            for (const auto& item : array) {
+                row.push_back(item.get<std::string>());
+            }
+            result.emplace_back(row);
+        }
+    } catch (const json::parse_error& e) {
+        LOG(ERROR) << "JSON 解析错误: " << e.what();
+        return {};
+    } catch (const json::type_error& e) {
+        LOG(ERROR) << "数据类型错误: " << e.what();
+        return {};
+    } catch (const std::exception& e) {
+        LOG(ERROR) << "运行时错误: " << e.what();
+        return {};
+    }
+    return result;
+}
+
+
+std::string BuildInputString(std::vector<std::string>& fileListPaths)
+{
+    std::stringstream ss;
+    for (size_t i = 0; i < fileListPaths.size(); ++i) {
+        ss << "input" << i << ":" << fileListPaths[i];
+        if (i != fileListPaths.size() - 1) {
+            ss << ";";  // 添加分隔符，例如分号
+        }
+    }
+    return ss.str();
+}
+
+std::vector<std::string> GetInputList(std::string inputString)
+{
+    std::vector<std::string> result;
+    std::stringstream ss(inputString);
+    std::string segment;
+    
+    while (std::getline(ss, segment, ';')) {
+        size_t colonPos = segment.find(':');
+        if (colonPos != std::string::npos) {
+            // 跳过 "inputX:" 部分，提取路径
+            result.push_back(segment.substr(colonPos + 1));
+        }
+    }
+    return result;
+}
+
+/**
+ * @brief FP32 转 FP16（用 memcpy 避免严格别名警告）
+ */
+uint16_t FloatToHalf(float value) {
+    uint32_t fp32Bits;
+    // 字节级拷贝：将 float 的二进制内容拷贝到 uint32_t（无类型转换冲突）
+    std::memcpy(&fp32Bits, &value, sizeof(float));
+
+    // 提取 FP32 符号位、指数位、尾数位（逻辑不变）
+    uint32_t sign = (fp32Bits >> FP32_SIGN_SHIFT) & FP32_SIGN_MASK;
+    uint32_t exp = (fp32Bits >> FP32_EXP_SHIFT) & FP32_EXP_MASK;
+    uint32_t mantissa = fp32Bits & FP32_MANTISSA_MASK;
+
+    int32_t fp16Exp = static_cast<int32_t>(exp) - FP32_EXP_BIAS + FP16_EXP_BIAS;
+    if (fp16Exp > FP16_EXP_MAX) {
+        fp16Exp = FP16_EXP_MAX;
+        mantissa = 0;
+    } else if (fp16Exp < FP16_EXP_MIN) {
+        fp16Exp = FP16_EXP_MIN;
+        mantissa = 0;
+    }
+
+    return static_cast<uint16_t>(
+        (sign << FP16_SIGN_SHIFT) |
+        (static_cast<uint16_t>(fp16Exp) << FP16_EXP_SHIFT) |
+        (static_cast<uint16_t>(mantissa >> FP32_MANTISSA_TRUNC_SHIFT) & FP16_MANTISSA_MASK)
+    );
+}
+
+/**
+ * @brief FP16 转 FP32（用 memcpy 避免严格别名警告）
+ */
+float HalfToFloat(uint16_t value) {
+    // 提取 FP16 符号位、指数位、尾数位（逻辑不变）
+    uint32_t sign = (static_cast<uint32_t>(value) >> FP16_SIGN_SHIFT) & FP16_SIGN_MASK;
+    uint32_t exp = (static_cast<uint32_t>(value) >> FP16_EXP_SHIFT) & FP16_EXP_MASK;
+    uint32_t mantissa = (static_cast<uint32_t>(value) & FP16_MANTISSA_MASK);
+
+    if (exp == 0 && mantissa == 0) {
+        uint32_t fp32Zero = sign << FP32_SIGN_SHIFT;  
+        float result;
+        // 字节级拷贝：将 uint32_t 的二进制内容拷贝到 float
+        std::memcpy(&result, &fp32Zero, sizeof(float));
+        return result;
+    }
+
+    uint32_t fp32Exp = exp + FP32_EXP_BIAS - FP16_EXP_BIAS;  
+    uint32_t fp32Bits =  
+        (sign << FP32_SIGN_SHIFT) |
+        (fp32Exp << FP32_EXP_SHIFT) |
+        (mantissa << FP16_MANTISSA_EXTEND_SHIFT);
+
+    float result;
+    // 字节级拷贝：避免指针类型转换
+    std::memcpy(&result, &fp32Bits, sizeof(float));
+    return result;
+}
 }

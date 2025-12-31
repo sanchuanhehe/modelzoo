@@ -4,5 +4,5 @@
             "../../../../../datasets/ImageNet/val/ILSVRC2012_val_00000001.JPEG"
         ]
     ],
-    "loop": 1
+    "loop": 20
 }
