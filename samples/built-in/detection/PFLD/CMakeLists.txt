@@ -16,7 +16,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 
 # project information
-project(ACL_CLASSIFICATION_PFLD)
-
+project(ACL_DETECTION_PFLD)
 
 add_subdirectory("./src")

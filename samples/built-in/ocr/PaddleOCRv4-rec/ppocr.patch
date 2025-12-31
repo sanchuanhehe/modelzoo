@@ -1,0 +1,29 @@
+diff --git a/tools/infer/predict_system.py b/tools/infer/predict_system.py
+index b93901c..47bcfa9 100644
+--- a/tools/infer/predict_system.py
++++ b/tools/infer/predict_system.py
+@@ -10,6 +10,7 @@ import cv2
+ import copy
+ import numpy as np
+ import time
++import torch
+ from PIL import Image
+ import json
+ import tools.infer.pytorchocr_utility as utility
+@@ -158,10 +159,16 @@ def sorted_boxes(dt_boxes):
+             _boxes[i + 1] = tmp
+     return _boxes
+ 
++def convert2onnx(model, input, onnx_path):
++    device = 'cpu'
++    torch.onnx.export(model.eval(), input.to(device), f'{onnx_path}.onnx', opset_version=13, do_constant_folding=True)
+ 
+ def main(args):
+     image_file_list = get_image_file_list(args.image_dir)
+     text_sys = TextSystem(args)
++    convert2onnx(text_sys.text_detector.net, torch.randn(1,3,960, 960), args.det_model_path+"_3x960x960")
++    convert2onnx(text_sys.text_recognizer.net, torch.randn(1,3,48, 320), args.rec_model_path+"_3x48x320")
++    exit()
+     is_visualize = True
+     font_path = args.vis_font_path
+     drop_score = args.drop_score

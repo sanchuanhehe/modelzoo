@@ -1,0 +1,146 @@
+{
+	"modelName": "Siamese Network",
+	"modelDesc": "Siamese Network(孪生神经网络)是一种通过共享权重的两个相同子网络来度量两个输入样本相似性的深度学习框架，广泛应用于人脸识别、签名验证等任务。",
+	"modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/recognition/SiameseNetwork",
+	"modelParameter": {
+	  "输入": "100x100",
+	  "参数量": "40254.505M",
+	  "计算量": "0.223GFLOPs"
+	},
+	"isBeta": true,
+	"betaDesc": "Hi3403V100 SVP_NNN 和 NNN 引擎上模型性能待进一步优化",
+	"modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+	"modelUsageScenes": [
+	  {
+		"task": "Vision",
+		"tags": [
+		  "人脸识别"
+		]
+	  }
+	],
+	"modelFrame": [
+	  "Pytorch"
+	],
+	"modelDatasets": {
+	  "desc": "数据集Faces",
+	  "link": "https://cam-orl.co.uk/facedatabase.html"
+	},
+	"srcModelLicense": [
+	  {
+		"desc": "源模型",
+		"link": "https://github.com/harveyslash/Facial-Similarity-with-Siamese-Networks-in-Pytorch/blob/master/LICENSE"
+	  }
+	],
+	"modelLicense": [
+	  {
+		"desc": "部署模型",
+		"link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/recognition/SiameseNetwork/LICENSE"
+	  }
+	],
+	"quickStart": {
+	  "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/recognition/SiameseNetwork/doc/快速开始.md/"
+	},
+	"modelChipset": [
+	  {
+		"chipset": "Hi3403V100 SVP_NNN",
+		"tools": [
+		  {
+			"name": "CANN配置",
+			"link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+			"desc": ""
+		  },
+		  {
+			"name": "编译工具库",
+			"link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md",
+			"desc": ""
+		  },
+		  {
+			"name": "SDK",
+			"link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/",
+			"desc": ""
+		  }
+		],
+		"os": [
+		  "OpenHarmony",
+		  "Linux"
+		],
+		"performance": [
+		  {
+			"quantMode": "a8w8",
+			"detail": [
+			  {
+				"performance": 4.6,
+				"performanceUnit": "耗时（ms）",
+				"performanceDesc": ""
+			  },
+			  {
+				"performance": 217.44,
+				"performanceUnit": "性能（fps）",
+				"performanceDesc": ""
+			  },
+			  {
+				"performance": 77.754,
+				"performanceUnit": "单帧内存带宽（MB）",
+				"performanceDesc": ""
+			  },
+			  {
+				"performance": 98.895,
+				"performanceUnit": "内存（MB）",
+				"performanceDesc": ""
+			  }
+			]
+		  }
+		]
+	  },
+	  {
+		"chipset": "Hi3403V100 NNN",
+		"tools": [
+		  {
+			"name": "CANN工具包 SPC022 (请联系FAE获取)",
+			"link": "",
+			"desc": ""
+		  },
+		  {
+			"name": "编译工具链 aarch64-mix210-linux-gcc (请联系FAE获取)",
+			"link": "",
+			"desc": ""
+		  },
+		  {
+			"name": "SDK SPC022 (请联系FAE获取)",
+			"link": "",
+			"desc": ""
+		  }
+		],
+		"os": [
+		  "Linux"
+		],
+		"performance": [
+		  {
+			"quantMode": "fp16",
+			"detail": [
+			  {
+				"performance": 28.81,
+				"performanceUnit": "耗时（ms）",
+				"performanceDesc": ""
+			  },
+			  {
+				"performance": 34.71,
+				"performanceUnit": "性能（fps）",
+				"performanceDesc": ""
+			  },
+			  {
+				"performance": 377.84,
+				"performanceUnit": "单帧内存带宽（MB）",
+				"performanceDesc": ""
+			  },
+			  {
+				"performance": 197.715,
+				"performanceUnit": "内存（MB）",
+				"performanceDesc": ""
+			  }
+			]
+		  }
+		]
+	  }
+	]
+  }

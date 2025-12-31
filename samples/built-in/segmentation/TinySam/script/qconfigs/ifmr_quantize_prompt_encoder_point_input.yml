@@ -1,0 +1,40 @@
+# Layer name not to be quantized
+skip_layers: []
+
+# By default, global quantization is disabled, and only CUBE quantization is turned on.
+common_config:
+  {
+    quant_enable: False
+  }
+
+# layer config by types user defined for overriding
+override_layer_configs:
+  [
+    {
+      layer_name: ['matmul'],
+      activation_quant_params:[
+        {
+          quantizer: "LuqActivationFakeQuantize",
+          quantizer_args:
+            {
+              observer: "IFMRObserver",
+              num_bits: 16,
+              batch_num: 16,
+              qscheme: "symmetric", # qscheme should be symmetric for matmul node
+              with_offset: False,   # with_offset be false to keep IFMRObserver symmetric
+            }
+        },
+        {
+          quantizer: "LuqActivationFakeQuantize",
+          quantizer_args:
+            {
+              observer: "IFMRObserver",
+              num_bits: 8,
+              batch_num: 16,
+              qscheme: "symmetric", # qscheme should be symmetric for matmul node
+              with_offset: False,   # with_offset be false to keep IFMRObserver symmetric
+            }
+        },
+      ]
+    }
+  ]

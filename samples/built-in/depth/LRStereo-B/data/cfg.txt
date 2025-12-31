@@ -1,0 +1,18 @@
+# 模型输入图像高度（预处理resize目标值）
+img_height=384
+
+# 模型输入图像宽度（预处理resize目标值）
+img_width=1248
+
+# 基线（baseline ，单位m）
+line=0.5
+
+# 焦距（fx， 单位像素）
+distance=900
+
+
+# 是否需要视差转距离，0不需要，1需要
+type=0
+
+# 距离转化模型地址
+dis_path="../model/disp2depth_384x1248.om"

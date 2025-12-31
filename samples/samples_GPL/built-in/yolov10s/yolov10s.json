@@ -1,0 +1,96 @@
+{
+    "modelName": "YOLOv10s",
+    "modelDesc": "YOLOv10 引入了一种新的实时目标检测方法，解决了以前YOLO 版本在后处理和模型架构方面的不足。通过消除非最大抑制NMS和优化各种模型组件，YOLOv10 显著降低了计算开销。本示例基于YOLOv10s。",
+    "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov10s",
+    "modelParameter": {
+        "输入": "640x640",
+        "参数量": "7.291",
+        "计算量": "24.073"
+    },
+	"isBeta": false,
+	"betaDesc": "",
+	"modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+	"modelUsageScenes": [
+		{
+			"task": "Vision",
+			"tags": [
+				"检测"
+			]
+		}
+	],
+	"modelFrame": [
+		"PyTorch"
+	],
+    "modelDatasets": {
+        "desc": "coco2017 val数据集",
+        "link": "https://cocodataset.org/#download"
+    },
+    "srcModelLicense": [
+		{
+            "desc": "源模型",
+            "link": "https://github.com/THU-MIG/yolov10/blob/v1.1/LICENSE"
+        }
+	],
+	"modelLicense": [
+		{
+            "desc": "部署模型",
+            "link": "https://gitee.com/HiSpark/modelzoo/blob/master/samples/samples_GPL/built-in/yolov10s/LICENSE"
+        }
+	],
+	"quickStart": {
+		"md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov3/doc/快速开始.md"
+	},
+    	"modelChipset": [
+		{
+			"chipset": "Hi3403V100 SVP_NNN",
+			"tools": [
+				{
+					"name": "CANN工具",
+					"link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+					"desc": "AI异构计算架构，承上启下，提升计算效率的关键平台"
+				},
+				{
+					"name": "编译工具链",
+					"link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8",
+					"desc": "高效编译，精准适配AI性能优化，应用流畅运行"
+				},
+				{
+					"name": "SDK",
+					"link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/ ",
+					"desc": "稳定、易用的设计，支撑客户快速产品量产"
+				}
+			],
+			"os": [
+				"OpenHarmony",
+				"Linux"
+			],
+			"performance": [
+				{
+					"quantMode": "a8w8",
+					"detail": [
+						{
+							"performance": 50.32,
+							"performanceUnit": "耗时（ms）",
+							"performanceDesc": ""
+						},
+						{
+							"performance": 19.87,
+							"performanceUnit": "性能（fps）",
+							"performanceDesc": ""
+						},
+						{
+							"performance": 163.335,
+							"performanceUnit": "单帧内存带宽（MB）",
+							"performanceDesc": ""
+						},
+						{
+							"performance": 38.066,
+							"performanceUnit": "内存（MB）",
+							"performanceDesc": ""
+						}
+					]
+				}
+			]
+		}
+	]
+}

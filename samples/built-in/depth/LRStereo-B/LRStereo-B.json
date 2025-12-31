@@ -1,0 +1,97 @@
+{
+  "modelName": "LRStereo-B",
+  "modelDesc": "LRStereo-B是一个轻量且鲁棒的双目立体匹配模型。它在开源模型(Raft-Stereo)的基础上做了大量的模型结构改进和重训。具体功能为输入标定好的左右目图像以及相关的相机参数，获得左目图像对应的深度图。",
+  "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/depth/LRStereo-B",
+  "modelParameter": {
+    "输入": "384x1248",
+    "参数量": "2.99M",
+    "计算量": "28.64GFLOPs"
+  },
+ "modelUsageScenes": [
+    {
+      "task": "Vision",
+      "tags": [
+        "双目深度"
+      ]
+    }
+  ],
+  "isBeta": false,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelFrame": [
+    "PyTorch"
+  ],
+  "modelDatasets": {
+    "desc": "KITTI15数据集",
+    "link": "https://www.cvlibs.net/datasets/kitti/eval_scene_flow.php?benchmark=stereo"
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/princeton-vl/RAFT-Stereo/blob/main/LICENSE"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/depth/LRStereo-B/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/depth/LRStereo-B/doc/快速开始.md"
+  },
+
+    "modelChipset": [
+    {
+      "chipset": "Hi3403V100 SVP_NNN",
+      "tools": [
+        {
+					"name": "CANN工具",
+					"link": "https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz",
+					"desc": "AI异构计算架构，承上启下，提升计算效率的关键平台"
+				},
+				{
+					"name": "编译工具链",
+					"link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8",
+					"desc": "高效编译，精准适配AI性能优化，应用流畅运行"
+				},
+				{
+					"name": "SDK",
+					"link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/ ",
+					"desc": "稳定、易用的设计，支撑客户快速产品量产"
+				}
+      ],
+      "os": [
+        "OpenHarmony",
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "a8w8",
+          "detail": [
+            {
+              "performance": 43.46,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 23.01,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 226.649,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 29.395,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

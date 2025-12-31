@@ -43,8 +43,6 @@ def main(opt):
         im = im.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         
         img = np.expand_dims(im, axis=0)
-        img1 = np.ascontiguousarray(im)  # contiguous
-        img1.tofile("{}/{}44.bin".format(opt.prep_data, paths_name))
         print(paths_name)
         if opt.data_type == "float32":
             print("float32")
@@ -84,7 +82,7 @@ def letterbox(img, target_size=[640, 640], scaleup=True):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='model inference')
     parser.add_argument('--data_path', type=str, default="./datasets/coco/images/")
-    parser.add_argument('--prep_data', type=str, default='./data/prep_data_aipp1')
+    parser.add_argument('--prep_data', type=str, default='./data/prep_data_aipp')
     parser.add_argument('--data_type', type=str, default="float32", choices=["uint8", "float32"])
     parser.add_argument('--output_path', default="./data/", type=str)
     parser.add_argument('--img_size', nargs='+', type=int, default=640)

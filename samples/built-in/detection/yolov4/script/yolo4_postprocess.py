@@ -310,9 +310,9 @@ def run_postprocess(args):
 def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='解析YOLO模型推理输出的bin文件并生成检测结果txt')
-    parser.add_argument('--bin_dir', default='../data/result_pc/bin', help='存放YOLO模型推理输出bin文件的目录')
+    parser.add_argument('--bin_dir', default='../out/result_pc/bin', help='存放YOLO模型推理输出bin文件的目录')
     parser.add_argument('--img_dir', default='../../../../../datasets/coco2017/val2017', help='原始图片目录')
-    parser.add_argument('--output_dir', default='../data/result_pc/txt', help='输出结果txt文件目录')
+    parser.add_argument('--output_dir', default='../out/result_pc/txt', help='输出结果txt文件目录')
     parser.add_argument('--nms_threshold', type=float, default=0.6, help='NMS的IOU阈值，默认0.6')
     parser.add_argument('--conf_threshold', type=float, default=0.001, help='置信度过滤阈值，默认0.001')
     parser.add_argument('--target_size', type=int, nargs=2, default=[608, 608], help='模型输入尺寸，格式为 宽 高，默认608 608')

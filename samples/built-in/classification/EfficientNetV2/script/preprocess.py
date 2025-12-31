@@ -21,9 +21,6 @@ from PIL import Image
 from tqdm import tqdm
 
 from timm.data import create_transform
-
-
-
 def get_transform():
     # 创建与 timm 模型兼容的变换
     val_transform = create_transform(
@@ -38,6 +35,14 @@ def get_transform():
 
 def efficient_preprocess(dataset_path, data_save_path):
     val_transform = get_transform()
+    
+    if dataset_path.endswith(".JPEG"):
+        input_image = Image.open(dataset_path).convert('RGB')
+        print(" image_path: " , dataset_path )
+        input_tensor = val_transform(input_image)
+        img = np.array(input_tensor).astype(np.float32)
+        img.tofile(os.path.join(data_save_path, dataset_path.split('/')[-1].split('.')[0] + ".bin"))
+        return
     val_path = os.path.join(dataset_path, 'val')
     val_files = os.listdir(val_path)
     i = 0
@@ -50,8 +55,8 @@ def efficient_preprocess(dataset_path, data_save_path):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='EfficientNetV2 preprocess')
-    parser.add_argument('--dataset_path', type=str, default = '../../../../datasets/ImageNet/',  help='dataset path', required=True)
-    parser.add_argument('--data_save_path', type=str, default = './data/img/', help='bin file save path', required=True)
+    parser.add_argument('--dataset_path', type=str, default = '../../../../datasets/ImageNet/',  help='dataset path')
+    parser.add_argument('--data_save_path', type=str, default = './data/img/', help='bin file save path')
     args = parser.parse_args()
     if not os.path.isdir(args.data_save_path):
         os.makedirs(os.path.realpath(args.data_save_path))

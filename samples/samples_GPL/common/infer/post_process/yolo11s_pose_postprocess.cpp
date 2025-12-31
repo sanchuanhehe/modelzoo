@@ -31,6 +31,10 @@ namespace Infer {
 namespace Yolo11sPoseNS {
 using namespace std;
 
+constexpr int BYTE_BIT_NUM = 8;
+constexpr int FP16_BIT_NUM = 16;
+constexpr int FP32_BIT_NUM = 32;
+
 struct BBox {
     float x1, y1, x2, y2, score;
     int classId;  // YOLO11s-pose默认为1（人体）
@@ -194,6 +198,32 @@ void SaveTxtResults(const vector<BBox>& results, const string& saveTxt, const st
     }
 }
 
+const float* GetOutDataAsFP32(const TensorBuf& buf, const TensorDesc& desc, std::vector<float>& preds) {
+    // 清空输出容器（确保数据干净）
+    preds.clear();
+    
+    // 获取Tensor基础信息
+    size_t typeSize = desc.typeSize;
+    size_t floatCount = buf.size / (typeSize / BYTE_BIT_NUM);
+
+    // 根据数据类型处理
+    if (typeSize == FP16_BIT_NUM) {
+        // FP16转FP32
+        const uint16_t* fp16Preds = reinterpret_cast<const uint16_t*>(buf.data.get());
+        preds.resize(floatCount);
+        for (size_t i = 0; i < floatCount; ++i) {
+            preds[i] = HalfToFloat(fp16Preds[i]);
+        }
+        return preds.data();
+    } else if (typeSize == FP32_BIT_NUM) {
+        // 直接返回FP32数据
+        return reinterpret_cast<const float*>(buf.data.get());
+    } else {
+        LOG(ERROR) << "output unsupported desc.typeSize: " << typeSize;
+        return nullptr;
+    }
+}
+
 // 核心后处理函数
 bool Yolov11sPosePostprocess(vector<string>& fileList,
                             vector<TensorBuf>& outBufs,
@@ -255,114 +285,93 @@ bool Yolov11sPosePostprocess(vector<string>& fileList,
         const int coordinateOffset = 4;
         const int keypointStep = 3;
 
-        for (size_t imgIdx = 0; imgIdx < fileList.size(); ++imgIdx) {
-            try {  // 新增：单张图片处理异常捕获
-                const string& imgPath = fileList[imgIdx];
-                LOG(INFO) << "处理第 " << imgIdx + 1 << " 张图片: " << imgPath;  // 新增：进度日志
-                const string fileName = GetFileName(imgPath);
-
-                // 保存原始bin文件（可选）
-                if (!saveBin.empty()) {
-                    const string binPath = saveBin + "/" + fileName + "_output_0.bin";
-                    ofstream binFile(binPath, ios::binary);
-                    if (!binFile.is_open()) {
-                        LOG(WARNING) << "无法打开bin文件用于写入: " << binPath << "，跳过保存bin文件";
-                    } else {
-                        binFile.write(reinterpret_cast<char*>(outBufs[imgIdx].data.get()), outBufs[imgIdx].size);
-                    }
-                }
-
-                // 解析模型输出
-                if (outBufs[imgIdx].data == nullptr) {  // 新增：空指针检查
-                    LOG(ERROR) << "输出缓冲区为空，图片: " << imgPath;
-                    continue;
-                }
-                float* data = reinterpret_cast<float*>(outBufs[imgIdx].data.get());
-                const int64_t bufSize = outBufs[imgIdx].size;
-                const int totalElements = bufSize / sizeof(float);
-
-                if (totalElements != numBoxes * boxDim) {
-                    LOG(ERROR) << "输出尺寸异常! 预期" << numBoxes * boxDim
-                              << "元素，实际" << totalElements << "元素，图片: " << imgPath;
-                    continue;
-                }
-
-                vector<BBox> boxes;
-                // 注意：修复维度解析，模型输出是(56, 8400)，需要转置为(8400, 56)
-                for (int j = 0; j < numBoxes; ++j) {
-                    // 计算转置后的索引，对应Python中的detections.transpose()
-                    const float cx = data[0 * numBoxes + j];    // 原(0, j) → 转置后(j, 0)
-                    const float cy = data[1 * numBoxes + j];    // 原(1, j) → 转置后(j, 1)
-                    const float w = data[2 * numBoxes + j];     // 原(2, j) → 转置后(j, 2)
-                    const float h = data[3 * numBoxes + j];     // 原(3, j) → 转置后(j, 3)
-                    const float score = data[coordinateOffset * numBoxes + j]; // 原(4, j) → 转置后(j, 4)
-
-                    // 过滤低置信度目标
-                    if (score < confThres) continue;
-
-                    // 解析关键点 (原(5+3k, j) → 转置后(j, 5+3k))
-                    vector<float> keypoints;
-                    for (int k = 0; k < keypointNum; ++k) {
-                        const int kpBase = coordinateOffset + 1 + k * keypointStep;
-                        keypoints.push_back(data[kpBase * numBoxes + j]);     // x
-                        keypoints.push_back(data[(kpBase + 1) * numBoxes + j]); // y
-                        keypoints.push_back(data[(kpBase + 2) * numBoxes + j]); // score
-                    }
-
-                    // 转换为xyxy格式
-                    BBox box;
-                    const float half = 2.0f;
-                    box.x1 = cx - w / half;
-                    box.y1 = cy - h / half;
-                    box.x2 = cx + w / half;
-                    box.y2 = cy + h / half;
-                    box.score = score;
-                    box.classId = 1;  // YOLO11s-pose默认为人体检测
-                    box.keypoints = keypoints;
-
-                    boxes.push_back(box);
-                }
-
-                // 添加Top-k筛选，与Python代码保持一致
-                if (boxes.size() > topk) {
-                    sort(boxes.begin(), boxes.end(), [](const BBox& a, const BBox& b) {
-                        return a.score > b.score;
-                    });
-                    boxes.resize(topk);
-                }
-
-                // 执行NMS
-                vector<BBox> nmsResult = BatchedNMS(boxes, nmsThres);
-
-                // 读取原图获取尺寸
-                cv::Mat img = cv::imread(imgPath);
-                if (img.empty()) {
-                    LOG(WARNING) << "无法读取图像: " << imgPath;
-                    continue;
-                }
-                const int originalHeight = img.rows;
-                const int originalWidth = img.cols;
-
-                // 计算缩放和填充参数
-                float scale;
-                int padWidth, padHeight;
-                CalculateScaleAndPad(originalHeight, originalWidth, targetWidth, targetHeight, scale, padWidth, padHeight);
-
-                // 缩放边界框和关键点到原始图像尺寸
-                ScaleBoxes(nmsResult, originalWidth, originalHeight, scale, padWidth, padHeight);
-
-                // 按置信度排序
-                SortResults(nmsResult);
-
-                // 保存结果到TXT
-                if (!saveTxt.empty()) {
-                    SaveTxtResults(nmsResult, saveTxt, fileName);
-                }
-            } catch (const exception& e) {
-                LOG(ERROR) << "处理第 " << imgIdx + 1 << " 张图片时出错: " << e.what()
-                          << "，图片路径: " << fileList[imgIdx];
-                continue;  // 继续处理下一张图片
+        size_t imgIdx = 0;
+        const string& imgPath = fileList[imgIdx];
+        const string fileName = GetFileName(imgPath);
+        // 保存原始bin文件（可选）
+        if (!saveBin.empty()) {
+            const string binPath = saveBin + "/" + fileName + "_output_0.bin";
+            ofstream binFile(binPath, ios::binary);
+            if (!binFile.is_open()) {
+                LOG(WARNING) << "无法打开bin文件用于写入: " << binPath << "，跳过保存bin文件";
+            } else {
+                binFile.write(reinterpret_cast<char*>(outBufs[imgIdx].data.get()), outBufs[imgIdx].size);
             }
+        }
+        // 解析模型输出
+        if (outBufs[imgIdx].data == nullptr) {  // 新增：空指针检查
+            LOG(ERROR) << "输出缓冲区为空，图片: " << imgPath;
+            return false;
+        }
+        // float* data = reinterpret_cast<float*>(outBufs[imgIdx].data.get());
+        const int64_t bufSize = outBufs[imgIdx].size;
+        const int totalElements = bufSize / sizeof(float);
+        if (totalElements != numBoxes * boxDim) {
+            LOG(ERROR) << "输出尺寸异常! 预期" << numBoxes * boxDim
+                      << "元素，实际" << totalElements << "元素，图片: " << imgPath;
+            return false;
+        }
+        std::vector<float> detectionsPreds;  
+        const float* data = GetOutDataAsFP32(outBufs[imgIdx], outDescs[imgIdx], detectionsPreds);
+        vector<BBox> boxes;
+        // 注意：修复维度解析，模型输出是(56, 8400)，需要转置为(8400, 56)
+        for (int j = 0; j < numBoxes; ++j) {
+            // 计算转置后的索引，对应Python中的detections.transpose()
+            const float cx = data[0 * numBoxes + j];    // 原(0, j) → 转置后(j, 0)
+            const float cy = data[1 * numBoxes + j];    // 原(1, j) → 转置后(j, 1)
+            const float w = data[2 * numBoxes + j];     // 原(2, j) → 转置后(j, 2)
+            const float h = data[3 * numBoxes + j];     // 原(3, j) → 转置后(j, 3)
+            const float score = data[coordinateOffset * numBoxes + j]; // 原(4, j) → 转置后(j, 4)
+            // 过滤低置信度目标
+            if (score < confThres) continue;
+            // 解析关键点 (原(5+3k, j) → 转置后(j, 5+3k))
+            vector<float> keypoints;
+            for (int k = 0; k < keypointNum; ++k) {
+                const int kpBase = coordinateOffset + 1 + k * keypointStep;
+                keypoints.push_back(data[kpBase * numBoxes + j]);     // x
+                keypoints.push_back(data[(kpBase + 1) * numBoxes + j]); // y
+                keypoints.push_back(data[(kpBase + 2) * numBoxes + j]); // score
+            }
+            // 转换为xyxy格式
+            BBox box;
+            const float half = 2.0f;
+            box.x1 = cx - w / half;
+            box.y1 = cy - h / half;
+            box.x2 = cx + w / half;
+            box.y2 = cy + h / half;
+            box.score = score;
+            box.classId = 1;  // YOLO11s-pose默认为人体检测
+            box.keypoints = keypoints;
+            boxes.push_back(box);
+        }
+        // 添加Top-k筛选，与Python代码保持一致
+        if (boxes.size() > topk) {
+            sort(boxes.begin(), boxes.end(), [](const BBox& a, const BBox& b) {
+                return a.score > b.score;
+            });
+            boxes.resize(topk);
+        }
+        // 执行NMS
+        vector<BBox> nmsResult = BatchedNMS(boxes, nmsThres);
+        // 读取原图获取尺寸
+        cv::Mat img = cv::imread(imgPath);
+        if (img.empty()) {
+            LOG(WARNING) << "无法读取图像: " << imgPath;
+            return false;
+        }
+        const int originalHeight = img.rows;
+        const int originalWidth = img.cols;
+        // 计算缩放和填充参数
+        float scale;
+        int padWidth, padHeight;
+        CalculateScaleAndPad(originalHeight, originalWidth, targetWidth, targetHeight, scale, padWidth, padHeight);
+        // 缩放边界框和关键点到原始图像尺寸
+        ScaleBoxes(nmsResult, originalWidth, originalHeight, scale, padWidth, padHeight);
+        // 按置信度排序
+        SortResults(nmsResult);
+        // 保存结果到TXT
+        if (!saveTxt.empty()) {
+            SaveTxtResults(nmsResult, saveTxt, fileName);
         }
 
         LOG(INFO) << "====== YOLO11s-pose后处理完成 ======";

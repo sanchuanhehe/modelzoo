@@ -46,7 +46,7 @@ namespace Infer
         size_t end = filePath.find_last_of(".");
 
         std::string fileName = filePath.substr(start, end - start);
-        std::string resultPath = "./result";
+        std::string resultPath = "../out/result";
         struct stat info;
         if (stat(resultPath.c_str(), &info) != 0) {
             // 文件夹不存在，尝试创建
@@ -108,7 +108,7 @@ namespace Infer
         size_t start = filePath.find_last_of("/");
         size_t end = filePath.find_last_of(".");
 
-        std::string binPath = "./result/jpg";
+        std::string binPath = "../out/result/jpg";
         std::string fileName = filePath.substr(start, end - start);
 
         // 保存jpg文件

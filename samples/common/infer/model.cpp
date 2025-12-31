@@ -23,13 +23,38 @@
 #include "post_process.h"
 #include "yolo4_preprocess.h"
 #include "yolo4_postprocess.h"
+#include "facenet_preprocess.h"
+#include "facenet_postprocess.h"
 #include "codeformer_preprocess.h"
 #include "codeformer_postprocess.h"
+#include "siamese_preprocess.h"
+#include "siamese_postprocess.h"
+#include "xstereo_preprocess.h"
+#include "xstereo_dis_preprocess.h"
+#include "xstereo_postprocess.h"
 #include "nlohmann/json.hpp"
 #include "PillowResize/PillowResize.hpp"
 #include "efficient_preprocess.h"
+#include "superpoint_preprocess.h"
+#include "superpoint_postprocess.h"
+#include "ocr_det_preprocess.h"
+#include "ocr_det_postprocess.h"
+#include "ocr_rec_preprocess.h"
+#include "ocr_rec_postprocess.h"
+#include "pfld_preprocess.h"
+#include "pfld_postprocess.h"
+#include "crowdcount_preprocess.h"
+#include "crowdcount_postprocess.h"
+#include "crnn_preprocess.h"
+#include "crnn_postprocess.h"
+#include "vdsr_preprocess.h"
+#include "vdsr_postprocess.h"
+#include "hrnet_preprocess.h"
+#include "hrnet_postprocess.h"
 
 namespace Infer {
+constexpr float MS2S = 1000.0f;
+
 using json = nlohmann::json;
 struct ExecuteParam
 {
@@ -51,9 +76,21 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
                             ImageprocessOptions(248, 224, true, PillowResize::INTERPOLATION_BICUBIC)), PrintTop5AndDumpResult} },
     { ModelType::VGG16, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                         ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::FaceNet, {FaceNetNS::FaceNetPreprocess, FaceNetNS::FaceNetPostprocess} },
     { ModelType::Yolov4, {Yolo4::Yolov4Preprocess, Yolo4::Yolov4Postprocess} },
     { ModelType::CodeFormer, {CodeFormerNS::CodeFormerPreprocess, CodeFormerNS::CodeFormerPostprocess} },
-    { ModelType::EfficientNet, {EfficientNetPreprocess, PrintTop5AndDumpResult} }
+    { ModelType::EfficientNet, {EfficientNetPreprocess, PrintTop5AndDumpResult} },
+    { ModelType::SiameseNetwork, {SiameseNetworkPreprocess, SiamesePostProcess} },
+    { ModelType::LRStereo, {XStereoPreprocess, XStereoPostprocess}},
+    { ModelType::LRStereoDis, {XStereoDisPreprocess, XStereoPostprocess}},
+    { ModelType::PaddleOCR_Det, {OcrDetPreprocess, OcrDetPostprocess} },
+    { ModelType::PaddleOCR_Rec, {OcrRecPreprocess, OcrRecPostprocess} },
+    { ModelType::PFLD, {PFLDNS::PFLDPreprocess, PFLDNS::PFLDPostprocess} },
+    { ModelType::CrowdCount, {CrowdCountNS::CrowdCountPreprocess, CrowdCountNS::CrowdCountPostprocess} },
+    { ModelType::CRNN, {CRNNPreprocess, CRNNPostProcess} },
+    { ModelType::VDSR, {VDSRPreprocess, VDSRPostProcess} },
+    { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
+    { ModelType::TinySam, {nullptr, nullptr} }
 };
 #else
 const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::modelTypeToProcessMap_ = {
@@ -69,8 +106,17 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
                             ImageprocessOptions(248, 224, false, PillowResize::INTERPOLATION_BICUBIC)), PrintTop5AndDumpResult} },
     { ModelType::VGG16, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                         ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::FaceNet, {FaceNetNS::FaceNetPreprocess, FaceNetNS::FaceNetPostprocess} },
     { ModelType::Yolov4, {Yolo4::Yolov4Preprocess, Yolo4::Yolov4Postprocess} },
-    { ModelType::CodeFormer, {CodeFormerNS::CodeFormerPreprocess, CodeFormerNS::CodeFormerPostprocess} }
+    { ModelType::CodeFormer, {CodeFormerNS::CodeFormerPreprocess, CodeFormerNS::CodeFormerPostprocess} },
+    { ModelType::SiameseNetwork, {SiameseNetworkPreprocess, SiamesePostProcess} },
+    { ModelType::SuperPoint, {SuperPointPreprocess, SuperPointPostprocess}},
+    { ModelType::PFLD, {PFLDNS::PFLDPreprocess, PFLDNS::PFLDPostprocess} },
+    { ModelType::CrowdCount, {CrowdCountNS::CrowdCountPreprocess, CrowdCountNS::CrowdCountPostprocess} },
+    { ModelType::CRNN, {CRNNPreprocess, CRNNPostProcess} },
+    { ModelType::VDSR, {VDSRPreprocess, VDSRPostProcess} },
+    { ModelType::CrowdCount, {CrowdCountNS::CrowdCountPreprocess, CrowdCountNS::CrowdCountPostprocess} },
+    { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} }
 };
 #endif
 
@@ -186,20 +232,19 @@ std::vector<std::vector<Tensor>> Model::Infer(const std::string& filePath, FileT
             return {};
         }
     } else {
-        // 输入为单个文件
-        if (inBuf.size() != 1) {
-            LOG(ERROR) << "model input num should be 1";
-            return {};
-        }
         param.fileLists = {{filePath}};
     }
-
+    if (param.loop > 1) {
+        inBuf.emplace_back(4, 0);
+    }
     std::chrono::microseconds dur(0);
     for (size_t i = 0; i < param.fileLists.size(); ++i) {
+        auto start0 = std::chrono::high_resolution_clock::now();
         if (preprocessFunc_ == nullptr || !preprocessFunc_(param.fileLists[i], inBuf, mdlInputDescs_)) {
             LOG(ERROR) << "failed to preprocess model input";
             return {};
         }
+        auto end0 = std::chrono::high_resolution_clock::now();
         auto start = std::chrono::high_resolution_clock::now();
         for (size_t j = 0; j < param.loop; j++) {
             if (mdl_->Execute(inBuf, outBuf) != 0) {
@@ -217,23 +262,34 @@ std::vector<std::vector<Tensor>> Model::Infer(const std::string& filePath, FileT
         for (size_t k = 0; k < mdlOutputDescs_.size(); ++k) {
             output.push_back(Tensor(outBuf[k].DeepCopy(), mdlOutputDescs_[k]));
         }
-        outputs.push_back(output);
+        if (fileType == FileType::SingelImageFile) {
+            outputs.push_back(output);
+        }
     }
-    float msDur = static_cast<float>(dur.count()) / (param.loop * param.fileLists.size() * 1000.0); // 	1 millisecond = 1000 microseconds
-    LOG(INFO) << std::fixed << std::setprecision(2) << "execution time: " << msDur << "ms, frame rate: " << (1000.0 / msDur) << "fps";
+    std::vector<Tensor> output;
+    for (size_t k = 0; k < mdlOutputDescs_.size(); ++k) {
+        output.push_back(Tensor(outBuf[k].DeepCopy(), mdlOutputDescs_[k]));
+    }
+    outputs.push_back({});
+
+    if (param.loop > 1) {
+        float msDur = static_cast<float>(dur.count()) / (param.loop * param.fileLists.size() * MS2S);
+        LOG(DEBUG) << std::fixed << std::setprecision(2) << "api execution time: " << msDur << "ms, frame rate: " << (MS2S / msDur) << "fps";
+        msDur = *(static_cast<float*>(inBuf[inBuf.size() - 1].GetRawPtr())) / (param.loop * param.fileLists.size() * MS2S);
+        LOG(INFO) << std::fixed << std::setprecision(2) << "execution time: " << msDur << "ms, frame rate: " << (MS2S / msDur) << "fps";
+    }
     return outputs;
 }
 
-std::vector<Tensor> Model::Infer(std::vector<Tensor>& tensors)
+std::vector<TensorBuf> Model::Infer(std::vector<TensorBuf>& tensorBufs)
 {
     std::vector<TensorBuf> inBuf, outBuf;
-    std::vector<Tensor> outputs;
-    if (tensors.size() != mdlInputDescs_.size()) {
+    if (tensorBufs.size() != mdlInputDescs_.size()) {
         LOG(ERROR) << "invalid input tensor num";
         return {};
     }
     for (size_t i = 0; i < mdlInputDescs_.size(); ++i) {
-        inBuf.emplace_back(tensors[i].buf.GetRawPtr(), tensors[i].buf.size, tensors[i].buf.stride);
+        inBuf.emplace_back(tensorBufs[i].GetRawPtr(), tensorBufs[i].size, tensorBufs[i].stride);
     }
     for (size_t i = 0; i < mdlOutputDescs_.size(); ++i) {
         outBuf.emplace_back(mdlOutputDescs_[i].defaultSize, mdlOutputDescs_[i].defaultStride);
@@ -242,9 +298,53 @@ std::vector<Tensor> Model::Infer(std::vector<Tensor>& tensors)
         LOG(ERROR) << "failed to execute model";
         return {};
     }
+    return outBuf;
+}
+
+std::pair<std::vector<TensorDesc>, std::vector<TensorDesc>> Model::GetModelInfo()
+{
+    return std::make_pair(mdlInputDescs_, mdlOutputDescs_);
+}
+
+std::vector<Tensor> Model::Infer(std::vector<Tensor>& tensors, std::string filePath)
+{
+    std::vector<TensorBuf> inBuf, outBuf;
+    std::vector<Tensor> outputs;
+    for (size_t i = 0; i < mdlOutputDescs_.size(); ++i) {
+        outBuf.emplace_back(mdlOutputDescs_[i].defaultSize, mdlOutputDescs_[i].defaultStride);
+    }
+    for (size_t i = 0; i < mdlInputDescs_.size(); ++i) {
+        inBuf.emplace_back(mdlInputDescs_[i].defaultSize, mdlInputDescs_[i].defaultStride);
+    }
+    std::vector<Tensor> input;
+    for (size_t k = 0; k < mdlInputDescs_.size(); ++k) {
+        input.push_back(Tensor(inBuf[k], mdlInputDescs_[k]));
+    }
+    for (size_t k = 0; k < tensors.size(); ++k) {
+        inBuf.push_back(tensors[k].buf);
+    }
+    LOG(INFO) << "input.size : " << input.size();
+    std::vector<std::string> filePaths;
+    filePaths.push_back(filePath);
+    if (preprocessFunc_ == nullptr || !preprocessFunc_(filePaths, inBuf, mdlInputDescs_)) {
+            LOG(ERROR) << "failed to preprocess model input";
+            return {};
+        }
+    for (size_t k = 0; k < tensors.size(); ++k) {
+        inBuf.pop_back();
+    }
+    if (mdl_->Execute(inBuf, outBuf) != 0) {
+        LOG(ERROR) << "failed to execute model";
+        return {};
+    }
     for (size_t k = 0; k < mdlOutputDescs_.size(); ++k) {
         outputs.push_back(Tensor(outBuf[k].DeepCopy(), mdlOutputDescs_[k]));
     }
+    if (postprocessFunc_ == nullptr || !postprocessFunc_(filePaths, outBuf, mdlOutputDescs_)) {
+            LOG(ERROR) << "failed to postprocess model output";
+            return {};
+        }
+    
     return outputs;
 }
 }

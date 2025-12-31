@@ -82,10 +82,11 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC022  |  aarch64-mix210-linux-gcc |  linux  | SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC022  |  aarch64-mix210-linux-gcc |  linux  | SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -161,17 +162,18 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
 3. 使用ATC工具将ONNX模型转OM模型。
 
     执行ATC命令。
-    1. SS928V100 SVP_NNN上的om模型转换命令
+    1. Hi3403V100 SVP_NNN上的om模型转换命令
 
         ```
+        python ./script/preprocess.py --dataset_path=../../../../datasets/ImageNet/val/ILSVRC2012_val_00000002.JPEG
         atc --framework=5 --model="./model/efficientnetv2.onnx" --input_shape="image:1,3,288,288" --output="./model/efficientnetv2" --image_list="./data/img/ILSVRC2012_val_00000002.bin" --soc_version=SS928V100 
         ```
-    2. SS928V100 NNN上的om模型转换命令
+    2. Hi3403V100 NNN上的om模型转换命令
 
         ```
         atc --framework=5 --model="./model/efficientnetv2.onnx" --input_shape="image:1,3,288,288" --output="./model/efficientnetv2_dlite" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG 
         ```
-   
+      
         运行成功后生成efficientnetv2.om模型文件。
 
         参数说明：
@@ -185,12 +187,7 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
         - --enable_small_channel:使能small channel优化。
         - --enable_single_stream:推理时使用一条stream。
         - --soc_version：处理器型号。
-        
-        注意：如果出现命令找不到，配置环境变量。
-        ```
-        source /usr/local/Ascend/ascend-toolkit/set_env.sh
-        ```
-
+       
 ## 模型推理<a name="section741711594518"></a>
 
 **步骤1：编译代码。**
@@ -207,11 +204,15 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
 
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器为aarch64-mix210-linux-gcc，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
     
     ```
     cd build
-    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+    ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
     ```
     
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
@@ -233,7 +234,7 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
     ```
-    ./main --acl ../src/acl.json --model ../model/efficientnetv2.om --input ../data/file_list.txt
+    ./main --model ../model/efficientnetv2.om --input ../data/file_list.json
     ```
 
 **步骤3：输出后处理**
@@ -257,7 +258,7 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
     - --result：输出精度结果所在的位置。
 
     例如：  `python ./script/accuracy.py --output ./out/result/txt/ --label ../../../../datasets/ImageNet/val_label.txt --result ./out/accuracy.txt`
-      
+    
     SVP_NNN平台上精度结果：
     ```
     {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "81.77%"}, {"key": "Top2 accuracy", "value": "90.65%"}, {"key": "Top3 accuracy", "value": "93.57%"}, {"key": "Top4 accuracy", "value": "95.02%"}, {"key": "Top5 accuracy", "value": "95.9%"}]}
@@ -266,21 +267,22 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
     ```
     {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "50000"}, {"key": "Number of classes", "value": "1000"}, {"key": "Top1 accuracy", "value": "82.34%"}, {"key": "Top2 accuracy", "value": "91.05%"}, {"key": "Top3 accuracy", "value": "93.94%"}, {"key": "Top4 accuracy", "value": "95.4%"}, {"key": "Top5 accuracy", "value": "96.19%"}]}
     ```
+    
 2. 验证batch_size的om模型的性能，参考命令如下：
 
     ```
-    执行./main --acl ../src/acl.json --model ../model/efficientnetv2.om --input ../data/file_list_1.txt --loop 100
+    执行./main --model ../model/efficientnetv2.om --input ../data/file_list_1.json
     ```
 
     参数说明：(此模式下，file_list_1.txt只放一张图片)
 
     - --model：om模型路径。
     - --output:  后处理后结果所在位置
-    - --model: 模型所在位置
     - --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
-
+    
     在板端会输出显示
     SVP_NNN平台上性能结果如下：
+    
     ```
     [INFO]  time: 2698983, fps: 37.050993
     ```
@@ -295,5 +297,5 @@ EfficientNetV2是一系列图像分类模型，与现有技术相比，其实现
 
 | 芯片型号    | Batch Size | 数据集   | 精度指标1（Acc@1） | 精度指标2（Acc@5） |性能(fps) |
 | ----------- | ---------- | -------- | ------------------ | ------------------ |----------- |
-| SS928V100 SVP_NNN | 1          | ImageNet  | 81.77%            | 95.9%             |37.051   |
-| SS928V100 NNN | 1          | ImageNet  | 82.34%            | 96.19%             |27.338  |
+| Hi3403V100 SVP_NNN | 1          | ImageNet  | 81.77%            | 95.9%             |37.051   |
+| Hi3403V100 NNN | 1          | ImageNet  | 82.34%            | 96.19%             |27.338  |

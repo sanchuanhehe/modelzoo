@@ -45,8 +45,13 @@ enum ModelType {
     Yolov3,
     Unet,
     Yolov7,
+    Yolov8sSeg,
+    Yolov11sSeg,
     Yolov11sPose,
-    Yolov6s
+    Yolov6s,
+    Yolov10s,
+    Yolov8sObb,
+    Yolov8s
 };
 
 using ProcessFunc = std::function<bool(std::vector<std::string>&, std::vector<TensorBuf>&, std::vector<TensorDesc>&)>;

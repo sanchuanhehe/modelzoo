@@ -91,11 +91,11 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |                                                     |  -                                                            |
-
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
@@ -200,10 +200,14 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
 3. 使用ATC工具将ONNX模型转OM模型。
 
       在当前模型的代码根目录下，执行ATC命令。
-      1. SS928V100 SVP_NNN上的om模型转换命令
+      1. Hi3403V100 SVP_NNN上的om模型转换命令
          ```bash
          # 如果您没有现成的bin文件，您需要参考后面的python脚本使用说明，使用preprocess.py脚本先生成bin文件。如果您想使用多个bin文件进行数据校准，多个文件间请使用;分割，例如a.bin;b.bin。
          atc --framework=5 --model="model/codeformer_simplified.onnx" --input_shape="input.1:1,3,512,512" --input_type="input.1:FP32" --output="model/codeformer" --image_list="data/preprocess/bin/000004.bin" --soc_version=SS928V100
+         ```
+      2. Hi3403V100 NNN上的om模型转换命令
+         ```bash
+         atc --framework=5 --model="model/codeformer_simplified.onnx" --input_shape="input.1:1,3,512,512" --output="model/codeformer" --enable_single_stream=true --fusion_switch_file=config.cfg  --soc_version=OPTG
          ```
          运行成功后生成codeformer.om模型文件。
     
@@ -230,17 +234,22 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
     mkdir -p build
     ```
 
-2. 切换到build目录，执行**cmake**生成编译文件。
+2.  切换到“build“目录，执行**cmake**生成编译文件。
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器为aarch64-mix210-linux-gcc，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
+
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
 	  
-      ```bash
-      cd build
-      cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
-      ```
-    ../src表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-    
+	  ```
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+	  ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
+
     
 
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
@@ -302,9 +311,15 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
 
    SVP_NNN平台上精度结果：
    ```bash
-   平均PSNR: 25.0426 dB
-   平均SSIM: 0.6692
-   平均LPIPS: 0.2151
+   平均PSNR(↑): 25.0426 dB
+   平均SSIM(↑): 0.6692
+   平均LPIPS(↓): 0.2151
+   ```
+   NNN平台上精度结果：
+   ```bash
+   平均PSNR(↑): 25.1248 dB
+   平均SSIM(↑): 0.6727
+   平均LPIPS(↓): 0.2147
    ```
 
 
@@ -325,7 +340,11 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
 
    在板端会输出显示，SVP_NNN平台上性能结果如下：
    ```bash
-   execution time: 726.04ms, frame rate: 1.38fps
+   execution time: 468.72ms, frame rate: 2.13fps
+   ```
+   在板端会输出显示，NNN平台上性能结果如下：
+   ```bash
+   execution time: 1724.14ms, frame rate: 0.58fps
    ```
 
 **步骤4（可选）：使用python脚本在PC上进行数据预处理、模型推理、输出后处理（可以跟CPP版本在开发板上的推理结果进行对比）**
@@ -410,7 +429,7 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
 
 调用ACL接口推理计算，模型的性能和精度参考下列数据。
 
-| 芯片型号    | Batch Size | 数据集   | 平均PSNR | 平均SSIM | 平均LPIPS |
-| ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | celeba-512-300  | 25.0426 dB      | 0.6692         | 0.2151 |
-
+| 芯片型号    | Batch Size | 数据集   | 平均PSNR(↑) | 平均SSIM(↑) | 平均LPIPS(↓) | 性能（fps） |
+| ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ | ------------------ |
+| Hi3403V100 SVP_NNN | 1          | celeba-512-300  | 25.0426 dB      | 0.6692         | 0.2151 | 1.38 |
+| Hi3403V100 NNN | 1          | celeba-512-300  | 25.1248 dB      | 0.6727         | 0.2147 | 0.58 |

@@ -25,11 +25,19 @@
   },
   {
     "buildTarget": "modelzoo-app",
-    "relativePath": "built-in/yolov8s",
+    "relativePath": "built-in/yolov8s-seg",
     "chip": "SS928V100",
     "buildDef": "SS928V100",
     "needSmoke": "false",
-    "description": "检测网"
+    "description": "分割网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s-seg",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分割网"
   },
   {
     "buildTarget": "modelzoo-app",
@@ -49,11 +57,11 @@
   },
   {
     "buildTarget": "modelzoo-app",
-    "relativePath": "built-in/yolov8l",
+    "relativePath": "built-in/yolo11s-seg",
     "chip": "SS928V100",
-    "buildDef": "SS928V100",
+    "buildDef": "OPTG",
     "needSmoke": "false",
-    "description": "检测网"
+    "description": "yolo11s-seg实例分割网络"
   },
   {
     "buildTarget": "modelzoo-app",
@@ -73,15 +81,7 @@
   },
   {
     "buildTarget": "modelzoo-app",
-    "relativePath": "built-in/yolov3",
-    "chip": "SS928V100",
-    "buildDef": "SS928V100",
-    "needSmoke": "false",
-    "description": "检测网"
-  },
-  {
-    "buildTarget": "modelzoo-app",
-    "relativePath": "built-in/yolov3",
+    "relativePath": "built-in/yolo11s-pose",
     "chip": "SS928V100",
     "buildDef": "SS928V100",
     "needSmoke": "false",
@@ -91,9 +91,25 @@
     "buildTarget": "modelzoo-app",
     "relativePath": "built-in/yolo11s-pose",
     "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "yolo11s-pose姿态检测"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s-seg",
+    "chip": "SS928V100",
     "buildDef": "SS928V100",
     "needSmoke": "false",
-    "description": "检测网"
+    "description": "yolov8s-seg实例分割网络"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s-seg",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "yolov8s-seg实例分割网络"
   },
   {
     "buildTarget": "modelzoo-app",
@@ -105,7 +121,39 @@
   },
   {
     "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov6s",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
     "relativePath": "built-in/yolov7",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov3",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov10s",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s-obb",
     "chip": "SS928V100",
     "buildDef": "SS928V100",
     "needSmoke": "false",
@@ -114,6 +162,46 @@
   {
     "buildTarget": "modelzoo-app",
     "relativePath": "built-in/yolov7",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8l",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolo11s",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolo11s",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s",
     "chip": "SS928V100",
     "buildDef": "OPTG",
     "needSmoke": "false",
