@@ -19,6 +19,7 @@ import sys
 import argparse
 import json
 import os
+from tqdm import tqdm
 
 sys.path.append(r"./HigherHRNet-Human-Pose-Estimation")
 sys.path.append(r"./HigherHRNet-Human-Pose-Estimation/lib")
@@ -120,11 +121,11 @@ def main():
     coco_dataset = CocoDataset(cfg.DATASET.ROOT, cfg.DATASET.TEST, cfg.DATASET.DATA_FORMAT)
     file_name_list = []
 
-    for sub_list in file_list:
+    for sub_list in tqdm(file_list):
         if not isinstance(sub_list, list) or len(sub_list) != 1:
             return
     
-        file_path = sub_list[0]
+        file_path = sub_list[0][3:]
         image = cv2.imread(file_path)
 
         (w_resized, h_resized), center, (scale_w, scale_h) = get_multi_scale_size(image, cfg.DATASET.INPUT_SIZE, 1.0, 1)

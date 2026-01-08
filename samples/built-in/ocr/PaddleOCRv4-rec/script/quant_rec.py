@@ -81,7 +81,7 @@ if __name__ == '__main__':
         os.makedirs(os.path.realpath("./data/"+ '/quant/'))
    
     for image_name in images:
-        if filename.startswith("zh_val_1"):
+        if image_name.startswith("zh_val_1"):
             single_quant_data = pre_process("./datasets/paddleocr_rec_input/img/" + image_name)
             res_image[num, :] = single_quant_data
             num +=1

@@ -14,7 +14,6 @@
 
 import numpy as np, cv2, argparse, sys
 
-# ==================== 常量配置 ====================
 SCORE_THRESHOLD, BOX_STRIP_CHARS = 0.25, "[]"
 NMS_IOU_THRESHOLD_DEFAULT, NMS_EPSILON = 0.45, 1e-6
 YOLO_CLASS_NUM, CIRCLE_RADIUS, BORDER_THICKNESS = 80, 3, 2
@@ -24,7 +23,7 @@ BG_OVERLAY_ALPHA, BG_IMAGE_ALPHA = 0.85, 0.15
 TEXT_COLOR_MAIN, TEXT_COLOR_SHADOW_1, TEXT_COLOR_SHADOW_2, BACKGROUND_COLOR = (240, 240, 240), (20, 20, 20), (
     50, 50, 50), (245, 245, 245)
 BORDER_COLOR_R_COEFF, BORDER_COLOR_G_BASE, BORDER_COLOR_G_COEFF = 255, 100, 155
-OUTPUT_FILENAME, CLASSES_TXT = "professional_output.jpg", "person|bicycle|car|motorcycle|airplane|bus|train|truck|boat|traffic light|fire hydrant|stop sign|parking meter|bench|bird|cat|dog|horse|sheep|cow|elephant|bear|zebra|giraffe|backpack|umbrella|handbag|tie|suitcase|frisbee|skis|snowboard|sports ball|kite|baseball bat|baseball glove|skateboard|surfboard|tennis racket|bottle|wine glass|cup|fork|knife|spoon|bowl|banana|apple|sandwich|orange|broccoli|carrot|hot dog|pizza|donut|cake|chair|couch|potted plant|bed|dining table|toilet|tv|laptop|mouse|remote|keyboard|cell phone|microwave|oven|toaster|sink|refrigerator|book|clock|vase|scissors|teddy bear|hair drier|toothbrush"
+OUTPUT_FILENAME, CLASSES_TXT = "demo_show.jpg", "person|bicycle|car|motorcycle|airplane|bus|train|truck|boat|traffic light|fire hydrant|stop sign|parking meter|bench|bird|cat|dog|horse|sheep|cow|elephant|bear|zebra|giraffe|backpack|umbrella|handbag|tie|suitcase|frisbee|skis|snowboard|sports ball|kite|baseball bat|baseball glove|skateboard|surfboard|tennis racket|bottle|wine glass|cup|fork|knife|spoon|bowl|banana|apple|sandwich|orange|broccoli|carrot|hot dog|pizza|donut|cake|chair|couch|potted plant|bed|dining table|toilet|tv|laptop|mouse|remote|keyboard|cell phone|microwave|oven|toaster|sink|refrigerator|book|clock|vase|scissors|teddy bear|hair drier|toothbrush"
 
 
 def parse(file_path):
@@ -62,21 +61,15 @@ def nms(bboxes, scores, iou_thresh):
     return bboxes[keep], scores[keep]
 
 
-def process(input_file, iou_thresh=NMS_IOU_THRESHOLD_DEFAULT, per_class=False):
+def process(input_file, iou_thresh=NMS_IOU_THRESHOLD_DEFAULT):
     bboxes, scores, classes = parse(input_file)
-    if per_class:
-        result = []
-        for cls in np.unique(classes):
-            mask = classes == cls
-            keep_bboxes, keep_scores = nms(bboxes[mask], scores[mask], iou_thresh)
-            result.extend([{'class': cls, 'score': s, 'box': b} for b, s in zip(keep_bboxes, keep_scores)])
-        return result
+
     keep_bboxes, keep_scores = nms(bboxes, scores, iou_thresh)
     return [{'class': classes[np.where((bboxes == b).all(axis=1))[0][0]], 'score': s, 'box': b} for b, s in
             zip(keep_bboxes, keep_scores)]
 
 
-def draw(file_path, boxes, output_path="professional_output.jpg", show=True):
+def draw(file_path, boxes, output_path="demo_show.jpg"):
     CLASS_MAPPING = dict(zip(range(YOLO_CLASS_NUM), CLASSES_TXT.split('|')))
     img = cv2.imread(file_path)
     for bbox in boxes:
@@ -113,7 +106,7 @@ def main():
     parser.add_argument('-r', '--result', required=True, help='检测结果文件路径')
     parser.add_argument('-t', '--iou', type=float, default=NMS_IOU_THRESHOLD_DEFAULT,
                        help=f'IOU阈值 (默认: {NMS_IOU_THRESHOLD_DEFAULT})')
-    parser.add_argument('-o', '--output', default="demo_show.jpg",
+    parser.add_argument('-o', '--output', default="../out/demo_show.jpg",
                        help='输出文件名 (默认: demo_show.jpg)')
 
     args = parser.parse_args()
@@ -124,13 +117,13 @@ def main():
         sys.exit(1)
     # 处理流程
     try:
-        boxes = process(args.result, args.iou, args.per_class)
+        boxes = process(args.result, args.iou)
         if not boxes:
             print("未检测到任何对象，跳过绘图")
             return
 
         print(f"检测到 {len(boxes)} 个边界框")
-        draw(args.image, boxes, args.output, show=not args.no_show)
+        draw(args.image, boxes, args.output)
         print("处理完成！")
 
     except Exception as e:

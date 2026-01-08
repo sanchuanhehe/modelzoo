@@ -33,6 +33,10 @@ namespace Infer
     static Result ReadImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc, TensorBuf &inBuf)
     {
         LOG(INFO) << "ReadImgFileToBuf: desc.dimCount " << desc.dimCount;
+        if (desc.defaultStride == 0) {
+            desc.defaultStride = desc.dims[desc.dimCount - 1] * desc.typeSize / BYTE_BIT_NUM;
+            inBuf.stride = desc.defaultStride;
+        }
         int64_t loopTimes = 1;
         for (size_t loop = 0; loop < desc.dimCount - 1; loop++) {
             loopTimes *= desc.dims[loop];

@@ -4,8 +4,8 @@
     "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov10s",
     "modelParameter": {
         "输入": "640x640",
-        "参数量": "7.291",
-        "计算量": "24.073"
+        "参数量": "7.291M",
+        "计算量": "24.073GFLOPS"
     },
 	"isBeta": false,
 	"betaDesc": "",
@@ -38,7 +38,7 @@
         }
 	],
 	"quickStart": {
-		"md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov3/doc/快速开始.md"
+		"md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov10s/doc/快速开始.md"
 	},
     	"modelChipset": [
 		{

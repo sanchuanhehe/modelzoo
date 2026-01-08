@@ -34,8 +34,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-fPIC -O2 -Wall")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro,-z,now,-z,noexecstack -fPIE -pie")
 set(CMAKE_SKIP_RPATH TRUE)
 
-set(LIB_PATH $ENV{NPU_HOST_LIB})
-
 include_directories(
     ${COMMON_PATH}/infer/platform
     ${COMMON_PATH}/include
@@ -47,6 +45,6 @@ link_directories(
 
 add_executable(main main.cpp)
 
-target_link_libraries(main infer_utils_static m stdc++)
+target_link_libraries(main infer_utils_static m)
 
 install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

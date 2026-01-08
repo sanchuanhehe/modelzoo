@@ -82,8 +82,7 @@ PP-OCRv4识别模型在PP-OCRv3的基础上进一步升级。整体的框架保�
 | 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
 | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC022  |  aarch64-mix210-linux-gcc |  linux  | SPC022 
-
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 |
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
@@ -106,7 +105,7 @@ PP-OCRv4识别模型在PP-OCRv3的基础上进一步升级。整体的框架保�
    git clone https://github.com/frotms/PaddleOCR2Pytorch.git
    cd PaddleOCR2Pytorch
    git checkout c799652dd04942240c0376cb6ade3cad94f7300e  # 切换到所用版本
-   git apply ppocr.patch
+   git apply ../ppocr.patch
    cd ..
    ```
 
@@ -147,15 +146,17 @@ PP-OCRv4识别模型在PP-OCRv3的基础上进一步升级。整体的框架保�
       cd ckpt
       wget https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_rec_train.tar
       wget https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_train.tar
-      tar -xvf ch_PP-OCRv4_det_train.tar.gz
-      tar -xvf ch_PP-OCRv4_rec_train.tar.gz
+      tar -xvf ch_PP-OCRv4_det_train.tar
+      tar -xvf ch_PP-OCRv4_rec_train.tar
+      cd ../
       ```
    
 2. 导出onnx文件。
 
-    1. 使用开源源码中的导出方法
+    1. 使用开源源码中的导出方法，在PaddleOCR2Pytorch目录下：
 
          ```
+         cp ../script/onnx_model_sim.py ./
          python ./converter/ch_ppocr_v4_det_converter.py --yaml_path ./configs/det/ch_PP-OCRv4/ch_PP-OCRv4_det_student.yml --src_model_path ckpt/ch_PP-OCRv4_det_train/
          
          python ./converter/ch_ppocr_v4_rec_converter.py --yaml_path ./configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml --src_model_path ckpt/ch_PP-OCRv4_rec_train/
@@ -246,16 +247,15 @@ PP-OCRv4识别模型在PP-OCRv3的基础上进一步升级。整体的框架保�
     调用脚本可以获得精度数据。
 
     ```
-    python rec_accuray.py --ground_truth_json "./datasets/paddleocr_rec_input/zh_val_labels.txt" --output "./out/result/txt"
+    python rec_accuray.py --label_path "./datasets/paddleocr_rec_input/zh_val_labels.txt" --pre_file "./out/result/txt"
     ```
 
     参数说明：
 
-    - --output：推理结果所在路径，默认为./out/result/txt/
+    - --pre_file：推理结果所在路径，默认为./out/result/txt/
 
-    - --ground_truth_json：真值标签文件所在路径。
+    - --label_path：真值标签文件所在路径。
       
-    
     运行rec_accuray.py脚本会输出文件，该文件中保存的是每一个图片的结果，平均结果为上述所有值求和输出：
     
     Hi3403V100 SVP_NNN平台上精度结果：

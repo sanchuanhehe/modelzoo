@@ -85,9 +85,12 @@ def process(gt, pred_label):
 
 # 调用示例
 if __name__ == "__main__":
-    file_path = "./datasets/paddleocr_rec_input/zh_val_labels.txt"  # 替换为你的文件路径
-    gt = read_file_to_dict_basic(file_path)
-    pre_file = "./out/result/txt1/"
-    pre = get_pre(pre_file)
+    parser = argparse.ArgumentParser(description='model ')
+    parser.add_argument('--pre_file', type=str, default="./out/result/txt/")
+    parser.add_argument('--label_path', type=str, default="./datasets/paddleocr_rec_input/zh_val_labels.txt")
+
+    opt = parser.parse_args()
+    gt = read_file_to_dict_basic(opt.label_path)
+    pre = get_pre(opt.pre_file)
     result = process(gt, pre)
     print("精度结果: ", result["acc"])

@@ -100,9 +100,9 @@ FaceNet 是一种基于深度卷积神经网络的端到端人脸识别与特征
 
 | 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97.md#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/OpenHarmony%20Small%E7%89%88%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97.md#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC022  |  aarch64-mix210-linux-gcc |  linux  |  SPC022  |
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC022  |                                                 |  -                                                            |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -199,8 +199,18 @@ FaceNet 是一种基于深度卷积神经网络的端到端人脸识别与特征
 1. 获取权重文件。
 
    点击[facenet](https://github.com/timesler/facenet-pytorch) 进入facenet开源首页，下载模型权重文件20180402-114759-vggface2.pt，或者点击[链接](https://github.com/timesler/facenet-pytorch/releases/download/v2.2.9/20180402-114759-vggface2.pt) 直接下载。
-   
-   下载成功后，将20180402-114759-vggface2.pt文件放到~/.cache/torch/checkpoints/路径下
+
+   下载模型文件20180402-114759-vggface2.pt，将文件放到~/.cache/torch/checkpoints/路径下
+
+   ```bash
+    # 记录当前所在目录
+    original_path=$(pwd)
+    mkdir -p ~/.cache/torch/checkpoints/
+    cd ~/.cache/torch/checkpoints/
+    wget https://github.com/timesler/facenet-pytorch/releases/download/v2.2.9/20180402-114759-vggface2.pt
+    # 返回之前的目录
+    cd "$original_path"
+   ```
 
 2. 生成onnx文件。
 
@@ -252,17 +262,20 @@ FaceNet 是一种基于深度卷积神经网络的端到端人脸识别与特征
     ```
 
 2. 切换到build目录，执行**cmake**生成编译文件。
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
 
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器为aarch64-mix210-linux-gcc，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
+
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
 	  
-      ```bash
-      cd build
-      cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
-      ```
-    ../src表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-    
-    
+    ```bash
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+    ```
+    比如
+    ```bash
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
 
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
@@ -308,9 +321,12 @@ FaceNet 是一种基于深度卷积神经网络的端到端人脸识别与特征
 
    ```bash
    cd script # 切换到script目录
+   # 更改下开发板输出文件的权限，确保脚本能访问
+   sudo chmod -R 777 ../out
    python3 facenet_evaluate.py \
       --pairs_path "../../../../../datasets/LFW/pairs.txt" \
-      --txt_dir "特征向量txt文件目录"
+      --txt_dir "../out/result/txt"
+   cd ..
    ```
 
    参数说明：
@@ -336,6 +352,7 @@ FaceNet 是一种基于深度卷积神经网络的端到端人脸识别与特征
    ```bash
    cd out # 切换到out目录
    ./main --acl ../src/acl.json --model ../model/facenet_vggface2.om  --input ../data/file_list_1.json
+   cd ..
    ```
 
    参数说明：(此模式下，输入路径为一张图片)
@@ -364,6 +381,7 @@ FaceNet 是一种基于深度卷积神经网络的端到端人脸识别与特征
    python3 facenet_preprocess.py \
       --file_list "../data/file_list.json" \
       --output_dir "../data/preprocess/bin"
+   cd ..
    ```
 
    参数说明：
@@ -376,6 +394,7 @@ FaceNet 是一种基于深度卷积神经网络的端到端人脸识别与特征
    python3 facenet_infer.py \
       --file_list_path "../data/preprocess/bin_file_list.txt" \
       --output_bin_dir "../out/result/bin"
+   cd ..
    ```
 
    参数说明：
@@ -388,6 +407,7 @@ FaceNet 是一种基于深度卷积神经网络的端到端人脸识别与特征
    python3 facenet_postprocess.py \
       --bin_dir "../out/result/bin" \
       --output_txt_dir "../out/result/txt"
+   cd ..
    ```
 
    参数说明：

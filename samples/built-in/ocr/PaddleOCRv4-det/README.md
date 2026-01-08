@@ -82,8 +82,8 @@ PP-OCRv4检测模型在PP-OCRv3检测模型的基础上，在网络结构，训�
 | 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
 | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC022  |  aarch64-mix210-linux-gcc |  linux  | SPC022 
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SPC022                                                       |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
@@ -106,7 +106,7 @@ PP-OCRv4检测模型在PP-OCRv3检测模型的基础上，在网络结构，训�
    git clone https://github.com/frotms/PaddleOCR2Pytorch.git
    cd PaddleOCR2Pytorch
    git checkout c799652dd04942240c0376cb6ade3cad94f7300e  # 切换到所用版本
-   git apply ppocr.patch
+   git apply ../ppocr.patch
    cd ..
    ```
 
@@ -133,6 +133,10 @@ PP-OCRv4检测模型在PP-OCRv3检测模型的基础上，在网络结构，训�
         python ./script/xfund_process.py
         python3 ../../../../utils/generate_file_list.py datasets/xfund_ppocr/images/
         ```
+    2. 生成量化数据
+        ```
+        python3 ./script/quant_det.py
+        ```
 
 ## 模型转化<a name="section741711594517"></a>
 
@@ -146,16 +150,18 @@ PP-OCRv4检测模型在PP-OCRv3检测模型的基础上，在网络结构，训�
      mkdir ckpt
      cd ckpt
      wget https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_train.tar
-     tar -xvf ch_PP-OCRv4_det_train.tar.gz
+     tar -xvf ch_PP-OCRv4_det_train.tar
      wget https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_rec_train.tar
-     tar -xvf ch_PP-OCRv4_rec_train.tar.gz
+     tar -xvf ch_PP-OCRv4_rec_train.tar
+     cd ../
       ```
 
 2. 导出onnx文件。
 
-    1. 使用开源源码中的导出方法
+    1. 使用开源源码中的导出方法，在PaddleOCR2Pytorch目录下：
 
          ```
+         cp ../script/onnx_model_sim.py ./
          python ./converter/ch_ppocr_v4_det_converter.py --yaml_path ./configs/det/ch_PP-OCRv4/ch_PP-OCRv4_det_student.yml --src_model_path ckpt/ch_PP-OCRv4_det_train/
          
          python ./converter/ch_ppocr_v4_rec_converter.py --yaml_path ./configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml --src_model_path ckpt/ch_PP-OCRv4_rec_train/
@@ -171,7 +177,7 @@ PP-OCRv4检测模型在PP-OCRv3检测模型的基础上，在网络结构，训�
     执行ATC命令。
     1. Hi3403V100 SVP_NNN上的om模型转换命令
         ```
-        atc --model="./modelnew/ch_ptocr_v4_det_simplified.onnx" --framework=5 --input_format="NCHW" --save_original_model="false" --output=./modelnew/det1 --input_type="input.1:FP32" --compile_mode=5 --soc_version=SS928V100 --image_list="./data/quant/data_det.txt" --input_shape="input.1:1,3,960,960" --matmul_per_channel_enable=1 --quant_mode=1
+        atc --model="./model/ch_ptocr_v4_det_simplified.onnx" --framework=5 --input_format="NCHW" --save_original_model="false" --output=./model/det --input_type="input.1:FP32" --compile_mode=5 --soc_version=SS928V100 --image_list="./data/quant/data_det.txt" --input_shape="input.1:1,3,960,960" --matmul_per_channel_enable=1 --quant_mode=1
         ```
 
     2. Hi3403V100 SVP_NNN上的om模型转换命令
@@ -250,17 +256,17 @@ PP-OCRv4检测模型在PP-OCRv3检测模型的基础上，在网络结构，训�
     调用脚本可以获得精度数据。
 
     ```
-    python ./script/eval_det_iou.py --gt_path "./datasets/xfund_det_gt.json" --out_path "./out/result/txt"
+    python ./script/eval_det_iou.py --gt_path "./datasets/end_gt_xfund.json" --out_path "./out/result/txt"
     ```
 
     参数说明：
 
-    - --output：推理结果所在路径，默认为./out/result/bin/
+    - --out_path：推理结果所在路径，默认为./out/result/bin/
 
-    - --ground_truth_json：真值标签文件所在路径。
+    - --gt_path：真值标签文件所在路径。
       
     
-    运行eval_det_iou.py脚本会输出文件，该文件中保存的是每一个图片的结果，平均结果为上述所有值求和输出：
+    运行eval_det_iou.py脚本会输出：
 
     Hi3403V100 SVP_NNN平台上精度结果：
     ```
