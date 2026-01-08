@@ -46,7 +46,7 @@
 
 namespace Infer {
 struct ExecuteParam {
-    size_t loop = 1;
+    size_t loop = 0;
     std::vector<std::vector<std::string>> fileLists;
 };
 using json = nlohmann::json;
@@ -192,26 +192,22 @@ std::vector<std::vector<Tensor>> Model::Infer(const std::string& filePath,
         }
         param.fileLists = { { filePath } };
     }
-    if (param.loop > 1) {
+    if (param.loop > 0) {
         inBuf.emplace_back(4, 0);
     }
-    std::chrono::microseconds dur(0);
+    size_t loop = param.loop > 0 ? param.loop : 1;
     auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < param.fileLists.size(); ++i) {
         if (preprocessFunc_ == nullptr || !preprocessFunc_(param.fileLists[i], inBuf, mdlInputDescs_)) {
             LOG(ERROR) << "failed to preprocess model input";
             return {};
         }
-        auto tempStart = std::chrono::high_resolution_clock::now();
-        for (size_t j = 0; j < param.loop; j++) {
+        for (size_t j = 0; j < loop; j++) {
             if (mdl_->Execute(inBuf, outBuf) != 0) {
                 LOG(ERROR) << "failed to execute model";
                 return {};
             }
         }
-        auto tempEnd = std::chrono::high_resolution_clock::now();
-        dur += std::chrono::duration_cast<std::chrono::microseconds>(tempEnd - tempStart);
-
         if (postprocessFunc_ == nullptr || !postprocessFunc_(param.fileLists[i], outBuf, mdlOutputDescs_)) {
             LOG(ERROR) << "failed to postprocess model output";
             return {};
@@ -229,10 +225,8 @@ std::vector<std::vector<Tensor>> Model::Infer(const std::string& filePath,
                   << costTime * (param.fileLists.size() - i - 1) * 1.00f / (i * S2MIN + S2MIN)
                   << "min remains.";
     }
-    if (param.loop > 1) {
-        float msDur = static_cast<float>(dur.count()) / (param.loop * param.fileLists.size() * MS2S);
-        LOG(INFO) << std::fixed << std::setprecision(2) << "api execution time: " << msDur << "ms, frame rate: " << (MS2S / msDur) << "fps";
-        msDur = *(static_cast<float*>(inBuf[inBuf.size() - 1].GetRawPtr())) / (param.loop * param.fileLists.size() * MS2S);
+    if (param.loop > 0 && param.fileLists.size() > 0) {
+        float msDur = *(static_cast<float*>(inBuf[inBuf.size() - 1].GetRawPtr())) / (param.loop * param.fileLists.size() * MS2S);
         LOG(INFO) << std::fixed << std::setprecision(2) << "execution time: " << msDur << "ms, frame rate: " << (MS2S / msDur) << "fps";
     }
     return outputs;

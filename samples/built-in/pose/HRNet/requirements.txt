@@ -5,3 +5,4 @@ munkres
 opencv-python
 json_tricks
 pycocotools
+tqdm

@@ -1,10 +1,2 @@
 {
-    "profiler":{
-        "output":"/home/hispark/shared/modelzoo/samples/built-in/classification/ResNet18/profiling",
-        "aicpu":"on",
-        "aic_metrics":"ArithmeticUtilization",
-        "interval":"0",
-        "acl_api":"on",
-        "switch":"on"
-    }
 }

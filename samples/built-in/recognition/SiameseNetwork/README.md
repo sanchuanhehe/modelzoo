@@ -88,9 +88,9 @@ Siamese Network（孪生神经网络）是一种通过共享权重的两个相�
 
 | 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -102,16 +102,16 @@ Siamese Network（孪生神经网络）是一种通过共享权重的两个相�
 2. 安装依赖。
 
    ```
+   # 建议使用python 3.7.5
    pip3 install -r requirements.txt
    ```
 3. 获取开源源码
    ```
-   pip install nbconvert
    git clone https://github.com/harveyslash/Facial-Similarity-with-Siamese-Networks-in-Pytorch.git
    cd Facial-Similarity-with-Siamese-Networks-in-Pytorch
+   git checkout f4a5352e38a25dca8eae68bcef5aa3ac7bbcb270
    sudo apt install jupyter-core
-   pip3 install nbconvert
-   jupyter nbconvert --to Siamese-networks-medium.ipynb
+   jupyter nbconvert --to script Siamese-networks-medium.ipynb
    cd ../
    cp Facial-Similarity-with-Siamese-Networks-in-Pytorch/Siamese-networks-medium.py script
    cd script/
@@ -138,27 +138,27 @@ Siamese Network（孪生神经网络）是一种通过共享权重的两个相�
     mkdir bin
     cd ../../script
     python3 preprocess.py 
-    python3 script/generate_file_list.py
     cd ../
+    python3 script/generate_file_list.py
     ```
 
 ## 模型转化<a name="section741711594517"></a>
 
 使用PyTorch将模型权重文件.pth转换为.onnx文件，再使用ATC工具将.onnx文件转为离线推理模型文件.om文件。
 
-1. 获取权重文件。
+1. 获取权重文件，此步骤需要自行训练模型，轮数100，若效果不佳可重新训练一次。
 
    ```
    mkdir model
    cd script
-   python3 Siamese-networks-medium.py
+   python3 model.py
    cd ../
 
 2. 导出onnx文件。
     ```
     cd script
     python3 ./pth2onnx.py
-    cd ..
+    cd ../
     ```
          
 3. 使用ATC工具将ONNX模型转OM模型。
@@ -166,12 +166,12 @@ Siamese Network（孪生神经网络）是一种通过共享权重的两个相�
     执行ATC命令。
     1. SS928V100 SVP_NNN上的om模型转换命令
         ```
-        atc --framework=5 --model="./model/siamese_network.onnx" --input_shape="img1:1,1,100,100;img2:1,1,100,100" --image_list="./data/preprocess/bin/0_0_s6_3.bin;./data/preprocess/bin/0_0_s6_4.bin" --output="./model/siamese_network" --compile_mode=5 --soc_version=SS928V100
+        atc --framework=5 --model="./model/siamese_network.onnx" --input_shape="img1:1,1,100,100;img2:1,1,100,100" --image_list="./data/preprocess/bin/s6_3.bin;./data/preprocess/bin/s6_4.bin" --output="./model/siamese_network" --compile_mode=5 --soc_version=SS928V100
         ```
     2. SS928V100 NNN上的om模型转换命令
-      ```
-      atc --framework=5 --model="./model/siamese_network.onnx" --input_shape="img1:1,1,100,100;img2:1,1,100,100" --output="./model/siamese_network" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
-      ```
+        ```
+        atc --framework=5 --model="./model/siamese_network.onnx" --input_shape="img1:1,1,100,100;img2:1,1,100,100" --output="./model/siamese_network" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
+        ```
         运行成功后生成siamese_network.om模型文件。
 
         参数说明：      

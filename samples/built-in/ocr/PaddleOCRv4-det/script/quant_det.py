@@ -119,6 +119,7 @@ if __name__ == '__main__':
     num = 0
     if not os.path.isdir("./data/" + '/quant/'):
         os.makedirs(os.path.realpath("./data/"+ '/quant/'))
+        os.makedirs(os.path.realpath("./data"+ '/quant' + '/det'))
     for image_name in quant_img:
         single_quant_data = preproces_img("./PaddleOCR2Pytorch/doc/imgs/" + image_name)
         res_image[num, :] = single_quant_data

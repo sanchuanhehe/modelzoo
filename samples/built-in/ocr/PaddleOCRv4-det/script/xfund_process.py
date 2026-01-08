@@ -171,7 +171,7 @@ class XFund2PaddleOCRRec:
         # 处理角度：确保宽>高（文本行水平）
         if w < h:
             w, h = h, w
-            angle += 270  # 旋转90度，使文本水平
+            angle += 90  # 旋转90度，使文本水平
        # print("w: xxx: " , w)
         # 旋转图片，使文本行水平
         M = cv2.getRotationMatrix2D((center_x, center_y), angle, 1.0)
@@ -298,7 +298,7 @@ class XFund2PaddleOCRRec:
                 json_gt.append(json_tmp) 
                 # 写入所有标注
                 f_label.write(json.dumps(annotations, ensure_ascii=False) + '\n')
-        pred_json_file = "end_gt_xfund.json"
+        pred_json_file = "./datasets/end_gt_xfund.json"
         #print("json_result: ", json_result)
         with open(pred_json_file, 'w') as f:
             json.dump(json_gt, f)

@@ -98,11 +98,11 @@
 
     **表 1** 版本配套表
 
-     | 芯片型号   | npu     | soc_version | 环境准备指导                                                 | cann包版本                                                   | 编译工具链                                                   | os                                                           | sdk                                                          |
-    | ---------- | ------- | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md#241安装clang交叉编译器) | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md) | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | SPC022                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
-    | Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100开发环境搭建.md) | 5.30.t11.7.b110                                                       | aarch64-mix210-linux-gcc                                     | linux                                                        | SPC022                                                       |
+| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -118,6 +118,7 @@
 
 2. 安装依赖  
    ```
+   #建议python版本3.7.5
    pip install -r requirements.txt 
    ```
 
@@ -144,7 +145,7 @@
 
 2. 数据预处理
 
-   数据预处理在代码主目录将原始数据集转换为模型输入的数据。
+   数据预处理在代码主目录将原始数据集转换为模型输入的数据(只有SVP_NNN平台需要)。
    ```
    python ./script/superpoint_preprocess.py --img_path $img_path --result_path $result_path
    ```
@@ -154,7 +155,7 @@
     | ----------- | ---------------------------------------------|
     | img_path    | 数据集路径                                    |
     | result_path | 数据预处理得到的bin文件保存位置                |
-    
+   
     例如执行如下命令后，在./data/hpatches_preprocessed 生成预处理后的数据集
     ```
     python ./script/superpoint_preprocess.py --img_path ./datasets/hpatches --result_path ./data/hpatches_preprocessed
@@ -203,11 +204,9 @@
     ```
     2). Hi3403V100 NNN上的om模型转换命令
 
-        ```
         atc --framework=5 --model="./model/superpoint_bs1.onnx" --input_format="NCHW" --input_shape="image:1,1,240,320" --output="./model/superpoint_bs1_dlite" --enable_single_stream=true --soc_version=OPTG
-        ```
     运行成功后生成superpoint_bs1.om模型文件。
-
+    
     参数说明：
     - --framework：5代表ONNX模型。
     - --model：为ONNX模型文件。
@@ -220,13 +219,7 @@
     - --enable_small_channel:使能small channel优化。
     - --enable_single_stream:推理时使用一条stream。
     - --soc_version：处理器型号。
-
-    注意：如果出现命令找不到，配置环境变量。
-    ```
-    source /usr/local/Ascend/ascend-toolkit/set_env.sh
-    ```
-
-
+    
 ## 模型推理<a name="section183221994800"></a>。
 
 
@@ -267,15 +260,11 @@
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
     Hi3403V100 SVP_NNN平台的如下：
     ```
-    ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list.txt --loop 100 
+    ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list.txt
     ```
     Hi3403V100 NNN平台的如下：
     ```
     ./main --acl ../src/acl.json --model ../model/superpoint_bs1.om --input ../data/file_list.json 
-    ```
-    执行如果报错找不到 opencv.so动态库，需要在板端将opencv路径加到环境变量，
-    ```
-    LD_LIBRARY_PATH=XXX/samples/opensource/opencv/lib/:$LD_LIBRARY_PATH
     ```
 
 

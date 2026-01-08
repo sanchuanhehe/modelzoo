@@ -116,7 +116,7 @@
 			],
 			"performance": [
 				{
-					"quantMode": "a8w8",
+					"quantMode": "fp16",
 					"detail": [
 						{
 							"performance": 15,
