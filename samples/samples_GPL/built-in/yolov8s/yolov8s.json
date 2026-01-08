@@ -4,8 +4,8 @@
   "modelRepository": "https://gitee.com/Hispark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s",
   "modelParameter": {
     "输入": "640x640",
-    "参数量": "11.182M",
-    "计算量": "30.486GFLOPs"
+    "参数量": "11.182 M",
+    "计算量": "30.486 GFLOPs"
   },
   "isBeta": false,
   "betaDesc": "",
@@ -14,7 +14,7 @@
     {
       "task": "Vision",
       "tags": [
-        "检测"
+        "目标检测"
       ]
     }
   ],
@@ -71,12 +71,12 @@
             {
               "performance": 23.461,
               "performanceUnit": "耗时（ms）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 42.624,
               "performanceUnit": "性能（fps）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 132.421,

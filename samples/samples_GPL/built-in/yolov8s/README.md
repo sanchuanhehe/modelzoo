@@ -94,9 +94,9 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 | 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN | ss928v100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
 
 
 
@@ -136,12 +136,11 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
             ……
             └── 00000581781.jpg
          ├── instances_val2017.json
-         └── val2017.txt
    ...
    ```
 2. 生成数据集目录文件
    ```
-   python3 ../../../../utils/generate_file_list.py ../../../../datasets/coco/val2017
+   python3 ../../../../utils/generate_file_list.py ../../../../../../modelzoo-dev/datasets/coco/val2017
    ```
    
    
@@ -175,15 +174,18 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 3. 使用ATC工具将ONNX模型转OM模型。
 
       执行ATC命令。
+
       SS928V100 SVP_NNN上的om模型转换命令
+
       ```
       atc --framework=5 --model="./model/yolov8s.onnx" --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_SVP_NNN/insert_op.cfg" --output="model/yolov8s" --image_list="./data/image_ref_list.txt" --soc_version=SS928V100 --compile_mode=6
       ```
 
       SS928V100 NNN上的om模型转换命令
-       ```
-       atc --framework=5 --model="./model/yolov8s.onnx"  --input_shape="images:1,3,640,640" --input_fp16_nodes="images" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/yolov8s" --enable_single_stream=true --soc_version=OPTG
-       ```
+
+      ```
+      atc --framework=5 --model="./model/yolov8s.onnx"  --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/yolov8s" --enable_single_stream=true --soc_version=OPTG
+      ```
        
       运行成功后生成yolov8s.om模型文件。
     
@@ -319,11 +321,11 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
    execution time: 38.14ms, frame rate: 26.22fps
    ```
 
-3. 可视化推理结果，SVP_NNN可用
+3. 可视化推理结果
    调用脚本，可以对推理结果进行可视化画框操作。
    ```
    cd script
-   python3 drawRectangle.py -i ../../../../../datasets/coco/val2017/000000000139.jpg -r ../out/result/txt/000000000139_result.txt -o ../out/000000000139_show.jpg --iou 0.45
+   python3 drawRectangle.py -i ../../../../../../../modelzoo-dev/datasets/coco/val2017/000000000724.jpg -r ../out/result/txt/000000000724_result.txt -o ../out/000000000724_show.jpg --iou 0.45
    cd ../
    ```
 
@@ -339,5 +341,5 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 | 芯片型号    | Batch Size | 数据集   | AP（IoU=0.50） | AP（IoU=0.50:0.95） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| SS928V100 SVP_NNN | 1          | coco2017  | 60.4%       | 43.5%         | 42.624 |
-| SS928V100 NNN | 1          | coco2017  | 60.4%       | 43.9%         | 26.22 |
+| Hi3403V100 SVP_NNN | 1          | coco2017  | 60.4%       | 43.5%         | 42.624 |
+| Hi3403V100 NNN | 1          | coco2017  | 60.4%       | 43.9%         | 26.22 |

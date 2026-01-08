@@ -58,7 +58,7 @@ constexpr float MS2S = 1000.0f;
 using json = nlohmann::json;
 struct ExecuteParam
 {
-    size_t loop = 1;
+    size_t loop = 0;
     std::vector<std::vector<std::string>> fileLists;
 };
 
@@ -116,7 +116,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::CRNN, {CRNNPreprocess, CRNNPostProcess} },
     { ModelType::VDSR, {VDSRPreprocess, VDSRPostProcess} },
     { ModelType::CrowdCount, {CrowdCountNS::CrowdCountPreprocess, CrowdCountNS::CrowdCountPostprocess} },
-    { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} }
+    { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
+    { ModelType::PaddleOCR_Det, {OcrDetPreprocess, OcrDetPostprocess} }
 };
 #endif
 
@@ -234,48 +235,35 @@ std::vector<std::vector<Tensor>> Model::Infer(const std::string& filePath, FileT
     } else {
         param.fileLists = {{filePath}};
     }
-    if (param.loop > 1) {
+    if (param.loop > 0) {
         inBuf.emplace_back(4, 0);
     }
+    size_t loop = param.loop > 0 ? param.loop : 1;
     std::chrono::microseconds dur(0);
     for (size_t i = 0; i < param.fileLists.size(); ++i) {
-        auto start0 = std::chrono::high_resolution_clock::now();
         if (preprocessFunc_ == nullptr || !preprocessFunc_(param.fileLists[i], inBuf, mdlInputDescs_)) {
             LOG(ERROR) << "failed to preprocess model input";
             return {};
         }
-        auto end0 = std::chrono::high_resolution_clock::now();
-        auto start = std::chrono::high_resolution_clock::now();
-        for (size_t j = 0; j < param.loop; j++) {
+        for (size_t j = 0; j < loop; j++) {
             if (mdl_->Execute(inBuf, outBuf) != 0) {
                 LOG(ERROR) << "failed to execute model";
                 return {};
             }
         }
-        auto end = std::chrono::high_resolution_clock::now();
-        dur += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         if (postprocessFunc_ == nullptr || !postprocessFunc_(param.fileLists[i], outBuf, mdlOutputDescs_)) {
             LOG(ERROR) << "failed to postprocess model output";
             return {};
-        }
-        std::vector<Tensor> output;
-        for (size_t k = 0; k < mdlOutputDescs_.size(); ++k) {
-            output.push_back(Tensor(outBuf[k].DeepCopy(), mdlOutputDescs_[k]));
-        }
-        if (fileType == FileType::SingelImageFile) {
-            outputs.push_back(output);
         }
     }
     std::vector<Tensor> output;
     for (size_t k = 0; k < mdlOutputDescs_.size(); ++k) {
         output.push_back(Tensor(outBuf[k].DeepCopy(), mdlOutputDescs_[k]));
     }
-    outputs.push_back({});
+    outputs.push_back(output);
 
-    if (param.loop > 1) {
-        float msDur = static_cast<float>(dur.count()) / (param.loop * param.fileLists.size() * MS2S);
-        LOG(DEBUG) << std::fixed << std::setprecision(2) << "api execution time: " << msDur << "ms, frame rate: " << (MS2S / msDur) << "fps";
-        msDur = *(static_cast<float*>(inBuf[inBuf.size() - 1].GetRawPtr())) / (param.loop * param.fileLists.size() * MS2S);
+    if (param.loop > 0 && param.fileLists.size() > 0) {
+        float msDur = *(static_cast<float*>(inBuf[inBuf.size() - 1].GetRawPtr())) / (param.loop * param.fileLists.size() * MS2S);
         LOG(INFO) << std::fixed << std::setprecision(2) << "execution time: " << msDur << "ms, frame rate: " << (MS2S / msDur) << "fps";
     }
     return outputs;

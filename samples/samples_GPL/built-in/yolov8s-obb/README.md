@@ -55,6 +55,7 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
 ├── data
 │   ├── cfg.txt           //参数配置文件
 │   ├── file_list.json    //输入图片路径
+│   ├── file_list_1.json  //输入图片路径, 单张循环测试FPS
 
 ├── script
 │   ├── yolov8s_obb_preprocess.py     //数据预处理脚本
@@ -91,8 +92,8 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
 | 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
 | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SPC022  |  aarch64-mix210-linux-gcc |  linux  | SPC022 
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SPC022                                                       |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -102,7 +103,8 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
 1. 获取 YOLOv8 (Ultralytics) 源码
 
    ```bash
-   git clone https://github.com/ultralytics/ultralytics.git
+   cd samples/samples_GPL/built-in/yolov8s-obb/
+   git clone -b v8.3.230 https://github.com/ultralytics/ultralytics.git
    cd ultralytics
    pip3 install -e .
    cd  ..
@@ -111,6 +113,7 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
 2. 安装依赖。
 
    ```bash
+   # 建议使用Python 3.9.23
    pip3 install -r requirements.txt
    ```
 
@@ -120,7 +123,7 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
    该模型通常使用 [DOTAv1数据集](https://github.com/ultralytics/assets/releases/download/v0.0.0/DOTAv1.zip) 进行训练和验证。
 
    在 `samples/samples_GPL/built-in/yolov8s-obb/` 目录下创建 `datasets` 文件夹（或建立软链接），
-   将下载的 DOTAv1.zip 拷贝到该目录并执行 `unzip DOTAv1.zip` 进行解压，确保 `data/file_list.json` 中的相对路径可用。
+   将下载的 DOTAv1.zip 拷贝到该目录并执行 `unzip DOTAv1.zip` 进行解压。
 
 2. 数据切割
 
@@ -133,23 +136,7 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
    
    修改ultralytics/cfg/datasets/DOTAv1.yaml中的path字段为DOTAv1-split。
 
-3. 生成file_list.json
 
-   main函数从file_list.json文件读取输入文件列表进行推理，因此我们对要推理的数据集生成匹配的file_list.json。
-   在data目录下提供了file_list.json的demo样例:
-   
-   执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
-    ```bash
-    # 在当前项目根目录下执行，生成的文件在data/file_list.json
-    python3 ../../../../utils/generate_file_list.py ${dataset_path}
-    ```
-    例如:
-    ```bash
-    python3 ../../../../utils/generate_file_list.py datasets/DOTAv1-split/images/val
-    ```
-  
-   参数说明：
-   - --dataset_path：原数据集所在路径。
 
 
 ## 模型转化<a name="section741711594517"></a>
@@ -167,15 +154,13 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
    ```
 
 2. 生成模型校准数据。
-
-      选取几张图片生成模型校准数据，引用的图片数据默认在samples/samples_GPL/built-in/yolov8s-obb/data/file_list.json中描述，也可以自定义数据。校准数据文件默认保存在out/preprocess/bin目录下。
+   
+      选取几张图片生成模型校准数据，引用的图片数据默认在samples/samples_GPL/built-in/yolov8s-obb/data/file_list.json中描述（当前仅包含3张示例图片，用于量化校准已足够）。校准数据文件默认保存在out/preprocess/bin目录下。
 
       ```sh
       cd samples/samples_GPL/built-in/yolov8s-obb/script/
       python yolov8s_obb_preprocess.py
       ```
-
-      > 注意，file_list.json默认使用 `../datasets` 的相对路径，需确保该路径指向你的DOTAv1切割验证集图片目录。
 
 3. 使用 ATC 工具将 ONNX 模型转 OM 模型。
 
@@ -184,6 +169,7 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
       ```bash
       cd samples/samples_GPL/built-in/yolov8s-obb
       # 需确保 out/preprocess/bin 下有用于量化的校准数据，或去掉 --image_list 参数
+      # 如果包含--image_list参数，需指定一个真实存在的 bin 文件路径（例如 out/preprocess/bin/P0146__1024__0___0.bin），请检查实际生成的文件名
       atc --framework=5 --model="model/yolov8s-obb.onnx" --input_shape="images:1,3,1024,1024" --output="model/yolov8s-obb" --soc_version=SS928V100 --image_list="out/preprocess/bin/P0146__1024__0___0.bin" --compile_mode=6
       ```
       
@@ -221,18 +207,16 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
 1.  将编译好的 `main` 和相关目录（data, model）上传到开发板。
 2.  赋予执行权限：`chmod +x main`
 3.  修改配置文件 `cfg.txt`（可选，用于控制是否保存 bin 文件）。
-4.  运行推理。（your_path是你板端具体的路径前缀）
+4.  运行推理。（**your_path**是板端文件系统具体的路径前缀）
 
     ```bash
     cd ${your_path}/modelzoo/samples/samples_GPL/built-in/yolov8s-obb/out
-    
     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${your_path}/modelzoo/samples/samples_GPL/opensource/opencv/lib"
-    
     ./main --model ../model/yolov8s-obb.om  --input ../data/file_list.json
     ```
     图片推理结果会保存在 `out/result/bin` 目录下。
     
-    > **注意**：file_list.json中当前只包含三张示例图片，需要按你的数据集路径进行修改。如果需要更多图片，可以在服务器的代码仓的modelzoo/samples/samples_GPL/built-in/yolov8s-obb目录下用`python ../../../../utils/generate_file_list.py datasets/DOTAv1-split/images/val` 生成完整的文件列表，注意核对生成的文件信息在板端文件系统的具体路径。
+    > **注意**：file_list.json中当前只包含3张示例图片，需要按你的数据集路径进行修改。如果需要更多图片，可以在服务器的代码仓的modelzoo/samples/samples_GPL/built-in/yolov8s-obb目录下用`python ../../../../utils/generate_file_list.py datasets/DOTAv1-split/images/val` 生成完整的文件列表，注意核对生成的文件信息在板端文件系统的具体路径。
 
 **步骤3：验证精度和性能**
 
@@ -242,9 +226,9 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
 
    ```bash
    python3 script/yolov8s_obb_evaluate.py \
-     --result_dir ../out/result/txt \
-     --gt_annotations ../datasets/DOTAv1-split/labels/val \
-     --img_dir ../datasets/DOTAv1-split/images/val
+     --result_dir out/result/txt \
+     --gt_annotations datasets/DOTAv1-split/labels/val \
+     --img_dir datasets/DOTAv1-split/images/val
    ```
    
    **关键说明**：
@@ -252,7 +236,34 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
    - 脚本会自动根据 `result_dir` 中存在的 txt 文件过滤待评估图片
    - 多进程数量可在脚本中修改 `NUM_WORKERS` 变量（默认 6）
 
-   精度结果示例如下：
+   SVP_NNN平台上精度结果：
+   
+   ```
+   ============================================================
+   Class                | mAP@0.5    | mAP@0.5:0.95
+   ------------------------------------------------------------
+   plane                | 0.9368     | 0.8344
+   ship                 | 0.9368     | 0.7759
+   storage-tank         | 0.8280     | 0.6893
+   baseball-diamond     | 0.8026     | 0.6124
+   tennis-court         | 0.9166     | 0.8741
+   basketball-court     | 0.6367     | 0.5656
+   ground-track-field   | 0.6638     | 0.5565
+   harbor               | 0.8004     | 0.5599
+   bridge               | 0.5591     | 0.3412
+   large-vehicle        | 0.8348     | 0.6746
+   small-vehicle        | 0.7565     | 0.5839
+   helicopter           | 0.7632     | 0.5568
+   roundabout           | 0.7133     | 0.5431
+   soccer-ball-field    | 0.5416     | 0.4529
+   swimming-pool        | 0.7628     | 0.4913
+   ------------------------------------------------------------
+   ALL                  | 0.7635     | 0.6075
+   ============================================================
+   ```
+   
+   NNN平台上精度结果：
+   
    ```
    ============================================================
    Class                | mAP@0.5    | mAP@0.5:0.95   
@@ -278,10 +289,23 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
    
 2. 推理耗时和 FPS。
 
-   板端运行完demo后，会在串口或者ssh最后一行打印推理耗时和 FPS。
+   在板端执行下面指令，运行结束后，性能参数会输出在终端。（注意，**your_path**是板端文件系统具体的路径前缀，如果报了`libopencv_world.so.412: cannot open shared object file`的问题，执行`export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${your_path}/modelzoo/samples/samples_GPL/opensource/opencv/lib"`）
 
-   ```bash
+   ```sh
+   cd ${your_path}/modelzoo/samples/samples_GPL/built-in/yolov8s-obb/out
+   ./main --model ../model/yolov8s-obb.om  --input ../data/file_list_1.json
+   ```
+   
+   SVP_NNN平台上性能结果：
+   
+   ```
    execution time: 55.28ms, frame rate: 18.09fps
+   ```
+   
+   NNN平台上性能结果：
+   
+   ```
+   execution time: 274.40ms, frame rate: 3.64fps
    ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>

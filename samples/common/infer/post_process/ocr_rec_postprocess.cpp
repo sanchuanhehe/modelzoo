@@ -89,10 +89,18 @@ namespace Infer
         string resultPath = "../out/result";
         string binPath = resultPath + "/bin";
         string txtPath = resultPath + "/txt";
-        for (auto &path : {resultPath, binPath, txtPath}) {
-            if (stat(path.c_str(), nullptr) != 0) {
-                mkdir(path.c_str(), 0755);
-            }
+        struct stat info; 
+        if (stat(resultPath.c_str(), &info) != 0) {
+            mkdir(resultPath.c_str(), 0777);
+            INFO_LOG("create file success");
+        }
+
+        if (stat(txtPath.c_str(), &info) != 0) {
+            mkdir(txtPath.c_str(), 0777);
+        }
+
+        if (stat(binPath.c_str(), &info) != 0) {
+            mkdir(binPath.c_str(), 0777);
         }
         string outputFileName = binPath + outputName + "_" + to_string(0) + ".bin";
         LOG(INFO) << " outputFileName: " << outputFileName;

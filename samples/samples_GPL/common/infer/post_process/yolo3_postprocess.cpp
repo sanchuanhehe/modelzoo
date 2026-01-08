@@ -401,7 +401,7 @@ static void scaleBoxes(vector<vector<float>> &bboxes, const string &filePath)
             box[BOTTOM_RIGHT_X] = xywh_box[BOTTOM_RIGHT_X];
             box[TOP_LEFT_Y] = xywh_box[TOP_LEFT_Y];
             box[BOTTOM_RIGHT_Y] = xywh_box[BOTTOM_RIGHT_Y];
-            LOG(INFO) << "After scaling: (" << box[TOP_LEFT_X] << ", " << box[TOP_LEFT_Y] << ", " << box[BOTTOM_RIGHT_X] << ", " << box[BOTTOM_RIGHT_Y] << ")";
+            // LOG(INFO) << "After scaling: (" << box[TOP_LEFT_X] << ", " << box[TOP_LEFT_Y] << ", " << box[BOTTOM_RIGHT_X] << ", " << box[BOTTOM_RIGHT_Y] << ")";
         }
         return;
     }

@@ -85,15 +85,15 @@ ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目�
     [SYS] Version: [SS928V100XXXXXXXXX]
     ```
 
-2、该模型需要以下环境
+2. 该模型需要以下环境
 
-  **表 1** 版本配套表
+    **表 1** 版本配套表
 
-| 芯片型号  | npu  | soc_version | 环境准备指导     |
-| --------- | ---- | ----------- | ---------------- |
-| SS928V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-| SS928V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |
-
+    | 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+    | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  |  SS928 V100R001C02SPC022  |
+    | Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SS928 V100R001C02SPC022  |  aarch64-mix210-linux-gcc |  linux  |  SS928 V100R001C02SPC022 |
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
@@ -124,29 +124,20 @@ ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目�
    ...
    ```
 
-2. 数据预处理，将原始数据集转换为模型的输入数据。
+2. 生成文件集file_list.json，将原始数据集图片地址转换为模型的输入数据。
   
-    执行 ../../../../utils/preprocess.py 脚本，完成数据预处理。
+    执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
     
     ```
-    python ../../../../utils/preprocess.py ${input_path} ${output_path}
+    python3 ../../../../utils/generate_file_list.py ${dataset_path}
     ```
-   2.1 SS928V100 SVP_NNN上的数据预处理命令
-   
-   ```
-   python ../../../../utils/preprocess.py --input_path ../../../../datasets/ImageNet/val/ --output_path ./data --resize 256 --center_crop 224
-   ```
-   
-   2.2 SS928V100 NNN上的的数据预处理命令
-   
-   ```
-   python ../../../../utils/preprocess.py --input_path ../../../../datasets/ImageNet/val/ --output_path ./data --resize 256 --center_crop 256 --transpose 1
-   ```
-   
+    例如:
+    ```
+    python3 ../../../../utils/generate_file_list.py ../../../../datasets/ImageNet/val
+    ```
+  
    参数说明：
-   
-   - --input_path：原数据集所在路径。
-   - --output_path：转化完后的数据保存路径， 默认在./data路径下
+   - --dataset_path：原数据集所在路径。
 
 
 ## 模型转化<a name="section741711594517"></a>
@@ -199,11 +190,6 @@ ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目�
         - --enable_small_channel:使能small channel优化。
         - --enable_single_stream:推理时使用一条stream。
         - --soc_version：处理器型号。
-        
-        注意：如果出现命令找不到，配置环境变量。
-        ```
-        source /usr/local/Ascend/ascend-toolkit/set_env.sh
-        ```
 
 ## 模型推理<a name="section741711594518"></a>
 
@@ -217,16 +203,18 @@ ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目�
 
 2.  切换到“build“目录，执行**cmake**生成编译文件。
 
-    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-
     当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
 
-    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译器为aarch64-mix210-linux-gcc，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据运行环境选择使用。
-    
+    例如，当开发环境为X86架构，运行环境为ARM架构时，执行以下命令进行交叉编译。其中交叉编译工具链有toolchain_aarch64_linux.cmake和toolchain_aarch64_ohos.cmake两个选项，SOC_VERSION根据使用npu的不同有SS928V100和OPTG两个选项，请根据开发和运行环境选择使用。
+	  
     ```
     cd build
-    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gcc -DSOC_VERSION=${soc_version}
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
     ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ``` 
     
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
@@ -247,7 +235,7 @@ ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目�
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
     ```
-    ./main --acl ../src/acl.json --model ../model/resnet50.om --input ../data/file_list.txt
+    ./main --acl ../src/acl.json --model ../model/resnet50.om --input ../data/file_list.json
     ```
 
 **步骤3：输出后处理**
@@ -283,24 +271,15 @@ ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目�
 2. 验证batch_size的om模型的性能，参考命令如下：
 
     ```
-    执行./main --acl ../src/acl.json --model ../model/resnet50.om --input ../data/file_list_1.txt --loop 100
+    执行./main --model ../model/resnet50.om --input ../data/file_list_1.json
     ```
 
-    参数说明：(此模式下，file_list_1.txt只放一张图片)
+    参数说明：
+    - --model：om模型文件路径。
+    - --input: 输入的图像列表文件
 
-    - --model：om模型路径。
-    - --output:  后处理后结果所在位置
-    - --model: 模型所在位置
-    - --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
+    file_list_1.json中的配置代表对一张输入图片重复推理100次，程序执行时会在板端会输出打印推理的平均时间和帧率。
 
-    在板端会输出显示，SVP_NNN平台上性能结果如下：
-    ```
-    [INFO] time: 297037, fps: 336.658396
-    ```
-    NNN平台上性能结果如下：
-    ```
-    [INFO] time: 751336, fps: 133.096244
-    ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
 
@@ -308,5 +287,5 @@ ResNet是残差网络(Residual Network)的缩写,该系列网络广泛用于目�
 
 | 芯片型号    | Batch Size | 数据集   | 精度指标1（Acc@1） | 精度指标2（Acc@5） |性能(fps) |
 | ----------- | ---------- | -------- | ------------------ | ------------------ |----------- |
-| SS928V100 SVP_NNN | 1          | ImageNet  | 76.05%            | 92.85%             |336.66    |
-| SS928V100 NNN | 1              | ImageNet  | 76.13%            | 92.88%             |133.10    |
+| Hi3403V100 SVP_NNN | 1          | ImageNet  | 76.05%            | 92.85%             |334.22    |
+| Hi3403V100 NNN | 1              | ImageNet  | 76.13%            | 92.88%             |133.10    |

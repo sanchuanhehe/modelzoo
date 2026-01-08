@@ -171,7 +171,7 @@ class XFund2PaddleOCRRec:
         # 处理角度：确保宽>高（文本行水平）
         if w < h:
             w, h = h, w
-            angle += 270  # 旋转90度，使文本水平
+            angle += 90  # 旋转90度，使文本水平
        # print("w: xxx: " , w)
         # 旋转图片，使文本行水平
         M = cv2.getRotationMatrix2D((center_x, center_y), angle, 1.0)
@@ -254,7 +254,7 @@ class XFund2PaddleOCRRec:
                     
                 h, w = img.shape[:2]
                 json_tmp = {}
-                json_tmp["img"] = filename
+                json_tmp["img"] = str(img_path) 
                     
                 # 写入图片路径
                 f_label.write(f"images/{img_file}\t")
@@ -290,7 +290,7 @@ class XFund2PaddleOCRRec:
                             "transcription": text,
                             "points": points
                         }
-                        gt_point = {"points": points, "text": text, "ignore":false}
+                        gt_point = {"points": points, "text": text, "ignore":False}
                         # PaddleOCR格式: 坐标,文本
                         gt_info_list.append(gt_point)
                         annotations.append(content)

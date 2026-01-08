@@ -37,6 +37,8 @@ def main(opt, cfg):
         im = letterbox(im0)  # padded resize
         im = np.array(im)
         im = im.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
+        if opt.data_type == "uint8":
+            im = im.transpose((1, 2, 0))  # CHW to HWC
         img = np.expand_dims(im, axis=0)
         print(paths_name)
         if opt.data_type == "float32":

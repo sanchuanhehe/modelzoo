@@ -47,8 +47,8 @@ for pair_index, pair in tqdm(enumerate(img_pair), total=len(img_pair)):
     img0_original_path = pair[0]
     img1_original_path = pair[1]
     label = 0 if img0_original_path.split("/")[-2] == img1_original_path.split("/")[-2] else 1
-    img0_bin_filename = f"{pair_index}_{label}_{img0_original_path.split('/')[-2]}_{img0_original_path.split('/')[-1].split('.')[0]}.bin"
-    img1_bin_filename = f"{pair_index}_{label}_{img1_original_path.split('/')[-2]}_{img1_original_path.split('/')[-1].split('.')[0]}.bin"
+    img0_bin_filename = f"{img0_original_path.split('/')[-2]}_{img0_original_path.split('/')[-1].split('.')[0]}.bin"
+    img1_bin_filename = f"{img1_original_path.split('/')[-2]}_{img1_original_path.split('/')[-1].split('.')[0]}.bin"
     get_bin(img0_original_path).tofile(bin_dir / img0_bin_filename)
     get_bin(img1_original_path).tofile(bin_dir / img1_bin_filename)
 

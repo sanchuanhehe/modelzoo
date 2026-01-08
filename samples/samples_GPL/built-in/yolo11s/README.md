@@ -98,9 +98,8 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 | 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
 | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/Hispark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | SPC 022  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022  |
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  |  SPC 022 |
-
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
@@ -137,7 +136,6 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
          ……
          └── 00000581781.jpg
       ├── instances_val2017.json
-      └── val2017.txt
    ...
    ```
 
@@ -165,16 +163,10 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 1. 获取权重文件。
 
-   在[链接](https://github.com/ultralytics/assets/releases/tag/v0.0.0)中找到所需版本下载，也可以使用下述命令下载。
+   在[链接](https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11s.pt)中找到yolo11s.pt下载，存储至model文件夹下。
       ```
       mkdir model
-      cd model
-      wget https://github.com/ultralytics/assets/releases/download/v0.0.0/${model}.pt
-      cd ../
       ```
-   参数说明：
-
-   - {model}:可选yolov11[n/s/m/l/x]
 
 2. 导出onnx文件。
 
@@ -241,9 +233,8 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
     比如
     ```
     cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
-    ```
-
     cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_linux.cmake -DSOC_VERSION=OPTG
+    ```
 
 3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
 
@@ -264,12 +255,14 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
    SS928V100 SVP_NNN上的执行命令
-    ```
-    ./main ../../src/acl.json ../../model/yolo11s.om ../../coco/file_list.txt
-    ```
+
+   ```
+   ./main ../../src/acl.json ../../model/yolo11s.om ../../coco/file_list.txt
+   ```
+
    SS928V100 NNN上的执行命令
    ```
-    ./main --acl ../src/acl.json --model ../model/yolo11s.om --input ../data/file_list.json
+   ./main --acl ../src/acl.json --model ../model/yolo11s.om --input ../data/file_list.json
    ```
     结果会保存在数据集所在目录下的result目录下，推理结果会保存在result目录下的bin目录下，后处理后的box结果会保存在result目录下的txt目录下
 
@@ -334,7 +327,7 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
    SS928V100 SVP_NNN上的执行命令
    ```
-   执行./main ../../src/acl.json ../../model/yolo11s.om ..data/file_list.txt 1000
+   ./main ../../src/acl.json ../../model/yolo11s.om ..data/file_list.txt 1000
    ```
    SS928V100 NNN上的执行命令,file_list_1.json中loop设为100
    ```

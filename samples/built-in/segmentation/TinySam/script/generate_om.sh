@@ -22,6 +22,7 @@ echo "将TARGET_VERSION的值修改为SS928V100 $INI_FILE"
 
 if ! grep -q "^n_loop_enable=1" "$INI_FILE"; then
     # 默认追加到文件末尾
+    echo "" >> "$INI_FILE"
     echo "n_loop_enable=1" >> "$INI_FILE"
     echo "添加 n_loop_enable=1"
 fi
