@@ -51,6 +51,8 @@
 #include "vdsr_postprocess.h"
 #include "hrnet_preprocess.h"
 #include "hrnet_postprocess.h"
+#include "fastspeech2_preprocess.h"
+#include "fastspeech2_postprocess.h"
 
 namespace Infer {
 constexpr float MS2S = 1000.0f;
@@ -78,6 +80,7 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
                         ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
     { ModelType::FaceNet, {FaceNetNS::FaceNetPreprocess, FaceNetNS::FaceNetPostprocess} },
     { ModelType::Yolov4, {Yolo4::Yolov4Preprocess, Yolo4::Yolov4Postprocess} },
+    { ModelType::FastSpeech2, {FastSpeech2NS::FastSpeech2Preprocess, FastSpeech2NS::FastSpeech2Postprocess} },
     { ModelType::CodeFormer, {CodeFormerNS::CodeFormerPreprocess, CodeFormerNS::CodeFormerPostprocess} },
     { ModelType::EfficientNet, {EfficientNetPreprocess, PrintTop5AndDumpResult} },
     { ModelType::SiameseNetwork, {SiameseNetworkPreprocess, SiamesePostProcess} },
@@ -108,6 +111,7 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
                         ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
     { ModelType::FaceNet, {FaceNetNS::FaceNetPreprocess, FaceNetNS::FaceNetPostprocess} },
     { ModelType::Yolov4, {Yolo4::Yolov4Preprocess, Yolo4::Yolov4Postprocess} },
+    { ModelType::FastSpeech2, {FastSpeech2NS::FastSpeech2Preprocess, FastSpeech2NS::FastSpeech2Postprocess} },
     { ModelType::CodeFormer, {CodeFormerNS::CodeFormerPreprocess, CodeFormerNS::CodeFormerPostprocess} },
     { ModelType::SiameseNetwork, {SiameseNetworkPreprocess, SiamesePostProcess} },
     { ModelType::SuperPoint, {SuperPointPreprocess, SuperPointPostprocess}},

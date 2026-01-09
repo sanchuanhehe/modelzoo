@@ -1,0 +1,1207 @@
+diff --git a/audio/stft.py b/audio/stft.py
+index fcce29b..d01f520 100644
+--- a/audio/stft.py
++++ b/audio/stft.py
+@@ -65,8 +65,8 @@ class STFT(torch.nn.Module):
+         input_data = input_data.squeeze(1)
+ 
+         forward_transform = F.conv1d(
+-            input_data.cuda(),
+-            torch.autograd.Variable(self.forward_basis, requires_grad=False).cuda(),
++            input_data,
++            torch.autograd.Variable(self.forward_basis, requires_grad=False),
+             stride=self.hop_length,
+             padding=0,
+         ).cpu()
+diff --git a/config/AISHELL3/model.yaml b/config/AISHELL3/model.yaml
+index ddd3d38..6524ec0 100644
+--- a/config/AISHELL3/model.yaml
++++ b/config/AISHELL3/model.yaml
+@@ -34,4 +34,4 @@ max_seq_len: 1000
+ 
+ vocoder:
+   model: "HiFi-GAN" # support 'HiFi-GAN', 'MelGAN'
+-  speaker: "universal" # support  'LJSpeech', 'universal'
++  speaker: "LJSpeech" # support  'LJSpeech', 'universal'
+diff --git a/config/LJSpeech/preprocess.yaml b/config/LJSpeech/preprocess.yaml
+index 8d5364a..196b056 100644
+--- a/config/LJSpeech/preprocess.yaml
++++ b/config/LJSpeech/preprocess.yaml
+@@ -1,7 +1,7 @@
+ dataset: "LJSpeech"
+ 
+ path:
+-  corpus_path: "/home/ming/Data/LJSpeech-1.1"
++  corpus_path: "../../../../../datasets/LJSpeech-1.1"
+   lexicon_path: "lexicon/librispeech-lexicon.txt"
+   raw_path: "./raw_data/LJSpeech"
+   preprocessed_path: "./preprocessed_data/LJSpeech"
+diff --git a/deploy/modules.py b/deploy/modules.py
+new file mode 100644
+index 0000000..b275fa2
+--- /dev/null
++++ b/deploy/modules.py
+@@ -0,0 +1,1014 @@
++from collections import OrderedDict
++
++import numpy as np
++import torch.fx
++from torch.nn import Conv2d, ConvTranspose2d
++import torch.utils.checkpoint
++from torch.nn.utils import weight_norm, remove_weight_norm
++from transformer import SubLayers
++from transformer.Modules import ScaledDotProductAttention
++from transformer import Layers
++from model import modules
++import hifigan
++from hifigan import models
++from model import fastspeech2
++from hifigan.models import init_weights, LRELU_SLOPE, get_padding
++import os
++import json
++
++import torch
++import torch.nn as nn
++import torch.nn.functional as F
++from transformer import Encoder, Decoder, PostNet
++from model.modules import VarianceAdaptor, LengthRegulator
++from utils.tools import get_mask_from_lengths, pad
++
++device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
++torch.fx.wrap('len')
++torch.fx.wrap('min')
++MASK_MIN_VALUE = -1024
++MAX_SRC_LENS = 41
++max_mel_len = None
++pitch_target = None
++energy_target = None
++duration_target = None
++p_control = 1.0
++e_control = 1.0
++d_control = 1.0
++mel_masks = None
++
++
++class MultiHeadAttention(nn.Module):
++    """ Multi-Head Attention module with Conv2d replacing Linear """
++
++    def __init__(self, n_head, d_model, d_k, d_v, dropout=0.1):
++        super().__init__()
++
++        self.n_head = n_head
++        self.d_k = d_k
++        self.d_v = d_v
++
++        # === 把 Linear 换成 Conv2d(kernel=1) ===
++        self.w_qs = nn.Conv2d(d_model, n_head * d_k, kernel_size=1, bias=True)
++        self.w_ks = nn.Conv2d(d_model, n_head * d_k, kernel_size=1, bias=True)
++        self.w_vs = nn.Conv2d(d_model, n_head * d_v, kernel_size=1, bias=True)
++
++        self.attention = ScaledDotProductAttention(temperature=np.power(d_k, 0.5))
++        self.layer_norm = nn.LayerNorm(d_model)
++
++        self.fc = nn.Conv2d(n_head * d_v, d_model, kernel_size=1, bias=True)
++
++        self.dropout = nn.Dropout(dropout)
++
++    def forward(self, q, k, v, mask=None):
++        d_k, d_v, n_head = self.d_k, self.d_v, self.n_head
++        sz_b, len_q, ad_q = q.data.size()
++        sz_b, len_k, ad_k = k.data.size()
++        sz_b, len_v, ad_v = v.data.size()
++
++        residual = q
++
++        # ==== [B, L, C] → [b, c, 1, l] ====
++        q = q.permute(0, 2, 1).unsqueeze(-2)
++        k = k.permute(0, 2, 1).unsqueeze(-2)
++        v = v.permute(0, 2, 1).unsqueeze(-2)
++
++        # ==== Conv2d 等效 Linear ====
++        q = self.w_qs(q).reshape(sz_b, ad_q, len_q).permute(0, 2, 1)  # [B, L, n_head*d_k]
++        k = self.w_ks(k).reshape(sz_b, ad_k, len_k).permute(0, 2, 1)
++        v = self.w_vs(v).reshape(sz_b, ad_v, len_v).permute(0, 2, 1)
++
++        # ==== reshape 进入 attention ====
++        q = q.view(sz_b, len_q, n_head, d_k).permute(2, 0, 1, 3).contiguous().view(-1, len_q, d_k)
++        k = k.view(sz_b, len_k, n_head, d_k).permute(2, 0, 1, 3).contiguous().view(-1, len_k, d_k)
++        v = v.view(sz_b, len_v, n_head, d_v).permute(2, 0, 1, 3).contiguous().view(-1, len_v, d_v)
++
++        # if mask is not None:
++        mask = mask.repeat(n_head, 1, 1)
++
++        output, attn = self.attention(q, k, v, mask=mask)
++
++        # ==== reshape 回来 ====
++        output = output.view(n_head, sz_b, len_q, d_v)
++        output = output.permute(1, 2, 0, 3).contiguous().view(sz_b, len_q, -1)
++
++        # ==== fc (Conv2d 版本) ====
++        output = output.permute(0, 2, 1).unsqueeze(-2)  # [B, d_model, L, 1]
++        output = self.fc(output).reshape(sz_b, ad_q, len_q).permute(0, 2, 1)  # [B, L, d_model]
++
++        output = self.dropout(output)
++        output = self.layer_norm(output + residual)
++
++        return output, attn
++
++    def _load_from_state_dict(
++            self,
++            state_dict,
++            prefix,
++            local_metadata,
++            strict,
++            missing_keys,
++            unexpected_keys,
++            error_msgs,
++    ):
++        # 处理 qkv
++        ks = ['w_qs', 'w_ks', 'w_vs', 'fc']
++        for k in ks:
++            w_key = prefix + f"{k}.weight"
++            if w_key in state_dict and state_dict[w_key].dim() == 2:
++                state_dict[w_key] = state_dict[w_key].unsqueeze(-1).unsqueeze(-1)
++
++        super()._load_from_state_dict(
++            state_dict,
++            prefix,
++            local_metadata,
++            strict,
++            missing_keys,
++            unexpected_keys,
++            error_msgs,
++        )
++
++class PositionwiseFeedForward(nn.Module):
++    """ A two-feed-forward-layer module (Conv2d version) """
++
++    def __init__(self, d_in, d_hid, kernel_size, dropout=0.1):
++        super().__init__()
++
++        # Conv2d 替代 Conv1d
++        # 输入: [B, L, C] → [b, c, 1, l]
++        self.w_1 = nn.Conv2d(
++            in_channels=d_in,
++            out_channels=d_hid,
++            kernel_size=(1, kernel_size[0]),
++            padding=(0, (kernel_size[0] - 1) // 2),
++        )
++
++        self.w_2 = nn.Conv2d(
++            in_channels=d_hid,
++            out_channels=d_in,
++            kernel_size=(1, kernel_size[1]),
++            padding=(0, (kernel_size[1] - 1) // 2),
++        )
++
++        self.layer_norm = nn.LayerNorm(d_in)
++        self.dropout = nn.Dropout(dropout)
++
++    def forward(self, x):
++        # x: [B, L, C]
++        residual = x
++        output = x.permute(0, 2, 1).unsqueeze(2)  # [b, c, 1, l]
++
++        output = F.relu(self.w_1(output))
++        output = self.w_2(output)
++        b, c, _, l = output.data.shape
++        output = output.reshape(b, c, l).permute(0, 2, 1)  # [B, L, C]
++
++        output = self.dropout(output)
++        output = self.layer_norm(output + residual)
++
++        return output
++
++    def _load_from_state_dict(
++            self,
++            state_dict,
++            prefix,
++            local_metadata,
++            strict,
++            missing_keys,
++            unexpected_keys,
++            error_msgs,
++    ):
++        # 处理 qkv
++        ks = "w_1", "w_2"
++        for k in ks:
++            w_key = prefix + f"{k}.weight"
++            if w_key in state_dict:
++                state_dict[w_key] = state_dict[w_key].unsqueeze(2)
++
++        super()._load_from_state_dict(
++            state_dict,
++            prefix,
++            local_metadata,
++            strict,
++            missing_keys,
++            unexpected_keys,
++            error_msgs,
++        )
++
++class Conv(nn.Module):
++    """
++    Convolution Module (Conv2d version, compatible with Conv1d checkpoints)
++    """
++
++    def __init__(
++        self,
++        in_channels,
++        out_channels,
++        kernel_size=1,
++        stride=1,
++        padding=0,
++        dilation=1,
++        bias=True,
++        w_init="linear",
++    ):
++        super(Conv, self).__init__()
++
++        # Conv1d(kernel_size=k) 等价于 Conv2d(kernel_size=(1,k))
++        self.conv = nn.Conv2d(
++            in_channels,
++            out_channels,
++            kernel_size=(1, kernel_size),
++            stride=(1, stride),
++            padding=(0, padding),
++            dilation=(1, dilation),
++            bias=bias,
++        )
++
++    def forward(self, x):
++        # 输入 [B, L, C] → [b, c, 1, l]
++        x = x.transpose(1, 2).unsqueeze(2)
++        x = self.conv(x)
++        # 输出还原 [B, L, C]
++        b, c, _, l = x.data.shape
++        x = x.reshape(b, c, l).transpose(1, 2)
++
++        return x
++
++    def _load_from_state_dict(
++            self, state_dict, prefix, local_metadata, strict,
++            missing_keys, unexpected_keys, error_msgs
++    ):
++        """
++        重写: 自动把 Conv1d 权重 [out, in, k] 转换成 Conv2d [out, in, 1, k]
++        """
++        conv_key = prefix + "conv.weight"
++        if conv_key in state_dict:
++            w = state_dict[conv_key]
++            if w.ndim == 3:  # Conv1d 权重
++                state_dict[conv_key] = w.unsqueeze(2)  # 转换成 Conv2d 格式
++        # 调用父类继续处理
++        super()._load_from_state_dict(
++            state_dict, prefix, local_metadata, strict,
++            missing_keys, unexpected_keys, error_msgs
++        )
++
++class PostNet(nn.Module):
++    """
++    PostNet: Five 1-d convolution with 512 channels and kernel size 5
++    """
++
++    def __init__(
++        self,
++        n_mel_channels=80,
++        postnet_embedding_dim=512,
++        postnet_kernel_size=5,
++        postnet_n_convolutions=5,
++    ):
++
++        super(PostNet, self).__init__()
++        self.convolutions = nn.ModuleList()
++
++        self.convolutions.append(
++            nn.Sequential(
++                ConvNorm(
++                    n_mel_channels,
++                    postnet_embedding_dim,
++                    kernel_size=postnet_kernel_size,
++                    stride=1,
++                    padding=int((postnet_kernel_size - 1) / 2),
++                    dilation=1,
++                    w_init_gain="tanh",
++                ),
++                nn.BatchNorm2d(postnet_embedding_dim),
++            )
++        )
++
++        for i in range(1, postnet_n_convolutions - 1):
++            self.convolutions.append(
++                nn.Sequential(
++                    ConvNorm(
++                        postnet_embedding_dim,
++                        postnet_embedding_dim,
++                        kernel_size=postnet_kernel_size,
++                        stride=1,
++                        padding=int((postnet_kernel_size - 1) / 2),
++                        dilation=1,
++                        w_init_gain="tanh",
++                    ),
++                    nn.BatchNorm2d(postnet_embedding_dim),
++                )
++            )
++
++        self.convolutions.append(
++            nn.Sequential(
++                ConvNorm(
++                    postnet_embedding_dim,
++                    n_mel_channels,
++                    kernel_size=postnet_kernel_size,
++                    stride=1,
++                    padding=int((postnet_kernel_size - 1) / 2),
++                    dilation=1,
++                    w_init_gain="linear",
++                ),
++                nn.BatchNorm2d(n_mel_channels),
++            )
++        )
++
++    def forward(self, x):
++        x = x.contiguous().transpose(1, 2).unsqueeze(2)
++
++        for i in range(len(self.convolutions) - 1):
++            x = F.dropout(torch.tanh(self.convolutions[i](x)), 0.5, self.training)
++        x = F.dropout(self.convolutions[-1](x), 0.5, self.training)
++        b, c, _, l = x.data.shape
++        x = x.reshape(b, c, l)
++        x = x.contiguous().transpose(1, 2)
++        return x
++
++
++class ConvNorm(nn.Module):
++    def __init__(
++        self,
++        in_channels,
++        out_channels,
++        kernel_size=1,
++        stride=1,
++        padding=None,
++        dilation=1,
++        bias=True,
++        w_init_gain="linear",
++    ):
++        super(ConvNorm, self).__init__()
++
++        if padding is None:
++            assert kernel_size % 2 == 1
++            padding = int(dilation * (kernel_size - 1) / 2)
++
++        # Conv1d(kernel=k) → Conv2d(kernel=(1,k))
++        self.conv = nn.Conv2d(
++            in_channels,
++            out_channels,
++            kernel_size=(1, kernel_size),
++            stride=(1, stride),
++            padding=(0, padding),
++            dilation=(1, dilation),
++            bias=bias,
++        )
++
++    def forward(self, signal):
++        x = self.conv(signal)
++        return x
++
++    def _load_from_state_dict(
++            self, state_dict, prefix, local_metadata, strict,
++            missing_keys, unexpected_keys, error_msgs
++    ):
++        """
++        自动把 Conv1d 权重 [out, in, k] 转换为 Conv2d 权重 [out, in, 1, k]
++        """
++        conv_key = prefix + "conv.weight"
++        if conv_key in state_dict:
++            w = state_dict[conv_key]
++            if w.ndim == 3:  # Conv1d 格式
++                state_dict[conv_key] = w.unsqueeze(2)  # 转成 Conv2d
++        super()._load_from_state_dict(
++            state_dict, prefix, local_metadata, strict,
++            missing_keys, unexpected_keys, error_msgs
++        )
++
++
++class Generator(torch.nn.Module):
++    def __init__(self, h):
++        super(Generator, self).__init__()
++        self.h = h
++        self.num_kernels = len(h.resblock_kernel_sizes)
++        self.num_upsamples = len(h.upsample_rates)
++        self.conv_pre = weight_norm(
++            Conv2d(80, h.upsample_initial_channel, (1, 7), (1, 1), padding=(0, 3))
++        )
++        resblock = ResBlock
++
++        self.ups = nn.ModuleList()
++        for i, (u, k) in enumerate(zip(h.upsample_rates, h.upsample_kernel_sizes)):
++            self.ups.append(
++                weight_norm(
++                    ConvTranspose2d(
++                        h.upsample_initial_channel // (2 ** i),
++                        h.upsample_initial_channel // (2 ** (i + 1)),
++                        (1, k),
++                        (1, u),
++                        padding=(0, (k - u) // 2),
++                    )
++                )
++            )
++
++        self.resblocks = nn.ModuleList()
++        for i in range(len(self.ups)):
++            ch = h.upsample_initial_channel // (2 ** (i + 1))
++            for j, (k, d) in enumerate(
++                zip(h.resblock_kernel_sizes, h.resblock_dilation_sizes)
++            ):
++                self.resblocks.append(resblock(h, ch, k, d))
++
++        self.conv_post = weight_norm(Conv2d(ch, 1, (1, 7), (1, 1), padding=(0, 3)))
++        self.ups.apply(init_weights)
++        self.conv_post.apply(init_weights)
++
++    def forward(self, x):
++        x = self.conv_pre(x.unsqueeze(2))
++        for i in range(self.num_upsamples):
++            x = F.leaky_relu(x, LRELU_SLOPE)
++            x = self.ups[i](x)
++            xs = None
++            for j in range(self.num_kernels):
++                if xs is None:
++                    xs = self.resblocks[i * self.num_kernels + j](x)
++                else:
++                    xs += self.resblocks[i * self.num_kernels + j](x)
++            x = xs / self.num_kernels
++        x = F.leaky_relu(x)
++        b, _, _, l = x.data.shape
++        x = self.conv_post(x).reshape(b, 1, l)
++        # print(f"tanh前: 极值[{x.min():.4f}, {x.max():.4f}] 前5值: {x.flatten()[:5].cpu().detach().numpy()}")
++        # x = torch.tanh(x)
++        # print(f"tanh后: 极值[{x.min():.4f}, {x.max():.4f}] 前5值: {x.flatten()[:5].cpu().detach().numpy()}")
++
++        return x
++
++    def remove_weight_norm(self):
++        print("Removing weight norm...")
++        for l in self.ups:
++            remove_weight_norm(l)
++        for l in self.resblocks:
++            l.remove_weight_norm()
++        remove_weight_norm(self.conv_pre)
++        remove_weight_norm(self.conv_post)
++
++    def _load_from_state_dict(
++            self, state_dict, prefix, local_metadata, strict,
++            missing_keys, unexpected_keys, error_msgs
++    ):
++        """
++        在加载旧 checkpoint 时自动把 Conv1d / ConvTranspose1d 权重 (3D)
++        转换为 Conv2d / ConvTranspose2d 权重 (4D)，即在最后一维加一个 size=1 的维度。
++        - 支持常见的权重参数名：'.weight' 与 weight_norm 的 '.weight_v'
++        - 只转换那些在当前 model.state_dict() 中对应为 4D 的键
++        """
++        ks = [
++            'conv_pre.weight_g', 'conv_pre.weight_v',
++            'conv_post.weight_g', 'conv_post.weight_v',
++
++            'ups.0.weight_g', 'ups.0.weight_v',
++            'ups.1.weight_g', 'ups.1.weight_v',
++            'ups.2.weight_g', 'ups.2.weight_v',
++            'ups.3.weight_g', 'ups.3.weight_v',
++        ]
++        for conv_key in ks:
++            conv_key = prefix + conv_key
++            if conv_key in state_dict:
++                w = state_dict[conv_key]
++                if w.ndim == 3:  # Conv1d 格式
++                    state_dict[conv_key] = w.unsqueeze(2)  # 转成 Conv2d
++                else:
++                    RuntimeError(f'the weight dims of {conv_key} is not 3')
++            else:
++                raise RuntimeError(f'not found {conv_key} in state_dict')
++
++        super(Generator, self)._load_from_state_dict(
++            state_dict, prefix, local_metadata, strict,
++            missing_keys, unexpected_keys, error_msgs
++        )
++
++class ConvWithPad(nn.Module):
++    def __init__(self, channels, extra, kernel_size, dilation, max_padding):
++        super().__init__()
++        self.pad = nn.ConstantPad2d((extra, extra, 0, 0), 0)
++        self.conv = weight_norm(
++            Conv2d(
++                channels,
++                channels,
++                (1, kernel_size),
++                (1, 1),
++                dilation=(1, dilation[2]),
++                padding=(0, max_padding),
++            )
++        )
++
++    def forward(self, x):
++        x = self.pad(x)
++        return self.conv(x)
++
++
++class ResBlock(torch.nn.Module):
++    def __init__(self, h, channels, kernel_size=3, dilation=(1, 3, 5)):
++        super(ResBlock, self).__init__()
++        self.h = h
++        self.convs1 = nn.ModuleList(
++            [
++                weight_norm(
++                    Conv2d(
++                        channels,
++                        channels,
++                        (1, kernel_size),
++                        (1, 1),
++                        dilation=(1, dilation[0]),
++                        padding=(0, get_padding(kernel_size, dilation[0])),
++                    )
++                ),
++                weight_norm(
++                    Conv2d(
++                        channels,
++                        channels,
++                        (1, kernel_size),
++                        (1, 1),
++                        dilation=(1, dilation[1]),
++                        padding=(0, get_padding(kernel_size, dilation[1])),
++                    )
++                ),
++            ]
++        )
++        if len(dilation) == 3:
++            pad = get_padding(kernel_size, dilation[2])
++            max_padding = 15
++            if pad <= max_padding:
++                self.convs1.append(weight_norm(
++                    Conv2d(
++                        channels,
++                        channels,
++                        (1, kernel_size),
++                        (1, 1),
++                        dilation=(1, dilation[2]),
++                        padding=(0, get_padding(kernel_size, dilation[2])),
++                    )
++                ))
++            else:
++                extra_pad = pad - max_padding
++                self.convs1.append(ConvWithPad(channels, 16, kernel_size, dilation, 9))
++
++        self.convs1.apply(init_weights)
++
++        self.convs2 = nn.ModuleList(
++            [
++                weight_norm(
++                    Conv2d(
++                        channels,
++                        channels,
++                        (1, kernel_size),
++                        (1, 1),
++                        dilation=(1, 1),
++                        padding=(0, get_padding(kernel_size, 1)),
++                    )
++                ),
++                weight_norm(
++                    Conv2d(
++                        channels,
++                        channels,
++                        (1, kernel_size),
++                        (1, 1),
++                        dilation=(1, 1),
++                        padding=(0, get_padding(kernel_size, 1)),
++                    )
++                ),
++                weight_norm(
++                    Conv2d(
++                        channels,
++                        channels,
++                        (1, kernel_size),
++                        (1, 1),
++                        dilation=(1, 1),
++                        padding=(0, get_padding(kernel_size, 1)),
++                    )
++                ),
++            ]
++        )
++        self.convs2.apply(init_weights)
++
++    def forward(self, x):
++        for c1, c2 in zip(self.convs1, self.convs2):
++            xt = F.leaky_relu(x, LRELU_SLOPE)
++            xt = c1(xt)
++            xt = F.leaky_relu(xt, LRELU_SLOPE)
++            xt = c2(xt)
++            x = xt + x
++        return x
++
++    def remove_weight_norm(self):
++        for l in self.convs1:
++            if isinstance(l, ConvWithPad):
++                l = l.conv
++            remove_weight_norm(l)
++        for l in self.convs2:
++            remove_weight_norm(l)
++
++    def _load_from_state_dict(
++            self, state_dict, prefix, local_metadata, strict,
++            missing_keys, unexpected_keys, error_msgs
++    ):
++        ks = [
++            'convs1.0.weight_g', 'convs1.0.weight_v',
++            'convs1.1.weight_g', 'convs1.1.weight_v',
++            'convs1.2.weight_g', 'convs1.2.weight_v',
++            'convs2.0.weight_g', 'convs2.0.weight_v',
++            'convs2.1.weight_g', 'convs2.1.weight_v',
++            'convs2.2.weight_g', 'convs2.2.weight_v',
++        ]
++        for conv_key in ks:
++            conv_key_tmp = conv_key
++            conv_key = prefix + conv_key
++            if conv_key in state_dict:
++                w = state_dict[conv_key]
++                if w.ndim == 3:  # Conv1d 格式
++                    if isinstance(list(self.convs1)[-1], ConvWithPad) and conv_key_tmp in ['convs1.2.weight_g',
++                                                                                           'convs1.2.weight_v', ]:
++                        splits = conv_key_tmp.rsplit('.', 1)
++                        pad_conv_k = prefix + splits[0] + '.conv.' + splits[1]
++                        state_dict[pad_conv_k] = w.unsqueeze(2)
++                        del state_dict[conv_key]
++
++                        old_bias_k = prefix + splits[0] + '.bias'
++                        new_bias_k = prefix + splits[0] + '.conv.bias'
++                        if old_bias_k in state_dict:
++                            state_dict[new_bias_k] = state_dict[old_bias_k]
++                            del state_dict[old_bias_k]
++                    else:
++                        state_dict[conv_key] = w.unsqueeze(2)  # 转成 Conv2d
++                else:
++                    RuntimeError(f'the weight dims of {conv_key} is not 3')
++            else:
++                raise RuntimeError(f'not found {conv_key} in state_dict')
++
++        super(ResBlock, self)._load_from_state_dict(
++            state_dict, prefix, local_metadata, strict,
++            missing_keys, unexpected_keys, error_msgs
++        )
++
++@torch.fx.wrap
++def get_mel_mask(mel_lens, max_mel_len):
++    mel_masks = (
++        get_mask_from_lengths(mel_lens, max_mel_len)
++        if mel_lens is not None
++        else None
++    )
++    return mel_masks
++
++
++class FastSpeech2(nn.Module):
++    """ FastSpeech2 """
++
++    def __init__(self, preprocess_config, model_config):
++        super(FastSpeech2, self).__init__()
++        self.model_config = model_config
++
++        self.encoder = Encoder(model_config)
++        self.variance_adaptor = VarianceAdaptor(preprocess_config, model_config)
++        self.decoder = Decoder(model_config)
++        self.mel_linear = nn.Conv2d(
++            model_config["transformer"]["decoder_hidden"],
++            preprocess_config["preprocessing"]["mel"]["n_mel_channels"],
++            1
++        )
++        self.postnet = PostNet()
++
++        self.speaker_emb = None
++        if model_config["multi_speaker"]:
++            with open(
++                os.path.join(
++                    preprocess_config["path"]["preprocessed_path"], "speakers.json"
++                ),
++                "r",
++            ) as f:
++                n_speaker = len(json.load(f))
++            self.speaker_emb = nn.Embedding(
++                n_speaker,
++                model_config["transformer"]["encoder_hidden"],
++            )
++
++    def forward(
++        self,
++        # speakers,
++        texts,
++        src_lens,
++        max_src_len=None,
++        # mels=None,
++        mel_lens=None,
++        max_mel_len=None,
++        p_targets=None,
++        e_targets=None,
++        d_targets=None,
++    ):
++        src_masks = get_mask_from_lengths_new(src_lens, max_src_len)
++        mel_masks = get_mel_mask(mel_lens, max_mel_len)
++
++        output = self.encoder(texts, src_masks)
++
++        (
++            output,
++            p_predictions,
++            e_predictions,
++            log_d_predictions,
++            d_rounded,
++            mel_lens,
++            mel_masks,
++        ) = self.variance_adaptor(
++            output,
++            src_masks,
++            mel_masks,
++            max_mel_len,
++            p_targets,
++            e_targets,
++            d_targets,
++        )
++
++        output, mel_masks = self.decoder(output, mel_masks)
++        output = output.unsqueeze(1).permute(0, 3, 1, 2)
++        output = self.mel_linear(output)
++        b, c, _, l = output.data.shape
++        output = output.permute(0, 2, 3, 1).reshape(b, l, c)
++
++        postnet_output = self.postnet(output) + output
++
++        return (
++            output,
++            postnet_output,
++            p_predictions,
++            e_predictions,
++            log_d_predictions,
++            d_rounded,
++            src_masks,
++            mel_masks
++        )
++
++    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
++                              missing_keys, unexpected_keys, error_msgs):
++        key = prefix + 'mel_linear.weight'
++        state_dict[key] = state_dict[key].unsqueeze(-1).unsqueeze(-1)
++        super()._load_from_state_dict(state_dict, prefix, local_metadata, strict,
++                                      missing_keys, unexpected_keys, error_msgs)
++
++def Encoderforward(self, src_seq, mask):
++    # encoder
++    batch_size, max_len = src_seq.data.shape[0], src_seq.data.shape[1]
++
++    slf_attn_mask = mask.unsqueeze(1).expand(-1, max_len, -1)
++    src_word_emb = self.src_word_emb(src_seq)
++    position_enc = self.position_enc[
++                   :, :max_len, :
++                   ].expand(batch_size, -1, -1)
++    enc_output = src_word_emb + position_enc
++    for enc_layer in self.layer_stack:
++        enc_output, enc_slf_attn = enc_layer(
++            enc_output, mask=mask, slf_attn_mask=slf_attn_mask
++        )
++    return enc_output
++
++
++class VariancePredictor(nn.Module):
++    """Duration, Pitch and Energy Predictor"""
++
++    def __init__(self, model_config):
++        super(VariancePredictor, self).__init__()
++
++        self.input_size = model_config["transformer"]["encoder_hidden"]
++        self.filter_size = model_config["variance_predictor"]["filter_size"]
++        self.kernel = model_config["variance_predictor"]["kernel_size"]
++        self.conv_output_size = model_config["variance_predictor"]["filter_size"]
++        self.dropout = model_config["variance_predictor"]["dropout"]
++
++        self.conv_layer = nn.Sequential(
++            OrderedDict(
++                [
++                    (
++                        "conv1d_1",
++                        Conv(
++                            self.input_size,
++                            self.filter_size,
++                            kernel_size=self.kernel,
++                            padding=(self.kernel - 1) // 2,
++                        ),
++                    ),
++                    ("relu_1", nn.ReLU()),
++                    ("layer_norm_1", nn.LayerNorm(self.filter_size)),
++                    ("dropout_1", nn.Dropout(self.dropout)),
++                    (
++                        "conv1d_2",
++                        Conv(
++                            self.filter_size,
++                            self.filter_size,
++                            kernel_size=self.kernel,
++                            padding=1,
++                        ),
++                    ),
++                    ("relu_2", nn.ReLU()),
++                    ("layer_norm_2", nn.LayerNorm(self.filter_size)),
++                    ("dropout_2", nn.Dropout(self.dropout)),
++                ]
++            )
++        )
++
++        self.linear_layer = nn.Conv2d(self.conv_output_size, 1, 1)
++
++    def forward(self, encoder_output, mask):
++        out = self.conv_layer(encoder_output)
++        out = out.unsqueeze(1).permute(0, 3, 1, 2)
++        out = self.linear_layer(out)
++        b, _, _, w = out.data.shape
++        out = out.reshape(b, w)
++
++        if mask is not None:
++            out = out.masked_fill(mask, 0.0)
++
++        return out
++
++    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
++                              missing_keys, unexpected_keys, error_msgs):
++        key = prefix + 'linear_layer.weight'
++        if state_dict[key].ndim == 2:
++            state_dict[key] = state_dict[key].unsqueeze(-1).unsqueeze(-1)
++        super()._load_from_state_dict(state_dict, prefix, local_metadata, strict,
++                                      missing_keys, unexpected_keys, error_msgs)
++
++@torch.fx.wrap
++def expand(batch, predicted):
++    # expanded = torch.repeat_interleave(batch, predicted.clamp_min(0).long(), dim=0)
++    # return expanded, torch.LongTensor([expanded.data.shape[0]]).to(device)
++    out = list()
++
++    for i, vec in enumerate(batch):
++        expand_size = predicted[i].item()
++        out.append(vec.expand(max(int(expand_size), 0), -1))
++    expanded = torch.cat(out, 0)
++    return expanded, torch.LongTensor([expanded.data.shape[0]]).to(device)
++
++
++@torch.fx.wrap
++def LR(self, x, duration, max_len):
++    output, mel_len = expand(x[0], duration[0])
++
++    return output.unsqueeze(0), mel_len
++
++
++@torch.fx.wrap
++def get_mask_from_lengths_new(lengths, max_len=None):
++    batch_size = lengths.shape[0]
++    if max_len is None:
++        # max_len = MAX_SRC_LENS
++        max_len = torch.max(lengths).item()
++    else:
++        max_len = int(max_len[0][0].item())
++    ids = torch.arange(0, max_len).unsqueeze(0).expand(batch_size, -1).to(device)
++    mask = ids >= lengths.expand(-1, max_len)
++
++    return mask
++
++
++@torch.fx.wrap
++def get_mask_from_lengths(lengths, max_len=None):
++    batch_size = lengths.shape[0]
++    if max_len is None:
++        max_len = torch.max(lengths).item()
++    else:
++        max_len = int(max_len[0][0].item())
++    ids = torch.arange(0, max_len).unsqueeze(0).expand(batch_size, -1).to(device)
++    mask = ids >= lengths.unsqueeze(1).expand(-1, max_len)
++
++    return mask
++
++
++@torch.fx.wrap
++def get_pitch_embedding_sub(self, prediction, target, control):
++    if target is not None:
++        embedding = self.pitch_embedding(torch.bucketize(target, self.pitch_bins))
++    else:
++        prediction = prediction * control
++        embedding = self.pitch_embedding(
++            torch.sum(prediction.unsqueeze(-1) >= self.pitch_bins, dim=-1)
++        )
++    return embedding
++
++
++def get_pitch_embedding(self, x, target, mask, control):
++    prediction = self.pitch_predictor(x, mask)
++    embedding = get_pitch_embedding_sub(self, prediction, target, control)
++    return prediction, embedding
++
++
++@torch.fx.wrap
++def get_energy_embedding_sub(self, prediction, target, control):
++    if target is not None:
++        embedding = self.energy_embedding(torch.bucketize(target, self.energy_bins))
++    else:
++        prediction = prediction * control
++        embedding = self.energy_embedding(
++            torch.sum(prediction.unsqueeze(-1) >= self.energy_bins, dim=-1)
++        )
++    return embedding
++
++
++def get_energy_embedding(self, x, target, mask, control):
++    prediction = self.energy_predictor(x, mask)
++    embedding = get_energy_embedding_sub(self, prediction, target, control)
++    return prediction, embedding
++
++
++@torch.fx.wrap
++def get_duration_embedding(self, x, duration_target, max_mel_len, d_control, log_duration_prediction, mel_masks):
++    if duration_target is not None:
++        x, mel_len = self.length_regulator(x, duration_target, max_mel_len)
++        duration_rounded = duration_target
++    else:
++        duration_rounded = torch.clamp(
++            (torch.round(torch.exp(log_duration_prediction) - 1) * d_control),
++            min=0,
++        )
++        x, mel_len = self.length_regulator(x, duration_rounded, max_mel_len)
++        mel_masks = get_mask_from_lengths(mel_len)
++    return x, mel_len, duration_rounded, mel_masks
++
++
++def VarianceAdaptorforward(
++        self,
++        x,
++        src_mask,
++        mel_masks=None,
++        max_mel_len=None,
++        pitch_target=None,
++        energy_target=None,
++        duration_target=None
++):
++    log_duration_prediction = self.duration_predictor(x, src_mask)
++    if self.pitch_feature_level == "phoneme_level":
++        pitch_prediction, pitch_embedding = self.get_pitch_embedding(
++            x, pitch_target, src_mask, p_control
++        )
++        x = x + pitch_embedding
++    if self.energy_feature_level == "phoneme_level":
++        energy_prediction, energy_embedding = self.get_energy_embedding(
++            x, energy_target, src_mask, p_control
++        )
++        x = x + energy_embedding
++    x, mel_len, duration_rounded, mel_masks = get_duration_embedding(self, x, duration_target, max_mel_len, d_control,
++                                                                     log_duration_prediction, mel_masks)
++    return (
++        x,
++        pitch_prediction,
++        energy_prediction,
++        log_duration_prediction,
++        duration_rounded,
++        mel_len,
++        mel_masks,
++    )
++
++
++def Decoderforward(self, enc_seq, mask, return_attns=False):
++    dec_slf_attn_list = []
++    batch_size, max_len = enc_seq.data.shape[0], enc_seq.data.shape[1]
++    max_len = min(max_len, self.max_seq_len)
++    # -- Prepare masks
++    slf_attn_mask = mask.unsqueeze(1).expand(-1, max_len, -1)
++    dec_output = enc_seq[:, :max_len, :] + self.position_enc[
++                                           :, :max_len, :
++                                           ].expand(batch_size, -1, -1)
++    mask = mask[:, :max_len]
++    slf_attn_mask = slf_attn_mask[:, :, :max_len]
++    for dec_layer in self.layer_stack:
++        dec_output, dec_slf_attn = dec_layer(
++            dec_output, mask=mask, slf_attn_mask=slf_attn_mask
++        )
++        if return_attns:
++            dec_slf_attn_list += [dec_slf_attn]
++    return dec_output, mask
++
++
++def ScaledDotProductAttentionforward(self, q, k, v, mask=None):
++    attn = torch.matmul(q, k.transpose(1, 2))
++    attn = attn / self.temperature
++    if mask is not None:
++        attn = attn.masked_fill(mask, MASK_MIN_VALUE)
++    attn = self.softmax(attn)
++    output = torch.matmul(attn, v)
++    return output, attn
++
++
++SubLayers.MultiHeadAttention = MultiHeadAttention
++SubLayers.PositionwiseFeedForward = PositionwiseFeedForward
++modules.Conv = Conv
++modules.VariancePredictor = VariancePredictor
++Layers.ConvNorm = ConvNorm
++hifigan.Generator = Generator
++models.ResBlock = ResBlock
++fastspeech2.FastSpeech2 = FastSpeech2
++
++DEPLOY_MODULE_MAPPINGS = {
++    Encoder: {"forward": Encoderforward},
++    LengthRegulator: {
++        "LR": LR,
++        "expand": expand,
++    },
++    VarianceAdaptor: {
++        "forward": VarianceAdaptorforward,
++        "get_energy_embedding": get_energy_embedding,
++        "get_pitch_embedding": get_pitch_embedding,
++    },
++    Decoder: {"forward": Decoderforward},
++    ScaledDotProductAttention: {"forward": ScaledDotProductAttentionforward},
++}
+\ No newline at end of file
+diff --git a/deploy/utils.py b/deploy/utils.py
+new file mode 100644
+index 0000000..733cc13
+--- /dev/null
++++ b/deploy/utils.py
+@@ -0,0 +1,15 @@
++from .modules import DEPLOY_MODULE_MAPPINGS
++
++
++def convert_to_deploy(model):
++    model.eval()
++    print("Convert the model to an equivalent inference implementation")
++    apply_module_patches()
++    return model.eval()
++
++
++def apply_module_patches():
++    for k1, v1 in DEPLOY_MODULE_MAPPINGS.items():
++        for k2, v2 in v1.items():
++            print(f"[Patch] {str(k1)}.{k2} has been replaced with {v2.__name__}")
++            setattr(k1, k2, v2)
+diff --git a/hifigan/models.py b/hifigan/models.py
+index 308bf8b..9a4a0c1 100644
+--- a/hifigan/models.py
++++ b/hifigan/models.py
+@@ -10,7 +10,10 @@ LRELU_SLOPE = 0.1
+ def init_weights(m, mean=0.0, std=0.01):
+     classname = m.__class__.__name__
+     if classname.find("Conv") != -1:
+-        m.weight.data.normal_(mean, std)
++        if classname == "ConvWithPad":
++            m.conv.weight.data.normal_(mean, std)
++        else:
++            m.weight.data.normal_(mean, std)
+ 
+ 
+ def get_padding(kernel_size, dilation=1):
+diff --git a/transformer/Layers.py b/transformer/Layers.py
+index 03aad4d..d932ca3 100644
+--- a/transformer/Layers.py
++++ b/transformer/Layers.py
+@@ -5,7 +5,7 @@ import torch.nn as nn
+ import numpy as np
+ from torch.nn import functional as F
+ 
+-from .SubLayers import MultiHeadAttention, PositionwiseFeedForward
++from . import SubLayers
+ 
+ 
+ class FFTBlock(torch.nn.Module):
+@@ -13,8 +13,8 @@ class FFTBlock(torch.nn.Module):
+ 
+     def __init__(self, d_model, n_head, d_k, d_v, d_inner, kernel_size, dropout=0.1):
+         super(FFTBlock, self).__init__()
+-        self.slf_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
+-        self.pos_ffn = PositionwiseFeedForward(
++        self.slf_attn = SubLayers.MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
++        self.pos_ffn = SubLayers.PositionwiseFeedForward(
+             d_model, d_inner, kernel_size, dropout=dropout
+         )
+ 
+diff --git a/utils/model.py b/utils/model.py
+index 45e1f41..1795a51 100644
+--- a/utils/model.py
++++ b/utils/model.py
+@@ -5,19 +5,20 @@ import torch
+ import numpy as np
+ 
+ import hifigan
+-from model import FastSpeech2, ScheduledOptim
++from model import ScheduledOptim
++from model import fastspeech2
+ 
+ 
+ def get_model(args, configs, device, train=False):
+     (preprocess_config, model_config, train_config) = configs
+ 
+-    model = FastSpeech2(preprocess_config, model_config).to(device)
++    model = fastspeech2.FastSpeech2(preprocess_config, model_config).to(device)
+     if args.restore_step:
+         ckpt_path = os.path.join(
+             train_config["path"]["ckpt_path"],
+             "{}.pth.tar".format(args.restore_step),
+         )
+-        ckpt = torch.load(ckpt_path)
++        ckpt = torch.load(ckpt_path, map_location=device)
+         model.load_state_dict(ckpt["model"])
+ 
+     if train:
+@@ -55,14 +56,21 @@ def get_vocoder(config, device):
+         vocoder.mel2wav.eval()
+         vocoder.mel2wav.to(device)
+     elif name == "HiFi-GAN":
+-        with open("hifigan/config.json", "r") as f:
+-            config = json.load(f)
+-        config = hifigan.AttrDict(config)
+-        vocoder = hifigan.Generator(config)
+         if speaker == "LJSpeech":
+-            ckpt = torch.load("hifigan/generator_LJSpeech.pth.tar")
++            with open("output/ckpt/hifigan/LJ_FT_T2_V2/config.json", "r") as f:
++                config = json.load(f)
++            config = hifigan.AttrDict(config)
++            vocoder = hifigan.Generator(config)
++
++            # ckpt = torch.load("hifigan/generator_LJSpeech.pth.tar", map_location=device)
++            ckpt = torch.load("output/ckpt/hifigan/LJ_FT_T2_V2/generator_v2", map_location=device)
+         elif speaker == "universal":
+-            ckpt = torch.load("hifigan/generator_universal.pth.tar")
++            with open("hifigan/config.json", "r") as f:
++                config = json.load(f)
++            config = hifigan.AttrDict(config)
++            vocoder = hifigan.Generator(config)
++
++            ckpt = torch.load("hifigan/generator_universal.pth.tar", map_location=device)
+         vocoder.load_state_dict(ckpt["generator"])
+         vocoder.eval()
+         vocoder.remove_weight_norm()
+diff --git a/utils/tools.py b/utils/tools.py
+index f897430..b6329ab 100644
+--- a/utils/tools.py
++++ b/utils/tools.py
+@@ -194,20 +194,23 @@ def synth_samples(targets, predictions, vocoder, model_config, preprocess_config
+             stats,
+             ["Synthetized Spectrogram"],
+         )
++        os.makedirs(path, exist_ok=True)
+         plt.savefig(os.path.join(path, "{}.png".format(basename)))
+         plt.close()
+ 
+-    from .model import vocoder_infer
++    from . import model
+ 
+     mel_predictions = predictions[1].transpose(1, 2)
+     lengths = predictions[9] * preprocess_config["preprocessing"]["stft"]["hop_length"]
+-    wav_predictions = vocoder_infer(
++    wav_predictions = model.vocoder_infer(
+         mel_predictions, vocoder, model_config, preprocess_config, lengths=lengths
+     )
+ 
+     sampling_rate = preprocess_config["preprocessing"]["audio"]["sampling_rate"]
+     for wav, basename in zip(wav_predictions, basenames):
+-        wavfile.write(os.path.join(path, "{}.wav".format(basename)), sampling_rate, wav)
++        file_path = os.path.join(path, "{}.wav".format(basename))
++        wavfile.write(file_path, sampling_rate, wav)
++        print(f"wav file saved in {file_path}")
+ 
+ 
+ def plot_mel(data, stats, titles):

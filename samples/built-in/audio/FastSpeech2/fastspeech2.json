@@ -1,0 +1,96 @@
+{
+  "modelName": "FastSpeech2",
+  "modelDesc": "FastSpeech2 是一种高效的端到端语音合成模型。相比 FastSpeech，FastSpeech2 引入了多尺度时长预测器和能量 / 基频预测分支，优化了时长预测模块并新增韵律特征建模，在合成速度和语音自然度上均有大幅提升。",
+  "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/audio/FastSpeech2",
+  "modelParameter": {
+    "输入": "1x40",
+    "参数量": "35.266M",
+    "计算量": "29.162GFLOPs"
+  },
+  "isBeta": false,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "Audio",
+      "tags": [
+        "文本转语音"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "PyTorch"
+  ],
+  "modelDatasets": {
+    "desc": "数据集LJSpeech",
+    "link": "https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2"
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/ming024/FastSpeech2/blob/master/LICENSE"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/blob/master/samples/built-in/audio/FastSpeech2/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/blob/master/samples/built-in/audio/FastSpeech2/doc/快速开始.md"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3403V100 SVP_NNN",
+      "tools": [
+        {
+          "name": "CANN配置",
+          "link": "",
+          "desc": "6.10.t01spc030b660 (请联系FAE获取)"
+        },
+        {
+          "name": "编译工具链",
+          "link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md",
+          "desc": "高效编译，精准适配AI性能优化，应用流畅运行"
+        },
+        {
+          "name": "SDK",
+          "link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/",
+          "desc": "稳定、易用的设计，支撑客户快速产品量产"
+        }
+      ],
+      "os": [
+        "OpenHarmony",
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "a16w8",
+          "detail": [
+            {
+              "performance": 52.49,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 19.05,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 488.799,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 1.418,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
