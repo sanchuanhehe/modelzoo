@@ -1,6 +1,14 @@
 [
   {
     "buildTarget": "modelzoo-app",
+    "relativePath": "audio/FastSpeech2",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "文本转语音"
+  },
+  {
+    "buildTarget": "modelzoo-app",
     "relativePath": "classification/SqueezeNet1_1",
     "chip": "SS928V100",
     "buildDef": "OPTG",

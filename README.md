@@ -384,7 +384,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     </tr>
     <tr>
     <td>
-    <a href="https://gitee.com/HiSpark/modelzoo-dev/tree/master/samples/built-in/super_resolution/VDSR">VDSR</a>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/super_resolution/VDSR">VDSR</a>
     </td>
     <td>Set5</td>
     <td>15.09</td>
@@ -409,7 +409,17 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>5.52</td>
     <td>512 x 768</td>
     </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/audio/FastSpeech2">FastSpeech2</a>
+    </td>
+    <td>LJSpeech</td>
+    <td>19.05</td>
+    <td></td>
+    <td>1 x 40</td>
+    </tr>
 </table>
+
 
 
 
@@ -435,8 +445,8 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 |          | [**Chinese-CLIP**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Chinese-CLIP) | [**CrowdCount**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/count/CrowdCount) | **[PaddleOCR-rec](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/PaddleOCRv4-rec)** |                                                              |                        |
 |          | [**Depth-Anything-v2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/depth/Depth-Anything-v2) | [**CodeFormer**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/super_resolution/CodeFormer) | [**PaddleOCR-det**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/PaddleOCRv4-det) |                                                              |                        |
 |          | [**PFLD**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/PFLD) |                                                              | [**CRNN**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/CRNN) |                                                              |                        |
-|          | [**SuperPoint**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/point/SuperPoint) |                                                              | [**VDSR**](https://gitee.com/HiSpark/modelzoo-dev/tree/master/samples/built-in/super_resolution/VDSR) |                                                              |                        |
-|          | [**UNet**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/UNet) |                                                              |                       **FastSpeech2**                        |                                                              |                        |
+|          | [**SuperPoint**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/point/SuperPoint) |                                                              | [**VDSR**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/super_resolution/VDSR) |                                                              |                        |
+|          | [**UNet**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/UNet) |                                                              | **[FastSpeech2](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/audio/FastSpeech2)** |                                                              |                        |
 |          | [**YOLOv5s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov5) |                                                              |                    **minicpm(VLM 0.5B)**                     |                                                              |                        |
 |          | [**YOLOv8l**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8l) |                                                              |                                                              |                                                              |                        |
 |          | [**YOLOv8s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s) |                                                              |                                                              |                                                              |                        |
