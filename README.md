@@ -17,10 +17,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 
 # 模型列表
 
-## 运行用户建议
-
-**说明：**
-**因使用版本差异，模型性能可能存在波动，性能仅供参考**
+(说明：因使用版本差异，模型性能可能存在波动，性能仅供参考)
 
 ## 具身模型
 
@@ -38,7 +35,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td><a href="https://huggingface.co/datasets/lwh2017/grab_banana/tree/main/banana_grasp_100_320x240">个人公开数据集</a></td>
     <td>27</td>
     <td></td>
-    <td>1 x 6; 1 x 3 x 240 x 320; 1 x 3 x 240 x 320</td>
+    <td>1 x 6; 240 x 320 * 3; 240 x 320 * 3</td>
     </tr>
 </table>
 

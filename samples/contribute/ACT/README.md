@@ -93,7 +93,8 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
    | Hi3403V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/SS928V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | aarch64-openeuler-linux-gnu-g++ | openEuler | SS928 V100R001C02SPC022 |
 
    系统驱动安装，参考：https://gitee.com/HiSpark/ss928v100_gcc.git
-   编译工具链的安装，参考：https://pages.openeuler.openatom.cn/embedded/docs/build/html/master/getting_started/index.html#install-openeuler-embedded-sdk
+   
+   SDK编译工具链的安装，参考：https://pages.openeuler.openatom.cn/embedded/docs/build/html/master/getting_started/index.html#install-openeuler-embedded-sdk
 
 
 ## 快速上手
