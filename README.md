@@ -22,6 +22,28 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 **说明：**
 **因使用版本差异，模型性能可能存在波动，性能仅供参考**
 
+## 具身模型
+
+<table align="center">
+    <tr>
+    <th rowspan=1>模型</th>
+    <th rowspan=1>数据集</th>
+    <th rowspan=1>SVP NNN性能fps</th>
+    <th rowspan=1>NNN性能fps</th>
+    <th rowspan=1>输入</th>
+    </tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/contribute">ACT</a>
+    </td>
+    <td><a href="https://huggingface.co/datasets/lwh2017/grab_banana/tree/main/banana_grasp_100_320x240">个人公开数据集</a></td>
+    <td>27</td>
+    <td></td>
+    <td>1 x 6; 1 x 3 x 240 x 320; 1 x 3 x 240 x 320</td>
+    </tr>
+</table>
+
+## 基础模型
+
 <table align="center">
     <tr>
     <th rowspan=1>模型</th>
