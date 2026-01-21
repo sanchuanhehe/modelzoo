@@ -1,8 +1,8 @@
 {
     "fileList": [
         [
-            "../../../../../datasets/ImageNet/val/ILSVRC2012_val_00000001.JPEG"
+            "../../../../../datasets/testdata/1.jpg"
         ]
     ],
-    "loop" : 100
+    "loop": 1
 }

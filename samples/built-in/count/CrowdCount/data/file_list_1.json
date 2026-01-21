@@ -1,8 +1,8 @@
 {
-    "loop": 30,
+    "loop": 1,
     "fileList": [
         [
-            "../../../../../datasets/CrowDensity/Crowdata/img/people1015.jpg"
+            "../../../../../datasets/testdata/3.jpg"
         ]
     ]
 }
