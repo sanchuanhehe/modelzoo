@@ -1,8 +1,8 @@
 {
     "fileList": [
         [
-            "../datasets/kitti15/training/image_2/000000_11.png",
-            "../datasets/kitti15/training/image_3/000000_11.png"
+            "../../../../../datasets/testdata/5.png",
+            "../../../../../datasets/testdata/6.png"
         ]
     ],
     "loop":1

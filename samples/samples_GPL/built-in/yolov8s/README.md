@@ -6,12 +6,13 @@
 
 - [环境准备](#ZH-CN_TOPIC_0000001126281702)
 
-- [快速上手](#ZH-CN_TOPIC_0000001126281700)
+- [模型推理](#ZH-CN_TOPIC_0000001126281700)
 
-  - [获取源码](#section4622531142816)
+  - [快速开始(推荐)](#section4622531142816)
+  - [安装依赖](#section183221994410)
   - [准备数据集](#section183221994411)
   - [模型转化](#section741711594517)
-  - [模型推理](#section741711594518)
+  - [精度&性能评估](#section741711594518)
 
 - [模型推理性能&精度](#ZH-CN_TOPIC_0000001172201573)
 
@@ -92,35 +93,83 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| 芯片型号  | 算力引擎   | soc_version | 环境准备指导  | CANN包版本 | 编译工具链 | 板端OS  | SDK  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022                                                       |
 
 
 
-# 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
+# 模型推理<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
-## 获取源码<a name="section4622531142816"></a>
+## 快速开始（推荐）<a name="section4622531142816"></a>
 
-1. 获取本仓源码
- 
-   ```
-   git clone https://github.com/ultralytics/ultralytics
-   cd ultralytics
-   git reset --hard 7a7c8dc7b70cf4bc0be18763a6b66805974ecbe6
-   pip3 install -e .
-   cd  ..
-   ```
+### 获取本仓源码
+
+备注：以下所有命令均在模型目录下执行
+
+### 获取om模型文件
+
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+
+创建`model`文件夹，并将om模型文件移动到`./model`目录下。
+```
+mkdir -p model
+```
+备注：若需要体验om模型转化过程，请参考[安装依赖](#section183221994410)和[模型转化](#section741711594517)章节。
+
+### 编译代码和运行应用
+
+#### 编译代码
+
+1. 切换到样例目录，创建目录用于存放编译文件，例如，本文中，创建的目录为`build`。
+    ```
+    mkdir -p build
+    ```
+
+2. 切换到`build`目录，执行**cmake**生成编译文件。
+
+    当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
+
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
+
+    例如，开发环境为X86架构、运行环境为ARM架构时，执行以下命令进行交叉编译。交叉编译工具链按运行环境操作系统，可选toolchain_aarch64_linux.cmake或toolchain_aarch64_ohos.cmake；SOC_VERSION按算力引擎可选SS928V100或OPTG，请根据运行环境和算力引擎平台选择。
+    ```
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+    ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
+
+3. 执行**make**命令，生成的可执行文件main在“./out“目录下。
 
 
-2. 安装依赖。
+#### 运行应用
 
-   ```
-   # 建议使用 Python 3.9.16
-   pip3 install -r requirements.txt
-   ```
+1. 将modelzoo代码上传到板端运行环境。
+2. 以运行用户登录板端运行环境。
+3. 切换到可执行文件main所在的目录，给该目录下的main文件加执行权限。
+
+    ```
+    chmod +x main
+    ```
+
+4. 切换到可执行文件main所在的目录，运行可执行文件。
+    
+    ```
+    ./main --acl ../src/acl.json --model ../model/yolov8s.om --input ../data/file_list_1.json
+    ```
+    备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
+
+## 安装依赖<a name="section183221994410"></a>
+
+```
+# 建议使用 Python 3.9.16
+pip3 install -r requirements.txt
+```
 
 ## 准备数据集<a name="section183221994411"></a>
 
@@ -143,22 +192,29 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
    ```
    python3 ../../../../utils/generate_file_list.py ../../../../../../modelzoo-dev/datasets/coco/val2017
    ```
-   
-   
-   
 
 ## 模型转化<a name="section741711594517"></a>
 
 使用PyTorch将模型权重文件.pth转换为.onnx文件，再使用ATC工具将.onnx文件转为离线推理模型文件.om文件。
 
-1. 获取权重文件。
+1. 获取模型源码
+ 
+   ```
+   git clone https://github.com/ultralytics/ultralytics
+   cd ultralytics
+   git reset --hard 7a7c8dc7b70cf4bc0be18763a6b66805974ecbe6
+   pip3 install -e .
+   cd  ..
+   ```
+
+2. 获取权重文件。
 
    在[链接](https://github.com/ultralytics/assets/releases/tag/v0.0.0)中找到yolov8s.pt下载，存储至 model。
       ```
-      mkdir model
+      mkdir -p model
       ```
 
-2. 导出onnx文件。
+3. 导出onnx文件。
 
       使用./script/pth2onnx.py导出onnx模型
 
@@ -172,17 +228,17 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
       yolo export model="yolov8s.pt" format=onnx opset=13 project=export name="yolov8s.onnx"
       ```
 
-3. 使用ATC工具将ONNX模型转OM模型。
+4. 使用ATC工具将ONNX模型转OM模型。
 
       执行ATC命令。
 
-      SS928V100 SVP_NNN上的om模型转换命令
+      Hi3403V100 SVP_NNN上的om模型转换命令
 
       ```
       atc --framework=5 --model="./model/yolov8s.onnx" --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_SVP_NNN/insert_op.cfg" --output="model/yolov8s" --image_list="./data/image_ref_list.txt" --soc_version=SS928V100 --compile_mode=6
       ```
 
-      SS928V100 NNN上的om模型转换命令
+      Hi3403V100 NNN上的om模型转换命令
 
       ```
       atc --framework=5 --model="./model/yolov8s.onnx"  --input_shape="images:1,3,640,640" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/yolov8s" --enable_single_stream=true --soc_version=OPTG
@@ -197,67 +253,23 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
       - --input_shape：输入数据的shape。
       - --insert_op_conf：插入图像预处理的配置
       - --output：输出的OM模型路径。
-      - --image_list：转换模型生成量化参数时用的校准数据
+      - --image_list：转换模型生成量化参数时用的校准数据。数据获取参考[准备数据集](#section183221994411)章节。
       - --enable_single_stream：推理时使用一条stream。
       - --soc_version：处理器型号。
       - --compile_mode：编译模式，6代表数据量化使用16bit，权重量化使用8bit，且仅对CUBE算子进行量化，非CUBE算法使用fp16格式。注：选取其他编译模式可能导致精度下降
       
 
 
-## 模型推理<a name="section741711594518"></a>
+## 精度&性能评估<a name="section741711594518"></a>
 
-**步骤1：编译代码。**
-
-1.  切换到样例目录，创建目录用于存放编译文件，例如，本文中，创建的目录为“build“。
-
-    ```
-    mkdir -p build
-    ```
-
-2.  切换到“build“目录，执行**cmake**生成编译文件。
-    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-
-    当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-
-    例如，开发环境为X86架构、运行环境为ARM架构时，执行以下命令进行交叉编译。交叉编译工具链按运行环境操作系统，可选toolchain_aarch64_linux.cmake或toolchain_aarch64_ohos.cmake；SOC_VERSION按算力引擎可选SS928V100或OPTG，请根据运行环境和算力引擎平台选择。
-	  
-	  ```
-    cd build
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
-	  ```
-    比如
-    ```
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
-    cd ../
-    ```
- 
-
-3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
-
-	```
-	make
-	```
-
-**步骤2：运行应用。**
-
-1.  以运行用户将开发环境的样例目录及目录下的文件上传到运行环境（Host），例如“$HOME/acl\_sample”。
-2.  以运行用户登录运行环境（Host）。
-3.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，给该目录下的main文件加执行权限。
-
-    ```
-    chmod +x main
-    ```
-
-4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
+1. 切换到可执行文件main所在的目录，数据集上运行命令参考：
 
    ```
    ./main --acl ../src/acl.json --model ../model/yolov8s.om --input ../data/file_list.json
    ```
     结果会保存在数据集所在目录下的result目录下，推理结果会保存在result目录下的bin目录下，后处理后的box结果会保存在result目录下的txt目录下
 
-**步骤3：输出后处理**
-
-1. 精度验证。
+2. 精度验证。
 
    ```
    python3 script/accuracy.py --ground_truth_json ${ground_truth_json}
@@ -298,7 +310,7 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
    Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.761
    ```
 
-2. 验证batch_size的om模型的性能，参考命令如下：
+3. 验证om模型的性能，参考命令如下：
    ```
    ./main --acl ../src/acl.json --model ../model/yolov8s.om --input ../data/file_list_1.json
    ```
@@ -322,7 +334,7 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
    execution time: 38.14ms, frame rate: 26.22fps
    ```
 
-3. 可视化推理结果
+4. 可视化推理结果
    调用脚本，可以对推理结果进行可视化画框操作。
    ```
    cd script

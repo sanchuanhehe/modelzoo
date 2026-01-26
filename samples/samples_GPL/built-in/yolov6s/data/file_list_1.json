@@ -1,8 +1,8 @@
 {
-    "loop": 300,
+    "loop": 1,
     "fileList": [
         [
-            "../../../../../datasets/coco2017/val2017/000000006818.jpg"
+            "../../../../../datasets/testdata/2.jpg"
         ]
     ]
 }

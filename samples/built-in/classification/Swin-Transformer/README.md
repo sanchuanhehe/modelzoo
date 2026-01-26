@@ -85,11 +85,11 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| 芯片型号  | 算力引擎   | soc_version | 环境准备指导  | CANN包版本 | 编译工具链 | 板端OS  | SDK  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -132,7 +132,7 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 
 2. 数据预处理，将原始数据集转换为模型的输入数据。
 
-   2.1 SS928V100 SVP_NNN上的数据预处理命令
+   2.1 Hi3403V100 SVP_NNN上的数据预处理命令
    
       ```
       python ./script/swin_preprocess.py --data_path ../../../../datasets/ImageNet/ --bin_path ./data
@@ -143,7 +143,7 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
       - --data_path：原数据集所在路径。
       - --bin_path：转化完后的数据保存路径， 默认在./data路径下
 
-   2.2 SS928V100 NNN上的数据预处理命令
+   2.2 Hi3403V100 NNN上的数据预处理命令
       执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
       
       ```
@@ -184,11 +184,11 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 3. 使用ATC工具将ONNX模型转OM模型。
 
     执行ATC命令。
-    1. SS928V100 SVP_NNN上的om模型转换命令
+    1. Hi3403V100 SVP_NNN上的om模型转换命令
         ```
         atc --framework=5 --model="./model/swin_sim.onnx" --input_shape="image:1,3,224,224" --output="./model/swin" --image_list="./data/img/ILSVRC2012_val_00000001.bin" --compile_mode=5 --softmax_optimize_enable=1 --soc_version=SS928V100
         ```
-    2. SS928V100 NNN上的om模型转换命令
+    2. Hi3403V100 NNN上的om模型转换命令
         ```
         atc --framework=5 --model="./model/swin_sim.onnx" --input_shape="image:1,3,224,224" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/swin" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
         ```
@@ -257,12 +257,12 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
 
 4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
-    SS928V100 SVP_NNN上的指令
+    Hi3403V100 SVP_NNN上的指令
       ```
       ./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list.txt
       ```
 
-    SS928V100 NNN上的指令
+    Hi3403V100 NNN上的指令
       ```
       ./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list_1.json
       ```
@@ -300,11 +300,11 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
     ```
 2. 验证batch_size的om模型的性能，参考命令如下：
 
-    SS928V100 SVP_NNN上的指令
+    Hi3403V100 SVP_NNN上的指令
       ```
       执行./main --acl ../src/acl.json --model ../model/swin.om --input ../data/file_list_1.txt --loop 100
       ```
-    SS928V100 NNN上的指令
+    Hi3403V100 NNN上的指令
       
       file_list_1.json 中 loop参数设置为 100
       ```
@@ -316,7 +316,7 @@ Swin-Transformer是针对于图片处理设计的基于Transformer架构的神�
     - --model：om模型路径。
     - --output:  后处理后结果所在位置
     - --model: 模型所在位置
-    - --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
+    - --loop：循环执行多少次取结果，loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
     在板端会输出显示，SVP_NNN平台上性能结果如下：
     ```

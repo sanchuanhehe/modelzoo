@@ -1,8 +1,8 @@
 {
-    "loop": 300,
+    "loop": 1,
     "fileList": [
         [
-            "../datasets/DOTAv1-split/images/val/P2570__682__349___783.jpg"
+            "../../../../../datasets/testdata/2.jpg"
         ]
     ]
 }

@@ -83,10 +83,10 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
 
   **表 1** 版本配套表
 
-     | 芯片型号   | npu     | soc_version | 环境准备指导                                                 | cann包版本                                                   | 编译工具链                                                   | os                                                           | sdk                                                          |
-    | ---------- | ------- | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md#241安装clang交叉编译器) | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md) | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)                                                      | aarch64-mix210-linux-gcc                                     | linux                                                        | SS928 V100R001C02SPC022                                                       |
+| 芯片型号  | 算力引擎   | soc_version | 环境准备指导  | CANN包版本 | 编译工具链 | 板端OS  | SDK  |
+| --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md#241安装clang交叉编译器) | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100环境搭建指南/Hi3403V100环境搭建指南.md) | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)                                                      | aarch64-mix210-linux-gcc                                     | Linux                                                       | SS928 V100R001C02SPC022                                                       |
 
 
 # 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -266,7 +266,7 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
     - --model：om模型路径。
     - --output:  后处理后结果所在位置
     - --model: 模型所在位置
-    - --loop：循环执行多少次取结果， loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
+    - --loop：循环执行多少次取结果，loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
     在板端会输出显示，SVP_NNN平台上性能结果如下：
     ```
