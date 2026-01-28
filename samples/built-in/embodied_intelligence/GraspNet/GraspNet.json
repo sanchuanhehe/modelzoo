@@ -1,0 +1,85 @@
+{
+  "modelName": "GraspNet",
+  "modelDesc": "GraspNet是一种基于点云输入的多阶段抓取姿态预测模型，由抓取视角估计和抓取姿态生成两个阶段组成，通过特征提取、视角估计、局部特征提取、抓取参数估计和预测解码一系列处理，最终生成包含抓取评分、抓取宽度、抓取高度、抓取深度、旋转矩阵、抓取中心点和物体ID的预测结果，旨在解决机器人抓取任务中的6D抓取姿态估计问题。",
+  "modelRepository": "https://github.com/graspnet/graspnet-baseline",
+  "modelParameter": {
+    "输入": "720x1280",
+    "参数量": "2.397M",
+    "计算量": "66.237GFLOPS"
+  },
+  "isBeta": true,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "EmbodiedIntelligence",
+      "tags": [
+        "具身智能"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "Pytorch"
+  ],
+  "modelDatasets": {
+    "desc": "example_data",
+    "link": "https://github.com/graspnet/graspnet-baseline/blob/main/doc/example_data"
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/graspnet/graspnet-baseline/blob/main/LICENSE"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型（该模型仅用于非商用）",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/embodied_intelligence/GraspNet/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/embodied_intelligence/GraspNet/README.md"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3591P",
+      "tools": [
+        {
+          "name": "CANN工具包 (请联系FAE获取)",
+          "link": "",
+          "desc": ""
+        },
+        {
+          "name": "SDK (请联系FAE获取)",
+          "link": "",
+          "desc": ""
+        }
+      ],
+      "os": [
+        "OpenEular"
+      ],
+      "performance": [
+        {
+          "quantMode": "fp16",
+          "detail": [
+            {
+              "performance": 1337.75,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 0.75,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 2842.42,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+    "fileList": [
+        [
+            "../data/color/color.png",
+            "../data/depth/depth.png",
+            "../data/workspace_mask/workspace_mask.png"
+        ]
+    ],
+    "loop": 1
+}

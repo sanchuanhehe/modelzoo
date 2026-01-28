@@ -49,6 +49,8 @@
 #include "crnn_postprocess.h"
 #include "vdsr_preprocess.h"
 #include "vdsr_postprocess.h"
+#include "graspnet_preprocess.h"
+#include "graspnet_postprocess.h"
 #include "hrnet_preprocess.h"
 #include "hrnet_postprocess.h"
 #include "fastspeech2_preprocess.h"
@@ -121,7 +123,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::VDSR, {VDSRPreprocess, VDSRPostProcess} },
     { ModelType::CrowdCount, {CrowdCountNS::CrowdCountPreprocess, CrowdCountNS::CrowdCountPostprocess} },
     { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
-    { ModelType::PaddleOCR_Det, {OcrDetPreprocess, OcrDetPostprocess} }
+    { ModelType::PaddleOCR_Det, {OcrDetPreprocess, OcrDetPostprocess} },
+    { ModelType::GraspNet, {Grasp::GraspNetPreprocess, Grasp::GraspNetPostprocess} }
 };
 #endif
 

@@ -1,0 +1,10 @@
+[
+    {
+        "Name": "Ascend/samples",                   # 上游开源软件名全称
+        "License": "Apache License 2.0",             # 上游开源软件中包含的许可证信息
+        "License File": "/LICENSE.OpenSource",         # 许可证所在文件路径
+        "Version Number": "v1.0-8.1.RC1.alpha001",       # 该软件的版本
+        "Upstream URL": "https://gitee.com/ascend/samples/repository/archive/v1.0-8.1.RC1.alpha001",   # 上游软件包发布地址
+        "Description": "昇腾样例仓提供了一系列媒体数据处理（DVPP/AIPP）、算子开发与调用（Ascend C）、推理应用开发与部署（AscendCL）等场景的丰富代码样例给开发者进行参考学习，帮助开发者快速入门，进而熟练掌握CANN关键特性使用"           # 开源软件功能描述
+    }
+]
