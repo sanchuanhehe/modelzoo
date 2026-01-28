@@ -33,6 +33,19 @@ function parse_arg()
             generate_usage;
             ;;
     esac
+    case $SOC in
+        "Hi3591P")
+            case $DEF in
+                "Hi3591P")
+                    /home/build/modelzoo/samples/build_script.sh $SOC $DEF $DIR $TARGET
+                    exit_status=$?
+                    ;;
+            esac
+            ;;
+        *)
+            generate_usage;
+            ;;
+    esac
 }
 
 #开始时间

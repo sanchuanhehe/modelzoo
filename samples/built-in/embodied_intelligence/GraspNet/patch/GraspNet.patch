@@ -1,0 +1,471 @@
+diff --git a/models/graspnet.py b/models/graspnet.py
+index af8a058..98d3a5a 100644
+--- a/models/graspnet.py
++++ b/models/graspnet.py
+@@ -72,7 +72,9 @@ class GraspNet(nn.Module):
+         if self.is_training:
+             end_points = process_grasp_labels(end_points)
+         end_points = self.grasp_generator(end_points)
+-        return end_points
++        grasp_preds = []
++        grasp_preds = pred_decode(end_points)
++        return grasp_preds
+ 
+ def pred_decode(end_points):
+     batch_size = len(end_points['point_clouds'])
+@@ -85,7 +87,7 @@ def pred_decode(end_points):
+         approaching = -end_points['grasp_top_view_xyz'][i].float()
+         grasp_angle_class_score = end_points['grasp_angle_cls_pred'][i]
+         grasp_width = 1.2 * end_points['grasp_width_pred'][i]
+-        grasp_width = torch.clamp(grasp_width, min=0, max=GRASP_MAX_WIDTH)
++        grasp_width = torch.clip(grasp_width.float(), 0, GRASP_MAX_WIDTH)
+         grasp_tolerance = end_points['grasp_tolerance_pred'][i]
+ 
+         ## slice preds by angle
+@@ -94,9 +96,12 @@ def pred_decode(end_points):
+         grasp_angle = grasp_angle_class.float() / 12 * np.pi
+         # grasp score & width & tolerance
+         grasp_angle_class_ = grasp_angle_class.unsqueeze(0)
+-        grasp_score = torch.gather(grasp_score, 0, grasp_angle_class_).squeeze(0)
+-        grasp_width = torch.gather(grasp_width, 0, grasp_angle_class_).squeeze(0)
+-        grasp_tolerance = torch.gather(grasp_tolerance, 0, grasp_angle_class_).squeeze(0)
++        grasp_score = torch.gather(grasp_score, 0, grasp_angle_class_)
++        grasp_score = grasp_score[0, ...]
++        grasp_width = torch.gather(grasp_width, 0, grasp_angle_class_)
++        grasp_width = grasp_width[0, ...]
++        grasp_tolerance = torch.gather(grasp_tolerance, 0, grasp_angle_class_)
++        grasp_tolerance = grasp_tolerance[0, ...]
+ 
+         ## slice preds by score/depth
+         # grasp depth
+@@ -128,7 +133,10 @@ def pred_decode(end_points):
+         rotation_matrix = rotation_matrix.view(Ns, 9)
+ 
+         # merge preds
+-        grasp_height = 0.02 * torch.ones_like(grasp_score)
+-        obj_ids = -1 * torch.ones_like(grasp_score)
+-        grasp_preds.append(torch.cat([grasp_score, grasp_width, grasp_height, grasp_depth, rotation_matrix, grasp_center, obj_ids], axis=-1))
++        grasp_height = grasp_angle
++        obj_ids = grasp_angle
++        grasp_pred = torch.cat([grasp_score, grasp_width, grasp_height, grasp_depth, rotation_matrix, grasp_center, obj_ids], axis=-1)
++        grasp_pred[:, 2] = 0.02
++        grasp_pred[:, 16] = -1
++        grasp_preds.append(grasp_pred)
+     return grasp_preds
+\ No newline at end of file
+diff --git a/models/modules.py b/models/modules.py
+index 399da0e..69ce04f 100644
+--- a/models/modules.py
++++ b/models/modules.py
+@@ -65,7 +65,8 @@ class ApproachNet(nn.Module):
+         top_view_inds_ = top_view_inds.view(B, num_seed, 1, 1).expand(-1, -1, -1, 3).contiguous()
+         template_views = generate_grasp_views(self.num_view).to(features.device) # (num_view, 3)
+         template_views = template_views.view(1, 1, self.num_view, 3).expand(B, num_seed, -1, -1).contiguous() #(B, num_seed, num_view, 3)
+-        vp_xyz = torch.gather(template_views, 2, top_view_inds_).squeeze(2) #(B, num_seed, 3)
++        vp_xyz = torch.gather(template_views, 2, top_view_inds_)
++        vp_xyz = vp_xyz[:, :, 0, :] #(B, num_seed, 3)
+         vp_xyz_ = vp_xyz.view(-1, 3)
+         batch_angle = torch.zeros(vp_xyz_.size(0), dtype=vp_xyz.dtype, device=vp_xyz.device)
+         vp_rot = batch_viewpoint_params_to_matrix(-vp_xyz_, batch_angle).view(B, num_seed, 3, 3)
+@@ -135,7 +136,7 @@ class CloudCrop(nn.Module):
+             grouped_features
+         ) # (batch_size, mlps[-1], num_seed*num_depth, nsample)
+         vp_features = F.max_pool2d(
+-            vp_features, kernel_size=[1, vp_features.size(3)]
++            vp_features, kernel_size=[1, self.nsample]
+         ) # (batch_size, mlps[-1], num_seed*num_depth, 1)
+         vp_features = vp_features.view(B, -1, num_seed, num_depth)
+         return vp_features
+diff --git a/pointnet2/graspnet_npu_ops.py b/pointnet2/graspnet_npu_ops.py
+new file mode 100644
+index 0000000..cbd0467
+--- /dev/null
++++ b/pointnet2/graspnet_npu_ops.py
+@@ -0,0 +1,220 @@
++# Copyright (c) ModelZoo. 2025-2025. All rights reserved.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import torch
++import torch_npu
++import os
++import sys
++import numpy as np
++
++modelzoo_ops_path = os.getenv('ASCEND_CUSTOM_OPP_PATH')
++if modelzoo_ops_path:
++    sys.path.append(os.path.join(modelzoo_ops_path, 'framework'))
++
++from modelzoo_ops.ops.group_points import group_points
++from modelzoo_ops.ops.cylinder_query import cylinder_query
++from modelzoo_ops.ops.furthest_point_sampling import furthest_point_sampling
++
++def npu_gather_points(points: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
++    """
++    从输入点云中根据索引收集点
++
++    points (torch.Tensor): 输入点云，shape为(B, C, N)
++    idx (torch.Tensor): 索引，shape为(B, M)
++
++    out (torch.Tensor): 收集的点，shape为(B, C, M)
++    """
++    B, C, N = points.size()
++    M = idx.size(1)
++    idx = idx.unsqueeze(1).repeat(1, C, 1) # 扩展索引以匹配通道维度
++    out = torch.gather(points, 2, idx)
++    return out
++
++def npu_gather_points_grad(grad_out: torch.Tensor, idx: torch.Tensor, n: int) -> torch.Tensor:
++    """
++    计算 gather_points 操作的梯度
++
++    grad_out (torch.Tensor): 输出的梯度，shape为(B, C, M)
++    idx (torch.Tensor): 索引，shape为(B, M)
++    n (int): 输入的点云数量
++
++    grad_points (torch.Tensor): 输入的梯度，shape为(B, C, N)
++    """
++    B, C, N = grad_out.size()
++    grad_points = torch.zeros((B, C, N), device=grad_out.device, dtype=grad_out.dtype)
++    grad_out = grad_out.contiguous()
++    idx = idx.unsqueeze(1).repeat(1, C, 1) # 扩展索引以匹配通道维度
++    grad_points.scatter_add_(2, idx, grad_out)
++    return grad_points
++
++def npu_furthest_point_sampling(xyz: torch.Tensor, npoint: int) -> torch.Tensor:
++    """
++    最远点采样
++
++    xyz (torch.Tensor): 输入点云，shape为 (B, N, 3)
++    npoint (int): 采样点的数量
++
++    out (torch.Tensor): 采样点的索引，shape为 (B, npoint)
++    """
++    return furthest_point_sampling(xyz, npoint)
++
++def npu_three_nn(unknowns: torch.Tensor, knows: torch.Tensor) -> tuple:
++    """
++    对每个未知点，找出距离最近的三个已知点及其距离平方
++
++    unknowns (torch.Tensor): shape为 (B, N, 3)的未知点张量
++    knows (torch.Tensor): shape为 (B, M, 3)的已知点张量
++
++    tuple: 包含距离平方 (B, N, 3)和索引 (B, M, 3)的元组
++    """
++    B, N, _ = unknowns.size()
++    M = knows.size(1)
++    # 扩展维度以广播计算距离
++    unknowns_expanded = unknowns.unsqueeze(2).repeat(1, 1, M, 1) # (B, N, M, 3)
++    knows_expanded = knows.unsqueeze(1).repeat(1, N, 1, 1) # (B, N, M, 3)
++    # 计算距离平方
++    dist2 = torch.sum((unknowns_expanded - knows_expanded) ** 2, dim = -1) # (B, N, M)
++    # 获取距离最小的三个点的距离和索引
++    dist2_topk, idx = torch.topk(dist2.float(), k = 3, dim = 2, largest = False) # (B, N, 3)
++    return dist2_topk, idx.int()
++
++def npu_three_interpolate(points: torch.Tensor, idx: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
++    """
++    根据三个最近点及其权重进行插值
++
++    points (torch.Tensor): 点特征张量，shape为(B, C, M)
++    idx (torch.Tensor): 索引张量，shape为(B, N, 3)
++    weight (torch.Tensor): 权重张量，shape为(B, N, 3)
++
++    out (torch.Tensor): 插值结果张量，shape为(B, C, N)
++    """
++    B, C, M = points.size()
++    N = idx.size(1)
++    # 扩展权重维度以匹配特征维度
++    weight = weight.unsqueeze(1).repeat(1, C, 1, 1) # (B, C, N, 3)
++    expand_n = N * 3
++    # 扩展points维度以匹配索引张量维度
++    points_expanded = points.unsqueeze(-1).repeat(1, 1, 1, expand_n) # (B, C, M, N * 3)
++    points_expanded = points_expanded.view(B, C, M, N, 3) # (B, C, M, N, 3)
++
++    # 扩展索引维度
++    idx_expanded = idx.unsqueeze(1).repeat(1, C, 1, 1) # (B, C, N, 3)
++    idx_expanded = idx_expanded.unsqueeze(2) # (B, C, 1, N, 3)
++
++    # 根据索引获取对应点的特征
++    points_gathered = torch.gather(points_expanded, 2, idx_expanded) # (B, C, 1, N, 3)
++    points_gathered = points_gathered[:, :, 0, :, :] # (B, C, N, 3)
++
++    # 加权求和
++    out = (points_gathered * weight).sum(dim = -1) # (B, C, N)
++    return out
++
++def npu_three_interpolate_grad(grad_out: torch.Tensor, idx: torch.Tensor, weight: torch.Tensor, M: int) -> torch.Tensor:
++    """
++    计算three_interpolate操作的梯度
++
++    grad_out (torch.Tensor): 输出梯度张量，shape为(B, C, N)
++    idx (torch.Tensor): 索引张量，shape为(B, N, 3)
++    weight (torch.Tensor): 权重张量，shape为(B, N, 3)
++    M (int): 输入点的数量
++
++    grad_points (torch.Tensor): 输入梯度张量，shape为(B, C, M)
++    """
++    B, C, N = grad_out.size()
++    # 扩展梯度和权重维度
++    grad_out_expanded = grad_out.unsqueeze(-1).repeat(1, 1, 1, 3) # (B, C, N, 3)
++    weight_expanded = weight.unsqueeze(1).repeat(1, C, 1, 1) # (B, C, N, 3)
++    # 计算每个点的梯度贡献
++    grad_contribution = grad_out_expanded * weight_expanded # (B, C, N, 3)
++    # 初始化输入梯度
++    grad_points = torch.zeros((B, C, M), device=grad_out.device, dtype=grad_out.dtype)
++    # 累加梯度
++    grad_points.scatter_add_(2, idx.unsqueeze(1).repeat(1, C, 1, 1), grad_contribution)
++    return grad_points
++
++def npu_group_points(points: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
++    """
++    根据索引对特征进行分组操作
++
++    points (torch.Tensor): 输入特征，shape为(B, C, N)
++    idx (torch.Tensor): 索引张量，shape为(B, npoint, nsample)
++
++    output (torch.Tensor): 分组后的特征，shape为(B, C, npoint, nsample)
++    """
++    return group_points(points, idx)
++
++def npu_ball_query(radius: float, nsample: int, xyz: torch.Tensor, new_xyz: torch.Tensor) -> torch.Tensor:
++    """
++    在给定点云中查询每个点的球形邻域内的点
++
++    radius (float): 球形邻域半径
++    nsample (int): 每个查询点最多采样点数
++    xyz (torch.Tensor): 输入点云坐标，shape为(B, N, 3)
++    new_xyz (torch.Tensor): 查询点坐标，shape为(B, M, 3)
++
++    out (torch.Tensor): 邻域点索引，shape为(B, M, nsample)
++    """
++
++    assert new_xyz.is_contiguous() and xyz.is_contiguous(), "输入张量必须连续存储"
++    assert new_xyz.dtype == torch.float32 and xyz.dtype == torch.float32, "输入张量必须为 float32 类型"
++
++    B, M, _ = new_xyz.size()
++    N = xyz.size(1)
++
++    new_xyz_expanded = new_xyz.unsqueeze(2).repeat(1, 1, N, 1) # (B, M, N, 3)
++    xyz_expanded = xyz.unsqueeze(1).repeat(1, M, 1, 1) # (B, M, N, 3)
++    dist2 = torch.sum((new_xyz_expanded - xyz_expanded) ** 2, dim = -1) # (B, M, N)
++    radius2 = radius * radius
++
++    # 标记有效点（距离 < 半径平方）
++    valid_mask = dist2 < radius2 # (B, M, N), True表示有效点
++
++    # 计算每个查询点的有效点累积计数（按点云原始顺序）
++    valid_count = torch.cumsum(valid_mask.int(), dim = 2).int() # (B, M, N), 累积有效点数
++
++    # 筛选前 nsample 个有效点（按原始顺序，非距离排序）
++    select_mask = (valid_count <= nsample) & valid_mask # (B, M, N), True表示选中的有效点
++
++    # 获取选中点的索引（按原始点云顺序）
++    indices = torch.arange(N, device=xyz.device).unsqueeze(0).unsqueeze(0).repeat(B, M, 1)
++    # 仅保留选中点的索引，其余位置置为-1
++    select_indices = torch.where(select_mask, indices, torch.tensor(-1, device=xyz.device))
++
++    # 提取前 nsample 个有效索引（补全 -1），此处topk 按位置排序，而非距离
++    values, pos = torch.topk(select_mask.float(), k = nsample, dim = 2, largest = True) # pos为选中点在N维的索引
++
++    idx = torch.gather(select_indices.int(), dim = 2, index = pos) # (B, M, nsample)
++
++    first_val = pos[:, :, 0].int().unsqueeze(-1).repeat(1, 1, nsample)
++    select_mask = (idx > 0)
++    out = torch.where(select_mask, idx, first_val)
++
++    out = torch.clip(out.float(), 0, N - 1) # 增加index边界检查
++    return out.to(torch.int)
++
++def npu_cylinder_query(new_xyz: torch.Tensor, xyz: torch.Tensor, rot: torch.Tensor, radius: float, hmin: float, hmax: float, nsample: int) -> torch.Tensor:
++    """
++    在给定点云中查询每个点在指定旋转圆柱领域内的点
++
++    new_xyz (torch.Tensor): 查询点坐标，shape为(B, M, 3)
++    xyz (torch.Tensor): 输入点云坐标，shape为(B, N, 3)
++    rot (torch.Tensor): 旋转矩阵张量，shape为(B, M, 9)
++    radius (float): 圆柱底面半径
++    hmin (float): 圆柱的最小高度
++    hmax (float): 圆柱的最大高度
++    nsample (int): 每个查询点最多采样点数
++
++    out (torch.Tensor): 每个查询点邻域内点的索引，shape为(B, M, nsample)
++    """
++    return cylinder_query(new_xyz, xyz, rot, radius, hmin, hmax, nsample)
+\ No newline at end of file
+diff --git a/pointnet2/pointnet2_modules.py b/pointnet2/pointnet2_modules.py
+index bfb4c3e..eb3903f 100644
+--- a/pointnet2/pointnet2_modules.py
++++ b/pointnet2/pointnet2_modules.py
+@@ -253,18 +253,18 @@ class PointnetSAModuleVotes(nn.Module):
+         )  # (B, mlp[-1], npoint, nsample)
+         if self.pooling == 'max':
+             new_features = F.max_pool2d(
+-                new_features, kernel_size=[1, new_features.size(3)]
++                new_features, kernel_size=[1, int(new_features.size(3))]
+             )  # (B, mlp[-1], npoint, 1)
+         elif self.pooling == 'avg':
+             new_features = F.avg_pool2d(
+-                new_features, kernel_size=[1, new_features.size(3)]
++                new_features, kernel_size=[1, int(new_features.size(3))]
+             )  # (B, mlp[-1], npoint, 1)
+         elif self.pooling == 'rbf': 
+             # Use radial basis function kernel for weighted sum of features (normalized by nsample and sigma)
+             # Ref: https://en.wikipedia.org/wiki/Radial_basis_function_kernel
+             rbf = torch.exp(-1 * grouped_xyz.pow(2).sum(1,keepdim=False) / (self.sigma**2) / 2) # (B, npoint, nsample)
+             new_features = torch.sum(new_features * rbf.unsqueeze(1), -1, keepdim=True) / float(self.nsample) # (B, mlp[-1], npoint, 1)
+-        new_features = new_features.squeeze(-1)  # (B, mlp[-1], npoint)
++        new_features = new_features[..., 0]  # (B, mlp[-1], npoint)
+ 
+         if not self.ret_unique_cnt:
+             return new_xyz, new_features, inds
+@@ -392,6 +392,7 @@ class PointnetFPModule(nn.Module):
+ 
+         if known is not None:
+             dist, idx = pointnet2_utils.three_nn(unknown, known)
++            dist = torch.sqrt(dist)
+             dist_recip = 1.0 / (dist + 1e-8)
+             norm = torch.sum(dist_recip, dim=2, keepdim=True)
+             weight = dist_recip / norm
+@@ -413,7 +414,7 @@ class PointnetFPModule(nn.Module):
+         new_features = new_features.unsqueeze(-1)
+         new_features = self.mlp(new_features)
+ 
+-        return new_features.squeeze(-1)
++        return new_features[..., 0]
+ 
+ class PointnetLFPModuleMSG(nn.Module):
+     ''' Modified based on _PointnetSAModuleBase and PointnetSAModuleMSG
+diff --git a/pointnet2/pointnet2_utils.py b/pointnet2/pointnet2_utils.py
+index 45c4c86..469d08a 100644
+--- a/pointnet2/pointnet2_utils.py
++++ b/pointnet2/pointnet2_utils.py
+@@ -16,22 +16,13 @@ from torch.autograd import Function
+ import torch.nn as nn
+ import pytorch_utils as pt_utils
+ import sys
++import graspnet_npu_ops
+ 
+ try:
+     import builtins
+ except:
+     import __builtin__ as builtins
+ 
+-try:
+-    import pointnet2._ext as _ext
+-except ImportError:
+-    if not getattr(builtins, "__POINTNET2_SETUP__", False):
+-        raise ImportError(
+-            "Could not import _ext module.\n"
+-            "Please see the setup instructions in the README: "
+-            "https://github.com/erikwijmans/Pointnet2_PyTorch/blob/master/README.rst"
+-        )
+-
+ if False:
+     # Workaround for type hints without depending on the `typing` module
+     from typing import *
+@@ -68,7 +59,7 @@ class FurthestPointSampling(Function):
+         torch.Tensor
+             (B, npoint) tensor containing the set
+         """
+-        return _ext.furthest_point_sampling(xyz, npoint)
++        return graspnet_npu_ops.npu_furthest_point_sampling(xyz, npoint)
+ 
+     @staticmethod
+     def backward(xyz, a=None):
+@@ -102,13 +93,13 @@ class GatherOperation(Function):
+ 
+         ctx.for_backwards = (idx, C, N)
+ 
+-        return _ext.gather_points(features, idx)
++        return graspnet_npu_ops.npu_gather_points(features, idx)
+ 
+     @staticmethod
+     def backward(ctx, grad_out):
+         idx, C, N = ctx.for_backwards
+ 
+-        grad_features = _ext.gather_points_grad(grad_out.contiguous(), idx, N)
++        grad_features = graspnet_npu_ops.npu_gather_points_grad(grad_out.contiguous(), idx, N)
+         return grad_features, None
+ 
+ 
+@@ -135,9 +126,9 @@ class ThreeNN(Function):
+         idx : torch.Tensor
+             (B, n, 3) index of 3 nearest neighbors
+         """
+-        dist2, idx = _ext.three_nn(unknown, known)
++        dist2, idx = graspnet_npu_ops.npu_three_nn(unknown, known)
+ 
+-        return torch.sqrt(dist2), idx
++        return dist2, idx
+ 
+     @staticmethod
+     def backward(ctx, a=None, b=None):
+@@ -172,7 +163,7 @@ class ThreeInterpolate(Function):
+ 
+         ctx.three_interpolate_for_backward = (idx, weight, m)
+ 
+-        return _ext.three_interpolate(features, idx, weight)
++        return graspnet_npu_ops.npu_three_interpolate(features, idx, weight)
+ 
+     @staticmethod
+     def backward(ctx, grad_out):
+@@ -194,7 +185,7 @@ class ThreeInterpolate(Function):
+         """
+         idx, weight, m = ctx.three_interpolate_for_backward
+ 
+-        grad_features = _ext.three_interpolate_grad(
++        grad_features = graspnet_npu_ops.npu_three_interpolate_grad(
+             grad_out.contiguous(), idx, weight, m
+         )
+ 
+@@ -252,7 +243,7 @@ class GroupingOperation(Function):
+         return grad_features, None
+ 
+ 
+-grouping_operation = GroupingOperation.apply
++grouping_operation = graspnet_npu_ops.npu_group_points
+ 
+ 
+ class BallQuery(Function):
+@@ -284,7 +275,7 @@ class BallQuery(Function):
+         return None, None, None, None
+ 
+ 
+-ball_query = BallQuery.apply
++ball_query = graspnet_npu_ops.npu_ball_query
+ 
+ 
+ class QueryAndGroup(nn.Module):
+@@ -448,7 +439,7 @@ class CylinderQuery(Function):
+         torch.Tensor
+             (B, npoint, nsample) tensor with the indicies of the features that form the query balls
+         """
+-        return _ext.cylinder_query(new_xyz, xyz, rot, radius, hmin, hmax, nsample)
++        return graspnet_npu_ops.npu_cylinder_query(new_xyz, xyz, rot, radius, hmin, hmax, nsample)
+ 
+     @staticmethod
+     def backward(ctx, a=None):
+diff --git a/utils/loss_utils.py b/utils/loss_utils.py
+index 9395dde..711c38c 100644
+--- a/utils/loss_utils.py
++++ b/utils/loss_utils.py
+@@ -86,7 +86,7 @@ def batch_viewpoint_params_to_matrix(batch_towards, batch_angle):
+     axis_y[mask_y,1] = 1
+     axis_x = axis_x / torch.norm(axis_x, dim=-1, keepdim=True)
+     axis_y = axis_y / torch.norm(axis_y, dim=-1, keepdim=True)
+-    axis_z = torch.cross(axis_x, axis_y)
++    axis_z = torch.cross(axis_x, axis_y, dim=-1)
+     sin = torch.sin(batch_angle)
+     cos = torch.cos(batch_angle)
+     R1 = torch.stack([ones, zeros, zeros, zeros, cos, -sin, zeros, sin, cos], dim=-1)

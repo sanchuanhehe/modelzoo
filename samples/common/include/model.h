@@ -62,7 +62,8 @@ enum ModelType {
     PaddleOCR_Rec,
     CRNN,
     HRNet,
-    TinySam
+    TinySam,
+    GraspNet
 };
 
 using ProcessFunc = std::function<bool(std::vector<std::string>&, std::vector<TensorBuf>&, std::vector<TensorDesc>&)>;

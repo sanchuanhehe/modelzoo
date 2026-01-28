@@ -1,0 +1,27 @@
+# 输入图像高度
+img_height=720
+
+# 输入图像宽度
+img_width=1280
+
+# 模型前处理提取的点云信息存储路径，为空则不保存
+save_out_bin="../out/bin/"
+
+# 模型推理结果路径（包含抓取得分、姿态信息等），为空则不保存
+save_out_txt="../out/txt/"
+
+# 相机参数.mat文件存放路径
+camera_matrix_dir="../data/meta.mat"
+
+# 前处理模型采样总点数
+num_points=20000
+
+# 后处理冲突检测阈值
+collision_thresh=0.01
+
+# 后处理点云下采样计算参数
+voxel_size=0.01
+
+# 是否在点云采样时采用固定采样，1表示固定采样，0表示随机采样
+# 验证模型精度时可设置is_test=1并将结果与/data/use_for_precision_align.txt进行比对
+is_test=0
