@@ -1,8 +1,8 @@
 {
     "fileList": [
         [
-            "../datasets/paddleocr_rec_input/zh_val_0/zh_val_0_29.png"
+            "../../../../../datasets/testdata/7.png"
         ]
     ],
-    "loop": 100
+    "loop": 1
 }

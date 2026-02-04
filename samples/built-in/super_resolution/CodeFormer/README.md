@@ -6,12 +6,13 @@
 
 - [环境准备](#ZH-CN_TOPIC_0000001126281702)
 
-- [快速上手](#ZH-CN_TOPIC_0000001126281700)
+- [模型推理](#ZH-CN_TOPIC_0000001126281700)
 
-  - [获取源码](#section4622531142816)
+  - [快速开始(推荐)](#section4622531142816)
+  - [安装依赖](#section183221994410)
   - [准备数据集](#section183221994411)
   - [模型转化](#section741711594517)
-  - [模型推理](#section741711594518)
+  - [精度&性能评估](#section741711594518)
 
 - [模型推理性能&精度](#ZH-CN_TOPIC_0000001172201573)
 
@@ -91,32 +92,81 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
 
   **表 1** 版本配套表
 
-| 芯片型号  | npu     | soc_version | 环境准备指导  | cann包版本 | 编译工具链 | os  | sdk  |
+| 芯片型号  | 算力引擎   | soc_version | 环境准备指导  | CANN包版本 | 编译工具链 | 板端OS  | SDK  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [openharmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022 
-| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  linux  | SS928 V100R001C02SPC022                                                       |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022                                                       |
 
-# 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
+# 模型推理<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
-## 获取源码<a name="section4622531142816"></a>
+## 快速开始<a name="section4622531142816"></a>
 
-1. 获取参考代码仓源码
- 
-   ```bash
-   git clone https://github.com/sczhou/CodeFormer.git
-   cd CodeFormer
-   git reset --hard e878192ee253cfcc8f19e29d3307c181501f53ae
-   cd ..
-   ```
+### 获取本仓源码
+
+备注：以下所有命令均在模型目录下执行
+
+### 获取om模型文件
+
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+
+创建`model`文件夹，并将om模型文件移动到`./model`目录下。
+```
+mkdir -p model
+```
+备注：若需要体验om模型转化过程，请参考[安装依赖](#section183221994410)和[模型转化](#section741711594517)章节。
+
+### 编译代码和运行应用
+
+#### 编译代码
+
+1. 切换到样例目录，创建目录用于存放编译文件，例如，本文中，创建的目录为`build`。
+    ```
+    mkdir -p build
+    ```
+
+2. 切换到`build`目录，执行**cmake**生成编译文件。
+
+    当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
+
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
+
+    例如，开发环境为X86架构、运行环境为ARM架构时，执行以下命令进行交叉编译。交叉编译工具链按运行环境操作系统，可选toolchain_aarch64_linux.cmake或toolchain_aarch64_ohos.cmake；SOC_VERSION按算力引擎可选SS928V100或OPTG，请根据运行环境和算力引擎平台选择。
+    ```
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+    ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
+
+3. 执行**make**命令，生成的可执行文件main在“./out“目录下。
 
 
-2. 安装依赖。
+#### 运行应用
 
-   ```bash
-   # 源作者使用的是python3.8，建议使用相同版本创建虚拟环境
-   pip3 install -r requirements.txt
-   ```
+1. 将modelzoo代码上传到板端运行环境。
+2. 以运行用户登录板端运行环境。
+3. 切换到可执行文件main所在的目录，给该目录下的main文件加执行权限。
+
+    ```
+    chmod +x main
+    ```
+
+4. 切换到可执行文件main所在的目录，运行可执行文件。测试图片上模型推理命令参考：
+    
+    ```
+    ./main --acl ../src/acl.json --model ../model/codeformer.om  --input ../data/file_list_1.json
+    ```
+    备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
+
+## 安装依赖<a name="section183221994410"></a>
+
+```bash
+# 源作者使用的是python3.8，建议使用相同版本创建虚拟环境
+pip3 install -r requirements.txt
+```
 
 ## 准备数据集<a name="section183221994411"></a>
 
@@ -181,13 +231,22 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
 
 使用PyTorch将模型权重文件.pth转换为.onnx文件，再使用ATC工具将.onnx文件转为离线推理模型文件.om文件。
 
-1. 获取权重文件。
+1. 获取参考代码仓源码
+ 
+   ```bash
+   git clone https://github.com/sczhou/CodeFormer.git
+   cd CodeFormer
+   git reset --hard e878192ee253cfcc8f19e29d3307c181501f53ae
+   cd ..
+   ```
+
+2. 获取权重文件。
 
    点击 [链接](https://pan.baidu.com/s/18g918VdcyODdVcSOCLutOA?pwd=ixre) 下载codeformer.onnx(原始的codeformer.pth模型文件可以通过 [链接](https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth) 下载，建议直接下载onnx文件即可) 。
    
    下载成功后，将codeformer.onnx文件放到./model路径下
 
-2. 简化onnx文件。
+3. 简化onnx文件。
 
       先使用script/codeformer_fix_onnx.py精简不需要的输入和输出参数；
 
@@ -200,7 +259,7 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
       onnxsim ../model/codeformer_fixed.onnx ../model/codeformer_simplified.onnx
       ```
 
-3. 使用ATC工具将ONNX模型转OM模型。
+4. 使用ATC工具将ONNX模型转OM模型。
 
       在当前模型的代码根目录下，执行ATC命令。
       1. Hi3403V100 SVP_NNN上的om模型转换命令
@@ -227,50 +286,9 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
          注意：如果出现atc命令找不到，参考推理环境准备。
 
 
-## 模型推理<a name="section741711594518"></a>
+## 精度&性能评估<a name="section741711594518"></a>
 
-**步骤1：编译代码。**
-
-1. 切换到样例目录，创建目录用于存放编译文件，例如，本文中，创建的目录为“build“。
-
-    ```bash
-    mkdir -p build
-    ```
-
-2.  切换到“build“目录，执行**cmake**生成编译文件。
-    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-
-    当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-
-    例如，开发环境为X86架构、运行环境为ARM架构时，执行以下命令进行交叉编译。交叉编译工具链按运行环境操作系统，可选toolchain_aarch64_linux.cmake或toolchain_aarch64_ohos.cmake；SOC_VERSION按算力引擎可选SS928V100或OPTG，请根据运行环境和算力引擎平台选择。
-	  
-	  ```
-    cd build
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
-	  ```
-    比如
-    ```
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
-    ```
-
-    
-
-3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
-
-	```bash
-	make
-	```
-
-**步骤2：运行应用。**
-
-1. 以运行用户将开发环境的样例目录及目录下的文件上传到运行环境（Host），例如“$HOME/acl\_sample”。
-2. 以运行用户登录运行环境（Host）。
-3. 切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，给该目录下的main文件加执行权限。
-
-    ```bash
-    chmod +x main
-    ```
-4. 修改配置文件cfg.txt。
+1. 修改配置文件cfg.txt。
 
     main函数执行时，前后处理函数会读取data/cfg.txt获取一些配置参数，cfg.txt中默认配置了推理时保存前处理和模型推理生成的原始bin文件，会占据较大的磁盘空间，您可以将该配置改为空字符串不保存节约磁盘空间。
     ```bash
@@ -283,16 +301,14 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
     save_result_bin="../data/result/bin"
     ```
 
-5. 切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
+2. 登录到板端运行环境，切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
 
     ```bash
     ./main --acl ../src/acl.json --model ../model/codeformer.om  --input ../data/file_list.json
     ```
     修复后的图像默认会保存在data/result/img目录下，模型推理的原始bin文件默认会保存在data/result/bin目录下。
 
-**步骤3：验证精度和性能**
-
-1. 精度验证。
+3. 精度验证。
 
    使用codeformer_evaluate.py将模型推理的结果与数据集中原始的高清人脸图像进行对比，获取评估结果。
 
@@ -328,7 +344,7 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
    ```
 
 
-2. 验证batch_size的om模型的性能，参考命令如下：
+4. 验证om模型的性能，参考命令如下：
 
    ```bash
    cd out # 切换到out目录
@@ -341,7 +357,7 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
    
    - --model: 指定待验证性能的 OM 模型文件路径。
    
-   - --input： 指定输入数据的列表文件路径（此场景下为单图路径的配置文件，注意：循环次数通过修改该文件中的loop变量即可）。
+   - --input： 指定输入数据的列表文件路径（此场景下为单图片路径的配置文件，注意：循环次数通过修改该文件中的loop变量即可）。
 
    在板端会输出显示，SVP_NNN平台上性能结果如下：
    ```bash
@@ -352,7 +368,7 @@ CodeFormer 是一种基于码本查找 Transformer 的鲁棒盲人脸修复模�
    execution time: 1724.14ms, frame rate: 0.58fps
    ```
 
-**步骤4（可选）：使用python脚本在PC上进行数据预处理、模型推理、输出后处理（可以跟CPP版本在开发板上的推理结果进行对比）**
+**（可选步骤）：使用python脚本在PC上进行数据预处理、模型推理、输出后处理（可以跟CPP版本在开发板上的推理结果进行对比）**
 
 1. 使用python脚本进行数据预处理，将原始数据集转换为模型的输入数据。
 

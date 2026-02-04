@@ -1,8 +1,8 @@
 {
     "fileList": [
         [
-            "../datasets/faces/testing/s5/1.pgm",
-            "../datasets/faces/testing/s5/6.pgm"
+            "../../../../../datasets/testdata/13.pgm",
+            "../../../../../datasets/testdata/14.pgm"
         ]
     ],
     "loop": 1
