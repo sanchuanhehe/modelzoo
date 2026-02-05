@@ -76,16 +76,11 @@ int main() {
 
         // 设置输入并执行推理
         sample.SetInputDatas(input_datas, input_sizes);
-
-        
-
         if (sample.Process() != SUCCESS) {
             cerr << "Inference failed" << endl;
         } else {
             cout << "3-input inference success" << endl;  // 注意这里修正了原代码的数字错误（5->3）
         }
-
-        
 
         // 释放当前批次的输入内存
         for (auto data : input_datas) svp_acl_rt_free(data);

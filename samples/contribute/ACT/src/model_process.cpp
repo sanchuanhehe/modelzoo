@@ -313,13 +313,6 @@ Result ModelProcess::CreateInputFromData(const std::vector<const void*>& input_d
     input_ = svp_acl_mdl_create_dataset();
     if (input_ == nullptr) { ERROR_LOG("Create input dataset failed"); return FAILED; }
 
-    // size_t input_num = GetInputNum();
-    // // 校验输入数据个数与模型输入个数一致
-    // if (input_datas.size() != input_num || input_sizes.size() != input_num) {
-    //     ERROR_LOG("Input count mismatch: model needs %zu, provided %zu", input_num, input_datas.size());
-    //     return FAILED;
-    // }
-
     // 为每个输入创建缓冲区并绑定数据
     for (size_t i = 0; i < input_datas.size(); ++i) {
         size_t buf_size = 0;
@@ -460,7 +453,6 @@ void ModelProcess::OutputModelResult() const {
             std::cout << floatData[j] << " ";
         }
         std::cout << std::endl << "FLOAT_OUTPUT_END " << i << std::endl;
-        // printf("\n");  // 结束当前输出的换行
     }
 }
 
