@@ -1,0 +1,95 @@
+{
+  "modelName": "MiniCPM",
+  "modelDesc": "MiniCPM 是一款紧凑型高性能大语言模型系列，其核心理念在于“小而精”，通过极致的参数与结构优化，在较小的计算规模下实现超越同级别模型的综合能力。在近年来的大模型发展格局中，MiniCPM 凭借出色的端侧部署能力受到广泛关注。",
+  "modelRepository": "https://github.com/OpenBMB/MiniCPM",
+  "modelParameter": {
+    "输入": "512x512",
+    "参数量": "433.874 M",
+    "计算量": "1.058 GFLOPs"
+  },
+  "isBeta": true,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "多模态",
+      "tags": [
+        "VLM"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "PyTorch"
+  ],
+  "modelDatasets": {
+    "desc": "",
+    "link": ""
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/OpenBMB/MiniCPM/blob/main/LICENSE"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/vlm/MiniCPM/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/vlm/MiniCPM/doc/快速开始.md/"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3403V100 SVP_NNN",
+      "tools": [
+        {
+          "name": "CANN工具",
+          "link": "",
+          "desc": ""
+        },
+        {
+          "name": "编译工具链",
+          "link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8",
+          "desc": "高效编译，精准适配AI性能优化，应用流畅运行"
+        },
+        {
+          "name": "SDK",
+          "link": "",
+          "desc": ""
+        }
+      ],
+      "os": [
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "a16w8",
+          "detail": [
+            {
+              "performance": 17.001,
+              "performanceUnit": "性能（token/s）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 0.629,
+              "performanceUnit": "TTFT（s）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 544.514,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 1217.676,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
