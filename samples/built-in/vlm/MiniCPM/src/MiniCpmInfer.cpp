@@ -105,7 +105,6 @@ string MiniCpmInfer::InferSingle(const string& imgPath, const string& text)
             make_pair(decodeOutputBufs_, prefillOutputBufs_),
             make_pair(decodeModelInputInfo_.first, prefillModelInputInfo_.second),
             make_pair(loopId, decodeModelInputInfo_.second.size()));
-
         decodeModel_->Infer(decodeInputBufs_, decodeOutputBufs_);
         DecodePostprocess(decodeOutputBufs_, decodeModelInputInfo_.second, tokenId);
         sumDecodeTokenTime_ += (TimestampInner() - decodeStartTime); // 计算token耗时;

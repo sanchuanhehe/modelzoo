@@ -29,27 +29,27 @@ Embedding embeddingData;
 
 // 特殊Token ID常量定义
 namespace SpecialTokens {
-    constexpr int32_t BOS_TOKEN = 1;               // <s>
-    constexpr int32_t IM_START_TOKEN = 73441;       // <|im_start|>
-    constexpr int32_t USER_TOKEN = 3060;            // ▁user
-    constexpr int32_t NEWLINE_TOKEN = 5;            // \n
-    constexpr int32_t IMAGE_ID_TOKEN = 113;         // <image_id>
-    constexpr int32_t UNDERSCORE_0_TOKEN = 59320;   // ▁0
-    constexpr int32_t IMAGE_ID_END_TOKEN = 59344;   // </image_id>
-    constexpr int32_t SPACE_TOKEN = 114;            // 空格
-    constexpr int32_t IMAGE_TOKEN = 101;            // <image>
-    constexpr int32_t IMAGE_END_TOKEN = 102;        // </image>
-    constexpr int32_t IM_END_TOKEN = 73440;         // <|im_end|>
-    constexpr int32_t ASSISTANT_TOKEN = 16434;      // ▁assistant
+constexpr int32_t BOS_TOKEN = 1; // <s>
+constexpr int32_t IM_START_TOKEN = 73441; // <|im_start|>
+constexpr int32_t USER_TOKEN = 3060; // ▁user
+constexpr int32_t NEWLINE_TOKEN = 5; // \n
+constexpr int32_t IMAGE_ID_TOKEN = 113; // <image_id>
+constexpr int32_t UNDERSCORE_0_TOKEN = 59320; // ▁0
+constexpr int32_t IMAGE_ID_END_TOKEN = 59344; // </image_id>
+constexpr int32_t SPACE_TOKEN = 114; // 空格
+constexpr int32_t IMAGE_TOKEN = 101; // <image>
+constexpr int32_t IMAGE_END_TOKEN = 102; // </image>
+constexpr int32_t IM_END_TOKEN = 73440; // <|im_end|>
+constexpr int32_t ASSISTANT_TOKEN = 16434; // ▁assistant
 }
 
 // 模板长度常量
 namespace TemplateParams {
-    constexpr int32_t MAX_TEXT_LEN = 118;           // 最大文本长度
-    constexpr int32_t TOTAL_PREFILL_LEN = 200;      // 总prefill长度
-    constexpr int32_t PRE_TEMPLATE_LEN = 9;         // 前置模板长度
-    constexpr int32_t MID_TEMPLATE_LEN = 3;         // 中间模板长度
-    constexpr int32_t POST_TEMPLATE_LEN = 6;        // 后置模板长度
+constexpr int32_t MAX_TEXT_LEN = 118; // 最大文本长度
+constexpr int32_t TOTAL_PREFILL_LEN = 200; // 总prefill长度
+constexpr int32_t PRE_TEMPLATE_LEN = 9; // 前置模板长度
+constexpr int32_t MID_TEMPLATE_LEN = 3; // 中间模板长度
+constexpr int32_t POST_TEMPLATE_LEN = 6; // 后置模板长度
 }
 
 static vector<float> ReshapeByPatch(const vector<float>& input, int32_t channelNum, int32_t height, int32_t width, int32_t patchSize)
@@ -123,11 +123,13 @@ void LoadVocab(const string& filePath)
     char path[PATH_MAX + 1] = { 0 };
     if (realpath(filePath.c_str(), path) == nullptr) {
         LOG(ERROR) << "Failed to get real path of vocab file";
+        return;
     }
     realPath = path;
     ifstream file(realPath);
     if (!file.is_open()) {
         LOG(ERROR) << "Failed to open vocab file: " << realPath.c_str();
+        return;
     }
     json jsonFile;
     file >> jsonFile;
@@ -182,12 +184,14 @@ static void LookUpVocabTable(float* data, const int32_t* ids, uint32_t idsLen)
     for (uint32_t i = 0; i < idsLen; i++) {
         if (ids[i] < 0 || ids[i] >= embeddingData.vocabEmbeddingMaxIndex_) {
             LOG(ERROR) << "idx is out of range";
+            return;
         }
         int32_t blockByteSize = embeddingData.vocabEmbeddingDimSize_ * sizeof(float);
         std::streampos offset = static_cast<std::streampos>(ids[i]) * blockByteSize;
         (*embeddingData.vocabEmbeddingTable_).seekg(offset, std::ios::beg);
         if (!(*embeddingData.vocabEmbeddingTable_)) {
             LOG(ERROR) << "Failed to seek in file at offset";
+            return;
         }
         (*embeddingData.vocabEmbeddingTable_).read(reinterpret_cast<char*>(data), blockByteSize);
         data += embeddingData.vocabEmbeddingDimSize_;
@@ -241,34 +245,34 @@ static void SetInputEmbedding(float* inData, const TensorBuf& resampleBuf, const
     int& prefillLen)
 {
     int m_prefillLen = 0;
-    const int32_t preTemplate[] = { 
-        SpecialTokens::BOS_TOKEN, 
-        SpecialTokens::IM_START_TOKEN, 
-        SpecialTokens::USER_TOKEN, 
-        SpecialTokens::NEWLINE_TOKEN, 
-        SpecialTokens::IMAGE_ID_TOKEN, 
-        SpecialTokens::UNDERSCORE_0_TOKEN, 
-        SpecialTokens::IMAGE_ID_END_TOKEN, 
-        SpecialTokens::SPACE_TOKEN, 
-        SpecialTokens::IMAGE_TOKEN 
-    }; //<s><|im_start|>▁user\n<image_id>▁0</image_id><image>
+    const int32_t preTemplate[] = {
+        SpecialTokens::BOS_TOKEN,
+        SpecialTokens::IM_START_TOKEN,
+        SpecialTokens::USER_TOKEN,
+        SpecialTokens::NEWLINE_TOKEN,
+        SpecialTokens::IMAGE_ID_TOKEN,
+        SpecialTokens::UNDERSCORE_0_TOKEN,
+        SpecialTokens::IMAGE_ID_END_TOKEN,
+        SpecialTokens::SPACE_TOKEN,
+        SpecialTokens::IMAGE_TOKEN
+    }; // <s><|im_start|>▁user\n<image_id>▁0</image_id><image>
     constexpr int32_t preTemplateLen = TemplateParams::PRE_TEMPLATE_LEN;
     LookUpVocabTable(inData, preTemplate, preTemplateLen);
     inData += (preTemplateLen * EMB_DATA_OFFSET);
     m_prefillLen += preTemplateLen;
 
     if (resampleBuf.size / sizeof(float) != VISION_TOKEN_LEN * EMB_DATA_OFFSET) {
-        LOG(ERROR) << "vision input size is not valid, resampleBuf.size: " << resampleBuf.size << "VISION_TOKEN_LEN * EMB_DATA_OFFSET: " << VISION_TOKEN_LEN * EMB_DATA_OFFSET;
+        LOG(ERROR) << "Vision input size is not valid, resampleBuf size: " << resampleBuf.size << "VISION_TOKEN_LEN * EMB_DATA_OFFSET: " << VISION_TOKEN_LEN * EMB_DATA_OFFSET;
     }
     memcpy(inData, resampleBuf.GetRawPtr(), resampleBuf.size);
     inData += resampleBuf.size / sizeof(float);
     m_prefillLen += VISION_TOKEN_LEN;
 
-    const int32_t midTemplate[] = { 
-        SpecialTokens::IMAGE_END_TOKEN, 
-        SpecialTokens::UNDERSCORE_0_TOKEN, 
-        SpecialTokens::NEWLINE_TOKEN 
-    }; //</image>▁\n
+    const int32_t midTemplate[] = {
+        SpecialTokens::IMAGE_END_TOKEN,
+        SpecialTokens::UNDERSCORE_0_TOKEN,
+        SpecialTokens::NEWLINE_TOKEN
+    }; // </image>▁\n
     constexpr int32_t midTemplateLen = TemplateParams::MID_TEMPLATE_LEN;
     LookUpVocabTable(inData, midTemplate, midTemplateLen);
     inData += (midTemplateLen * EMB_DATA_OFFSET);
@@ -277,21 +281,21 @@ static void SetInputEmbedding(float* inData, const TensorBuf& resampleBuf, const
     std::vector<int32_t> inputIds;
     TokenizerEncode(text, inputIds);
     if (inputIds.size() > TemplateParams::MAX_TEXT_LEN) {
-        LOG(ERROR) << "Text length[" << inputIds.size() << "] is resized to " << TemplateParams::MAX_TEXT_LEN << ".";
+        LOG(INFO) << "Text length[" << inputIds.size() << "] is resized to " << TemplateParams::MAX_TEXT_LEN << ".";
         inputIds.resize(TemplateParams::MAX_TEXT_LEN);
     }
     LookUpVocabTable(inData, inputIds.data(), inputIds.size());
     inData += (inputIds.size() * EMB_DATA_OFFSET);
-    m_prefillLen += inputIds.size(); // total 200, so text.size = 200 - 9 - 64 - 3 - 6 = 118
+    m_prefillLen += inputIds.size(); // Total 200 tokens, so text tokens num is (200 - 9 - 64 - 3 - 6) = 118
 
-    const int32_t postTemplate[] = { 
-        SpecialTokens::IM_END_TOKEN, 
-        SpecialTokens::UNDERSCORE_0_TOKEN, 
-        SpecialTokens::NEWLINE_TOKEN, 
-        SpecialTokens::IM_START_TOKEN, 
-        SpecialTokens::ASSISTANT_TOKEN, 
-        SpecialTokens::NEWLINE_TOKEN 
-    }; //<|im_end|>▁\n<|im_start|>▁assistant\n
+    const int32_t postTemplate[] = {
+        SpecialTokens::IM_END_TOKEN,
+        SpecialTokens::UNDERSCORE_0_TOKEN,
+        SpecialTokens::NEWLINE_TOKEN,
+        SpecialTokens::IM_START_TOKEN,
+        SpecialTokens::ASSISTANT_TOKEN,
+        SpecialTokens::NEWLINE_TOKEN
+    }; // <|im_end|>▁\n<|im_start|>▁assistant\n
     constexpr int32_t postTemplateLen = TemplateParams::POST_TEMPLATE_LEN;
     LookUpVocabTable(inData, postTemplate, postTemplateLen);
     inData += (postTemplateLen * EMB_DATA_OFFSET);
@@ -306,6 +310,7 @@ static void SetAttentionMask(float* inAttentionMask, const TensorDesc& prefillDe
 
     if (inDataSize != fixLen * fixLen) {
         LOG(ERROR) << "inAttentionMask size is not valid, should be " << fixLen << "*" << fixLen << ", while it is " << inDataSize;
+        return;
     }
 
     for (size_t i = 0; i < fixLen; i++) {
@@ -328,6 +333,7 @@ static void LookUpTable(float* data, std::ifstream& ifs, int32_t idx,
 {
     if (idx < 0 || idx >= maxIndex) {
         LOG(ERROR) << "idx is out of range";
+        return;
     }
 
     int32_t blockByteSize = dimSize * sizeof(float);
@@ -335,6 +341,7 @@ static void LookUpTable(float* data, std::ifstream& ifs, int32_t idx,
     ifs.seekg(offset, std::ios::beg);
     if (!ifs) {
         LOG(ERROR) << "Failed to seek in file at offset";
+        return;
     }
     ifs.read(reinterpret_cast<char*>(data), blockByteSize);
 }
@@ -386,7 +393,7 @@ void SaveLog(const string& imgPath, const string& text, const string& result, co
         sep += sep;
     }
     mode_t old = umask(0);
-    std::string content = format("%s\n [Question]: %s\n [imgPath]: %s\n [MiniCPM infer result]:\n %s\n%s\n",
+    std::string content = format("%s\n [Question]: %s\n [Image path]: %s\n [MiniCPM infer result]:\n %s\n%s\n",
         sep.c_str(), text.c_str(), imgPath.c_str(), result.c_str(), sep.c_str());
     ofstream ofs(txtDir + "/result.txt", ios::app);
     if (!ofs.is_open())
@@ -435,8 +442,8 @@ int DecodePreprocess(std::vector<Infer::TensorBuf>& decodeInputBufs, const std::
 {
     int loopId = fromParams.first;
     int outputNum = fromParams.second;
-    auto &[lastDecodeOutBufs, prefillOutBufs] = fromBufs;
-    auto &[decodeInputDescs, prefillOutDescs] = fromDescs;
+    auto& [lastDecodeOutBufs, prefillOutBufs] = fromBufs;
+    auto& [decodeInputDescs, prefillOutDescs] = fromDescs;
 
     LookUpTable(static_cast<float*>(decodeInputBufs[EMBEDDING_INPUT_ID].GetRawPtr()), *embeddingData.vocabEmbeddingTable_, tokenIdVec.back(), embeddingData.vocabEmbeddingDimSize_, embeddingData.vocabEmbeddingMaxIndex_);
     auto* inData = static_cast<float*>(decodeInputBufs[LOOP_IDX_INPUT_ID].GetRawPtr());
@@ -448,7 +455,6 @@ int DecodePreprocess(std::vector<Infer::TensorBuf>& decodeInputBufs, const std::
         embeddingData.rotaryPositionEmbeddingMaxIndex_);
 
     if (tokenIdVec.size() == 1) {
-        // SetFirstLoopKVCache;
         auto outDims = prefillOutDescs[0];
         auto keyValueSize = decodeInputBufs[KV_START_INPUT_ID].size / sizeof(float);
         auto inDims = decodeInputDescs[KV_START_INPUT_ID];
@@ -456,8 +462,11 @@ int DecodePreprocess(std::vector<Infer::TensorBuf>& decodeInputBufs, const std::
         auto prefillDecodeFixSeq = outDims.dims[1];
         auto decodeFixSeq = inDims.dims[0];
 
+        if (layers == 0 || prefillDecodeFixSeq == 0 || decodeFixSeq == 0)
+            return 0;
+
         if (prefillOutBufs[0].size / sizeof(float) / layers / prefillDecodeFixSeq != keyValueSize / decodeFixSeq) {
-            LOG(ERROR) << "prefillOutBufs[0].size / sizeof(float) / layers / prefillDecodeFixSeq [%d] != keyValueSize / decodeFixSeq [%d]" << prefillOutBufs[0].size / sizeof(float) / layers / prefillDecodeFixSeq << keyValueSize / decodeFixSeq;
+            LOG(ERROR) << "PrefillOutBufs[0] size / sizeof(float) / layers / prefillDecodeFixSeq [%d] != keyValueSize / decodeFixSeq [%d]" << prefillOutBufs[0].size / sizeof(float) / layers / prefillDecodeFixSeq << keyValueSize / decodeFixSeq;
         }
 
         if (layers != static_cast<int64_t>(outputNum / 2)) {

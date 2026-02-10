@@ -25,4 +25,4 @@ int PrefillPostprocess(const std::vector<Infer::TensorBuf>& outBuf, const std::v
 
 int DecodePostprocess(const std::vector<Infer::TensorBuf>& outBuf, const std::vector<Infer::TensorDesc>& outDesc, int& tokenId);
 
-int DecodeTokenIds(const std::vector<int>& tokenIdVec, std::string& result, std::unordered_map<int, std::string>& idToToken_);
+int DecodeTokenIds(const std::vector<int>& tokenIdVec, std::string& result, std::unordered_map<int, std::string>& idToToken);

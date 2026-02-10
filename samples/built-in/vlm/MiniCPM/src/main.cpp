@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
             LOG(INFO) << "\n Current question: \n Text: " << text << "\n Image path: " << imagePath;
             result = model.InferSingle(imagePath, text);
             LOG(INFO) << "\n MiniCPM infer result: \n " << result;
+            LOG(INFO) << "Avg TTFT:" << model.GetTTFT() << " ms; TPS: " << model.GetTPS() << " token/s";
         }
     }
     LOG(INFO) << "Avg TTFT:" << model.GetTTFT() << " ms; TPS: " << model.GetTPS() << " token/s";

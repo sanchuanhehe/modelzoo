@@ -89,17 +89,17 @@ int DecodePostprocess(const std::vector<Infer::TensorBuf>& outBuf,
 
 int DecodeTokenIds(const std::vector<int>& tokenIdVec,
     std::string& result,
-    std::unordered_map<int, std::string>& idToToken_)
+    std::unordered_map<int, std::string>& idToToken)
 {
     for (int32_t id : tokenIdVec) {
-        if (idToToken_.find(id) != idToToken_.end()) {
-            AddStr(result, idToToken_[id]);
+        if (idToToken.find(id) != idToToken.end()) {
+            AddStr(result, idToToken[id]);
         }
     }
 
     if (result.size() == 0) {
         LOG(ERROR) << "DecodeTokenIds failed, decodeText is empty!";
-        return FAILED;
+        return 0;
     }
     return 0;
 }

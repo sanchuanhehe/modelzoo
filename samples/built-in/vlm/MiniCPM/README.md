@@ -1,4 +1,4 @@
-# 基于MiniCPM的视觉语言模型(Vision Language Model, 简称VLM)
+# 基于MiniCPM-4v-0.5B的视觉语言模型(Vision Language Model, 简称VLM)
 - [概述](#ZH-CN_TOPIC_0000001172161501)
 
     - [输入输出数据](#section540883920406)
@@ -12,27 +12,34 @@
   - [安装依赖](#section183221994410)
   - [准备数据集](#section183221994411)
   - [模型转化](#section741711594517)
-  - [精度&性能评估](#section741711594518)
+  - [性能评估](#section741711594518)
 
-- [模型推理性能&精度](#ZH-CN_TOPIC_0000001172201573)
+- [模型推理性能](#ZH-CN_TOPIC_0000001172201573)
 
   ------
 
 # 概述<a name="ZH-CN_TOPIC_0000001172161501"></a>
 
-MiniCPM 是一款紧凑型高性能大语言模型系列，其核心理念在于“小而精”，通过极致的参数与结构优化，在较小的计算规模下实现超越同级别模型的综合能力。在近年来的大模型发展格局中，MiniCPM 凭借出色的端侧部署能力受到广泛关注。
-
-- 参考实现：
-
-  ```
-  https://github.com/OpenBMB/MiniCPM
-  ```
+MiniCPM-4v-0.5B 是一款紧凑型高性能大语言模型系列，其核心理念在于“以小博大”，通过极致的参数与结构优化，在较小的计算规模下实现超越同级别模型的综合能力。在近年来的大模型发展格局中，其凭借出色的端侧部署能力受到广泛关注。
 
 ## 输入输出数据<a name="section540883920406"></a>
 
-- 输入数据（decode.om）
+- 输入数据
 
-  | NPU | 输入数据 | 数据类型 | 大小             | 数据排布格式 |
+  | NPU | 输入数据(vision.om) | 数据类型 | 大小             | 数据排布格式 |
+  | -------- | -------- | -------- | ---------------- | ------------ |
+  | SVP_NNN  | image  | FP32 | 1 x 3 x 16 x 16384 | NCT         |
+
+  | NPU | 输入数据(resample.om) | 数据类型 | 大小             | 数据排布格式 |
+  | -------- | -------- | -------- | ---------------- | ------------ |
+  | SVP_NNN  | vision_hidden_states  | FP32 | 1 x 1 x 73448 | ND         |
+
+  | NPU | 输入数据(prefill_decode.om) | 数据类型 | 大小             | 数据排布格式 |
+  | -------- | -------- | -------- | ---------------- | ------------ |
+  | SVP_NNN  | inputs_embeds  | FP32 | 1 x 200 x 1024 | ND         |
+  | SVP_NNN  | attention_mask  | FP32 | 1 x 1 x 200 x 200 | NCT         |
+
+  | NPU | 输入数据(decode.om) | 数据类型 | 大小             | 数据排布格式 |
   | -------- | -------- | -------- | ---------------- | ------------ |
   | SVP_NNN  | input_ids  | FP32 | 1 x 1 x 1024 | ND         |
   | SVP_NNN  | attention_mask  | FP32 | 1 x 1 x 1 x 1024 | NCT         |
@@ -41,9 +48,23 @@ MiniCPM 是一款紧凑型高性能大语言模型系列，其核心理念在于
   | SVP_NNN  | unsqueeze_7  | FP32 | 1 x 1 x 1 x 64 | NCT         |
   | SVP_NNN  | past_keys_0...23/present_values_0...23  | FP32 | 1024 x 1 x 2 x 64 | NCT         |
 
-- 输出数据（decode.om）
+- 输出数据
 
-  | NPU | 输出数据 | 数据类型 | 大小        | 数据排布格式        |
+  | NPU | 输出数据(vision.om) | 数据类型 | 大小             | 数据排布格式 |
+  | -------- | -------- | -------- | ---------------- | ------------ |
+  | SVP_NNN  | vision_features_report_0_0  | FP32 | 1 x 1024 x 768 | ND         |
+
+  | NPU | 输出数据(resample.om) | 数据类型 | 大小             | 数据排布格式 |
+  | -------- | -------- | -------- | ---------------- | ------------ |
+  | SVP_NNN  | MatMul_report_0_0  | FP32 | 1 x 64 x 1024 | ND         |
+
+  | NPU | 输出数据(prefill_decode.om) | 数据类型 | 大小             | 数据排布格式 |
+  | -------- | -------- | -------- | ---------------- | ------------ |
+  | SVP_NNN  | keys  | FP32 | 24 x 200 x 1 x 2 x 64 | ND         |
+  | SVP_NNN  | values  | FP32 | 24 x 200 x 1 x 2 x 64 | ND         |
+  | SVP_NNN  | logits_report_0_2  | FP32 | 1 x 200 x 73448 | ND         |
+
+  | NPU | 输出数据（decode.om） | 数据类型 | 大小        | 数据排布格式        |
   | -------- | -------- | -------- | ----------- | ----------- |
   | SVP_NNN  | past_keys_0...23/present_values_0...23  | FP32 | 1024 x 1 x 2 x 64 | NCT         |
   | SVP_NNN  | logits  | FP32     | 1 x 1 x 73448 | ND         |
@@ -56,32 +77,33 @@ MiniCPM 是一款紧凑型高性能大语言模型系列，其核心理念在于
 
 ```
 ├── data
-│   ├── cfg.txt           //参数配置文件
-│   ├── file_list.json    //输入文本
-│   ├── file_list_1.json  //输入文本, 单张循环测试TPS
-│   ├── rotary_position_emb0.bin
-│   ├── rotary_position_emb1.bin
-│   ├── token_emb.bin
-│   ├── tokenizer.json
+│   ├── cfg.txt                  // 参数配置文件
+│   ├── file_list.json           // 输入问题
+│   ├── file_list_1.json         // 输入问题, 单个问题循环测试TPS
+│   ├── rotary_position_emb0.bin // RoPE旋转位置编码权重文件（位置编码 embedding part0）
+│   ├── rotary_position_emb1.bin // RoPE旋转位置编码权重文件（位置编码 embedding part1）
+│   ├── token_emb.bin            // Token Embedding 权重文件（二进制词向量数据）
+│   ├── tokenizer.json           // 分词器配置文件（词表）
 
 ├── doc
-│   ├── 快速开始.md        //快速开始
+│   ├── 快速开始.md              // 快速开始
 
 ├── src
-│   ├── acl.json          //系统初始化的配置文件
-│   ├── CMakeLists.txt    //编译脚本
-│   ├── main.cpp          //模型运行CPP函数入口
+│   ├── acl.json                 // 系统初始化的配置文件
+│   ├── CMakeLists.txt           // 编译脚本
+│   ├── main.cpp                 // 模型运行CPP函数入口（模型加载、推理流程调度、输入输出控制）
 
 ├── model
-│   ├── decode.om
-│   ├── prefill_decode.om
-│   ├── resample.om
-│   ├── vision.om
+│   ├── decode.om                // 自回归解码模型（Decoder阶段推理）
+│   ├── prefill_decode.om        // Prefill 模型（首token生成）
+│   ├── resample.om              // 多模态重采样模型（视觉特征与文本token对齐）
+│   ├── vision.om                // 视觉编码模型（Vision Encoder，图像特征提取）
 
-├── CMakeLists.txt        //编译脚本，调用src目录下CMakeLists文件
-├── *.json                //模型信息
-├── LICENSE               //模型LICENSE
-├── README.md             //README
+├── CMakeLists.txt               // 编译脚本，调用src目录下CMakeLists文件
+├── *.json                       // 模型信息（模型结构描述、参数映射、运行模式配置等）
+├── LICENSE                      // 模型LICENSE
+├── README.md                    // README
+
 ```
 
 # 推理环境准备<a name="ZH-CN_TOPIC_0000001126281702"></a>
@@ -100,8 +122,7 @@ MiniCPM 是一款紧凑型高性能大语言模型系列，其核心理念在于
 
     | 芯片型号  | 算力引擎   | soc_version | 环境准备指导  | CANN包版本 | 编译工具链 | 板端OS  | SDK  |
     | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  Linux |  SS928 V100R001C02SPC022  |
+    | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | 6.10.t01spc030b700(请联系FAE获取)  |  aarch64-mix210-linux-gcc |  Linux |  SS928V100V1.0.2.5 B060(请联系FAE获取)  |
 
 
 # 模型推理<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -114,13 +135,12 @@ MiniCPM 是一款紧凑型高性能大语言模型系列，其核心理念在于
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[]上进行下载。
+网站上提供转化成功的om模型文件，可以从 Hispark ModelZoo 主页进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```
 mkdir -p model
 ```
-备注：若需要体验om模型转化过程，请参考[安装依赖](#section183221994410)和[模型转化](#section741711594517)章节。
 
 ### 编译代码和运行应用
 
@@ -165,7 +185,6 @@ mkdir -p model
     ```
     ./main --input ../data/file_list_1.json
     ```
-    备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
 
 
 ## 准备数据集<a name="section183221994411"></a>
@@ -180,17 +199,25 @@ mkdir -p model
    下载图片放置到datasets目录下，建议下载512x512大小左右的jpg或png格式图片。
    
    在`data/file_list.json`文件内fileList item下添加图片地址和问题描述，格式如下：
-   ```
-   [
-      "../datasets/demo.png",
-      "请描述图片内容。"
-   ]
+   ```json
+    {
+        "fileList": [
+            [
+                "../../../../../datasets/testdata/MiniCPMDemo.png",
+                "描述图片内容"
+            ],
+            [
+                "../../../../../datasets/testdata/MiniCPMDemo.png",
+                "描述图片内容"
+            ]
+        ]
+    }
    ```
 
 
 ## 模型获取<a name="section741711594517"></a>
 
-   请从链接[]下载如下om/bin/json文件：
+   请下载如下om/bin/json文件：
    rotary_position_emb0.bin
    rotary_position_emb1.bin
    token_emb.bin
@@ -200,7 +227,7 @@ mkdir -p model
    resample.om
    vision.om
 
-## 精度&性能评估<a name="section741711594518"></a>
+## 性能评估<a name="section741711594518"></a>
 
 1. 修改配置文件cfg.txt。
 
@@ -243,10 +270,7 @@ mkdir -p model
    - --input:  问题描述和图片地址文件。
    推理结果会保存在../out/result目录下
 
-3. 精度验证。
-
-    精度验证正在开发中，静待后续。
-4. 验证om模型的性能，参考命令如下：
+3. 验证om模型的性能，参考命令如下：
 
    执行
    ```bash
@@ -259,10 +283,10 @@ mkdir -p model
     file_list_1.json中的配置代表对一个问题重复推理100次，程序执行时会在板端会输出打印推理的平均时间和帧率。
 
 
-# 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
+# 模型推理性能<a name="ZH-CN_TOPIC_0000001172201573"></a>
 
-调用ACL接口推理计算，MiniCPM模型的性能和精度参考下列数据。
+调用ACL接口推理计算，MiniCPM-4v-0.5B 模型的性能参考下列数据。
 
 | 芯片型号    | Batch Size | TTFT | TPS |
 | ----------- | ---------- | ------------- | ------------- |
-| Hi3403V100 SVP_NNN | 1          | 629 ms | 17.0012 token/s |
+| Hi3403V100 SVP_NNN | 1          | 519.74 ms | 21.30 token/s |
