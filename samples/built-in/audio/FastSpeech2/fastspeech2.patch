@@ -729,7 +729,6 @@ index 0000000..b275fa2
 +
 +    def forward(
 +        self,
-+        # speakers,
 +        texts,
 +        src_lens,
 +        max_src_len=None,
@@ -739,11 +738,17 @@ index 0000000..b275fa2
 +        p_targets=None,
 +        e_targets=None,
 +        d_targets=None,
++        speakers=8,
 +    ):
 +        src_masks = get_mask_from_lengths_new(src_lens, max_src_len)
 +        mel_masks = get_mel_mask(mel_lens, max_mel_len)
 +
 +        output = self.encoder(texts, src_masks)
++        if self.speaker_emb is not None:
++            speaker_idx = torch.tensor([speakers], device=output.device)
++            output = output + self.speaker_emb(speaker_idx).unsqueeze(1).expand(
++                -1, src_lens.item(), -1
++            )
 +
 +        (
 +            output,

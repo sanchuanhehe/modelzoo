@@ -92,10 +92,6 @@ static Infer::Result ReadImgFileToBuf(const std::string& fileName, Infer::Tensor
 
 bool CRNNPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs)
 {
-    if (fileList.size() != tensorBufs.size()) {
-        LOG(ERROR) << "fileList.size() != tensorBufs.size()";
-        return false;
-    }
     int ret = SUCCESS;
     for (size_t i = 0; i < fileList.size(); ++i) {
         /* read img to inBuf */

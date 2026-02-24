@@ -180,6 +180,7 @@ Result GetPad(std::map<std::string, std::tuple<int, int, int, int, int, int, int
             );
         }
     }
+    ERROR_LOG("end read shapes.json");
     return SUCCESS;
 }
 

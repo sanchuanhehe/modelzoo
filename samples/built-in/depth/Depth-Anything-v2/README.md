@@ -115,7 +115,7 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
 
 1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
 
-   本模型使用[ImageNet](https://huggingface.co/datasets/depth-anything/DA-2K/tree/main)验证集进行推理测试 ，用户自行获取数据集后，将文件解压并上传数据集data路径下。数据集目录结构如下所示：
+   本模型使用[DA-2K](https://huggingface.co/datasets/depth-anything/DA-2K/tree/main)验证集进行推理测试 ，用户自行获取数据集后，将文件解压并上传数据集data路径下。数据集目录结构如下所示：
 
    ```
    DA-2K/
@@ -155,7 +155,10 @@ Depth Anything V2在细节和鲁棒性方面显著优于 [V1](https://github.com
     将pth2onnx.py复制到下载好的源码Depth-Anything-V2中，执行下面命令完成完成模型转换到onnx。
 
     ```
+    #当前目录中
+    mkdir model
     cd Depth-Anything-V2
+    cp ../script/pth2onnx.py ./
     python ./pth2onnx.py
     cd ..
     ```

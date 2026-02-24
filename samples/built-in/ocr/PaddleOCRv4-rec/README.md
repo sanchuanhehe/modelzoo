@@ -159,7 +159,7 @@ pip3 install -r requirements.txt
 
 1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
 
-   该模型使用 [XFUND数据集](https://github.com/doc-analysis/XFUND/releases/tag/v1.0) 中文集进行精度评估，在`PaddleOCRv4_det`源码根目录下新建`datasets`文件夹，数据集放到`datasets`里，文件结构如下：
+   该模型使用 [XFUND数据集](https://github.com/doc-analysis/XFUND/releases/tag/v1.0) 中文集进行精度评估，在`PaddleOCRv4_rec`源码根目录下新建`datasets`文件夹，数据集放到`datasets`里，文件结构如下：
    
    ```
     datasets
@@ -265,7 +265,7 @@ pip3 install -r requirements.txt
     调用脚本可以获得精度数据。
 
     ```
-    python rec_accuray.py --label_path "./datasets/paddleocr_rec_input/zh_val_labels.txt" --pre_file "./out/result/txt"
+    python ./script/rec_accuray.py --label_path "./datasets/paddleocr_rec_input/zh_val_labels.txt" --pre_file "./out/result/txt/"
     ```
 
     参数说明：
@@ -303,4 +303,4 @@ pip3 install -r requirements.txt
 
 | 芯片型号    | Batch Size | 数据集   | acc | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ |
-| Hi3403V100 SVP_NNN | 1          | XFUND | 57.25%    | 0.459 |
+| Hi3403V100 SVP_NNN | 1          | XFUND | 61.3%    | 0.459 |
