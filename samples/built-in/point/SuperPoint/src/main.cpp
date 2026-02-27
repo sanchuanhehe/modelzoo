@@ -140,8 +140,26 @@ std::string GetCurrentWorkingDir() {
 
 int SaveOutBufs(std::vector<Infer::TensorBuf> &outBufs, const std::string& fileName)
 {
-    std::string outputName = ExtractFilename(fileName);
+    std::string resultPath = "../out/result";
+    struct stat info;
+    if (stat(resultPath.c_str(), &info) != 0) {
+        // 文件夹不存在，尝试创建
+        mkdir(resultPath.c_str(), 0777);
+        INFO_LOG("create file success");
+    }
+    std::string jpgPath = resultPath + "/jpg";
+    if (stat(jpgPath.c_str(), &info) != 0) {
+        // 文件夹不存在，尝试创建
+        mkdir(jpgPath.c_str(), 0777);
+    }
+    std::string binPath = resultPath + "/bin";
+    if (stat(binPath.c_str(), &info) != 0)
+    {
+        // 文件夹不存在，尝试创建
+        mkdir(binPath.c_str(), 0777);
+    }
     std::string path = GetCurrentWorkingDir() + "/result/bin/";
+    std::string outputName = ExtractFilename(fileName);
     for (size_t i =0 ;i < outBufs.size(); i++){
         // 将拼接字符串,类似 path+ outputName + "_0.bin"
         std::string outputPath = path + outputName + "_"+ std::to_string(i) + ".bin";

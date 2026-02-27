@@ -94,7 +94,7 @@ FastSpeech2 是一种高效的端到端语音合成模型。相比 FastSpeech，
 
 | 芯片型号  | 算力引擎   | soc_version | 环境准备指导  | CANN包版本 | 编译工具链 | 板端OS  | SDK  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | 6.10.t01spc030b660(请联系FAE获取) |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
 | Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |6.10.t01spc030b660(请联系FAE获取)|  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 
 
 
@@ -169,8 +169,17 @@ pip3 install -r requirements.txt
 ```
 
 ## 准备数据集<a name="section183221994411"></a>
-
-1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
+1. 获取参考代码仓源码
+ 
+   ```bash
+   git clone https://github.com/ming024/FastSpeech2.git
+   cd FastSpeech2
+   git reset --hard d4e79eb52e8b01d24703b2dfc0385544092958f3
+   patch -p1 < ../fastspeech2.patch
+   cd ..
+   ```
+   
+2. 获取原始数据集。（解压命令参考tar -xvf *.tar与 unzip *.zip）
 
    LJSpeech 是语音合成（TTS）领域的经典英文单说话人开源数据集，由 Keith Ito 基于 LibriVox 项目的公共领域有声书构建，是 FastSpeech2、Tacotron 等主流 TTS 模型的基准训练数据集。
 
@@ -197,7 +206,7 @@ pip3 install -r requirements.txt
    cd ..
    ```
    
-2. 为精度评估准备数据
+3. 为精度评估准备数据
 
    为了评估精度，需要为FastSpeech2语音合成（TTS）模型构建高质量的 “文本 - 语音” 对齐数据。
    首先通过prepare_align.py完成数据预处理的基础配置，再借助蒙特利尔强制对齐工具（MFA）实现语音话语与音素序列的精准时间对齐（可以直接使用源代码作者提供的现成的对齐文件）。
@@ -222,7 +231,7 @@ pip3 install -r requirements.txt
    cd ..
    ```
 
-3. 生成file_list.json
+4. 生成file_list.json
 
    main函数从file_list.json文件读取输入文本进行推理，因此我们对要推理的数据集生成匹配的file_list.json。
    在data目录下提供了file_list.json的demo样例:
@@ -246,26 +255,23 @@ pip3 install -r requirements.txt
 
 使用PyTorch将模型权重文件.pth转换为.onnx文件，再使用ATC工具将.onnx文件转为离线推理模型文件.om文件。
 
-1. 获取参考代码仓源码
- 
-   ```bash
-   git clone https://github.com/ming024/FastSpeech2.git
-   cd FastSpeech2
-   git reset --hard d4e79eb52e8b01d24703b2dfc0385544092958f3
-   patch -p1 < ../fastspeech2.patch
-   cd ..
-   ```
+1. 获取权重文件。
 
-2. 获取权重文件。
-
-   先下载FastSpeech2的预训练模型，在 [谷歌云盘](https://drive.google.com/drive/folders/1DOhZGlTLMbbAAFZmZGDdc77kz1PloS7F) 中找到LJSpeech_900000.zip（英文模型）下载。
+   先下载FastSpeech2的预训练模型，在 [谷歌云盘](https://drive.google.com/drive/folders/1DOhZGlTLMbbAAFZmZGDdc77kz1PloS7F) 中找到LJSpeech_900000.zip（英文模型）和AISHELL3_600000.pth.tar（中文模型）下载。
       ```bash
       # 执行下方命令，下载预训练模型，解压
       cd FastSpeech2
       mkdir -p output/ckpt/LJSpeech
+      mkdir -p output/ckpt/AISHELL3
+      
+      # 将从goole云盘下载的LJSpeech_900000.zip（英文模型）放到output/ckpt/LJSpeech目录下，然后解压缩
       cd output/ckpt/LJSpeech
-      # 将从goole云盘下载的LJSpeech_900000.zip放到此目录下
       unzip LJSpeech_900000.zip
+   
+      # 将从goole云盘下载的AISHELL3_600000.pth.tar（中文模型）放到output/ckpt/AISHELL3目录下，不需要解压缩但是需要更改下名称
+      cd ../AISHELL3
+      mv AISHELL3_600000.pth.tar 600000.pth.tar
+   
       cd ../../../../
       ```
 
@@ -280,18 +286,26 @@ pip3 install -r requirements.txt
       cd ../../../../
       ```
 
-3. 导出onnx文件。
+2. 导出onnx文件。
 
       使用./script/fastspeech2_pth2onnx.py导出onnx模型
 
       ```bash
       # 需要在源作者FastSpeech2目录下执行脚本，否则无法读取源作者的一些相对路径的配置文件
       cd FastSpeech2
+      # 导出英文的onnx模型，请执行以下命令
       python3 ../script/fastspeech2_pth2onnx.py \
          --target_len 40 \
          --language "en" \
          --npu "SVP_NNN" \
          --text "Please inform me if you find any mistakes in this repo, or any useful tips to train the FastSpeech 2 model" \
+         --onnx_path "../model"
+      # 导出中文的onnx模型，请执行以下命令
+      python3 ../script/fastspeech2_pth2onnx.py \
+         --target_len 40 \
+         --language "zh" \
+         --npu "SVP_NNN" \
+         --text "湖南一餐馆推出石槽火锅生意火爆，老板称红薯叶等之前喂猪的食材现在人也在吃，这样的创新火锅你愿意尝试吗？" \
          --onnx_path "../model"
       cd ..
       ```
@@ -307,7 +321,7 @@ pip3 install -r requirements.txt
       - --onnx_path：ONNX模型导出路径，默认值为"../model"。
 
 
-4. 使用ATC工具将ONNX模型转OM模型。
+3. 使用ATC工具将ONNX模型转OM模型。
 
       执行ATC命令。
       1. Hi3403V100 SVP_NNN上的om模型转换命令
@@ -325,7 +339,7 @@ pip3 install -r requirements.txt
          - --output：输出的OM模型路径。
          - --image_list：转换模型生成量化参数时用的校准数据。
          - --soc_version：处理器型号。
-         - --compile_mode：编译模式，1代表数据量化使用16bit，0代表数据量化使用8bit。
+         - --compile_mode：编译模式，1代表数据量化使用16bit，0代表数据量化使用8bit；权重固定是8bit量化。
       
          注意：如果出现atc命令找不到，参考推理环境准备。
 

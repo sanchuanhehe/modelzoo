@@ -42,10 +42,11 @@ SAMPLING_RATE = 22050  # FastSpeech2/HifiGAN默认采样率
 
 
 class FastSpeech2AndHifigan(torch.nn.Module):
-    def __init__(self, fast_speech2, hifi_gan):
+    def __init__(self, fast_speech2, hifi_gan, speakers=8):
         super().__init__()
         self.fast_speech2 = fast_speech2
         self.hifi_gan = hifi_gan
+        self.speakers = speakers
 
     def forward(self,
                 texts,
@@ -66,6 +67,7 @@ class FastSpeech2AndHifigan(torch.nn.Module):
             p_targets=p_targets,
             e_targets=e_targets,
             d_targets=d_targets,
+            speakers=self.speakers,
         )[1]
         mel = mel.transpose(-2, -1)
         x = self.hifi_gan(mel)
@@ -77,12 +79,18 @@ def combine_model(args, configs, model_config):
     if args.npu == "SVP_NNN":
         model = convert_to_deploy(model)
     vocoder = get_vocoder(model_config, device)
-    model = FastSpeech2AndHifigan(model, vocoder).eval()
+    model = FastSpeech2AndHifigan(model, vocoder, speakers=args.speaker_id).eval()
 
     return model
 
 
 def export_combine_onnx_model(args):
+    # 1. 先将相对路径转为绝对路径（避免路径解析错误）
+    args.onnx_path = os.path.abspath(args.onnx_path)
+    # 2. 检查目录是否存在，不存在则创建（exist_ok=True 避免重复创建报错）
+    os.makedirs(args.onnx_path, exist_ok=True)
+    print(f"ONNX模型保存目录已确认/创建：{args.onnx_path}")
+
     # 根据配置选择对应的配置文件
     if args.language == "zh":
         args.preprocess_config = 'config/AISHELL3/preprocess.yaml'
@@ -155,7 +163,6 @@ def export_combine_onnx_model(args):
     # ====================== PTH推理逻辑结束 ======================
 
     # 导出输入数据和onnx模型
-    os.makedirs(args.onnx_path, exist_ok=True)
     texts.detach().cpu().numpy().astype(np.int16).tofile(f'{args.onnx_path}/text.bin')
     text_lens.detach().cpu().numpy().astype(np.int16).tofile(f'{args.onnx_path}/src_lens.bin')
     onnx_path = f'{args.onnx_path}/fastspeech_hifigan_{args.language}.onnx'
@@ -238,7 +245,7 @@ def parser_args():
     parser.add_argument("--pitch_control", type=float, default=1.0, help="音调控制参数")
     parser.add_argument("--energy_control", type=float, default=1.0, help="能量控制参数")
     parser.add_argument("--duration_control", type=float, default=1.0, help="时长控制参数")
-    parser.add_argument("--speaker_id", type=int, default=0, help="说话人ID")
+    parser.add_argument("--speaker_id", type=int, default=8, help="说话人ID")
 
     args = parser.parse_args()
     args.source = None
