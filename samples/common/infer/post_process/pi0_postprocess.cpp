@@ -106,15 +106,16 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
         auto& kMean = config["mean"];
         auto& kStd = config["std"];
         if (!kMean.is_array()) {
-            throw std::runtime_error("'mean' must be array");
             file.close();
+            throw std::runtime_error("'mean' must be array");
+
         }
         for (const auto& val : kMean) {
             param.kMean.emplace_back(float(val));
         }
         if (!kStd.is_array()) {
-            throw std::runtime_error("'std' must be array");
             file.close();
+            throw std::runtime_error("'std' must be array");
         }
         for (const auto& val : kStd) {
             param.kStd.emplace_back(float(val));
