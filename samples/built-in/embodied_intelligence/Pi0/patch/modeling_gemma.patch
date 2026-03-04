@@ -1,0 +1,18 @@
+diff --git a/modeling_gemma.py b/modeling_gemma.py
+index 4b1fefd..01702b1 100644
+--- a/modeling_gemma.py
++++ b/modeling_gemma.py
+@@ -49,7 +49,12 @@ class GemmaRMSNorm(nn.Module):
+         self.weight = nn.Parameter(torch.zeros(dim))
+
+     def _norm(self, x):
+-        return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
++        x_fp32 = x.to(torch.float32)               # 转换为float类型
++        sum_square = x_fp32.pow(2).sum(dim=-1, keepdim=True)  # 沿最后一维求和
++        var = sum_square / x_fp32.size(-1)
++        # Compute normalization in float32
++        normed_inputs = x * torch.rsqrt(var + self.eps)
++        return normed_inputs
+
+     def forward(self, x):
+         output = self._norm(x.float())

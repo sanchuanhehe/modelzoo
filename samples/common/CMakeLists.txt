@@ -70,6 +70,7 @@ include_directories(
     ../opensource/json/single_include/
     ../opensource/opencv/include/
     ../opensource/pillow-resize/include/
+    ../opensource/sentencepiece/include/
 )
 
 find_library(OpenCV_WORLD_SHARED_LIB

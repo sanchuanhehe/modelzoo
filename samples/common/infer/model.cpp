@@ -55,6 +55,8 @@
 #include "hrnet_postprocess.h"
 #include "fastspeech2_preprocess.h"
 #include "fastspeech2_postprocess.h"
+#include "pi0_preprocess.h"
+#include "pi0_postprocess.h"
 
 namespace Infer {
 constexpr float MS2S = 1000.0f;
@@ -124,7 +126,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::CrowdCount, {CrowdCountNS::CrowdCountPreprocess, CrowdCountNS::CrowdCountPostprocess} },
     { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
     { ModelType::PaddleOCR_Det, {OcrDetPreprocess, OcrDetPostprocess} },
-    { ModelType::GraspNet, {Grasp::GraspNetPreprocess, Grasp::GraspNetPostprocess} }
+    { ModelType::GraspNet, {Grasp::GraspNetPreprocess, Grasp::GraspNetPostprocess} },
+    { ModelType::Pi0, {Pi0Preprocess, Pi0Postprocess} }
 };
 #endif
 

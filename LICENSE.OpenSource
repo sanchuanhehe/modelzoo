@@ -3,6 +3,8 @@
 ./samples/samples_GPL/opensource/opencv
 ./samples/opensource/pillow-resize
 ./samples/samples_GPL/opensource/pillow-resize
+./samples/opensource/sentencepiece
+./samples/opensource/lerobot
 ./operators/ascend_npu/opensource/ascendsamples
 
 (2) The directories below are licensed under MIT License

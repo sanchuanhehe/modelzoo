@@ -1,0 +1,21 @@
+# 输入图像高度
+img_height=480
+
+# 输入图像宽度
+img_width=640
+
+# 模型输入最大token长度
+token_len=48
+
+# tokenizer模型路径
+token_model_path="../weight/paligemma-3b-pt-224/tokenizer.model"
+
+# 模型输入最大token长度
+action_len=14
+
+# 反归一化参数路径，用于模型推理结果反归一化处理，包含模型action输出结果的均值和方差，可从模型训练数据集中的meta/stats.json文件中获取。
+# 注意：若模型更新需同步更新该文件中的参数
+action_stats_path="../data/action_stats.json"
+
+# 模型推理结果路径，为空则不保存
+save_out_txt="../out/action/"

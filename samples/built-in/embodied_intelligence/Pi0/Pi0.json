@@ -1,0 +1,85 @@
+{
+  "modelName": "Pi0",
+  "modelDesc": "Pi0是一款视觉-语言-动作(VLA)通用机器人大模型，它基于预训练视觉语言模型(VLM)和流匹配(Flow Matching)机制，能够将自然语言指令直接转换为机器人可执行的连续动作序列，从而精准控制机器人完成复杂、高灵巧度的操作任务。",
+  "modelRepository": "https://github.com/Physical-Intelligence/openpi",
+  "modelParameter": {
+    "输入": "Image Size: 480x640; State Len: 14; Token Len: 48",
+    "参数量": "3152.177M",
+    "计算量": "1762.693GFLOPS"
+  },
+  "isBeta": true,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "EmbodiedIntelligence",
+      "tags": [
+        "具身智能"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "Pytorch"
+  ],
+  "modelDatasets": {
+    "desc": "数据集lerobot/aloha_sim_transfer_cube_scripted",
+    "link": "https://huggingface.co/datasets/lerobot/aloha_sim_transfer_cube_scripted"
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/Physical-Intelligence/openpi/blob/main/LICENSE"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/embodied_intelligence/Pi0/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/embodied_intelligence/Pi0/README.md"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3591P",
+      "tools": [
+        {
+          "name": "CANN工具包",
+          "link": "",
+          "desc": "7.7.0.1.238-linux.aarch64-spc001(请联系FAE获取)"
+        },
+        {
+          "name": "SDK",
+          "link": "",
+          "desc": "7.7.0.1.231-openEuler24.03.aarch64-rc-spc001(请联系FAE获取)"
+        }
+      ],
+      "os": [
+        "OpenEular"
+      ],
+      "performance": [
+        {
+          "quantMode": "fp16",
+          "detail": [
+            {
+              "performance": 221.48,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 4.52,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 7088.023,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

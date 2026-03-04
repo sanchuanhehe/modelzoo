@@ -1,0 +1,10 @@
+{
+    "fileList": [
+        [
+            "Pick up the cube with the right arm and transfer it to the left arm.",
+            "../data/dataset/state_00000.txt",
+            "../data/images/frame_00000.png"
+        ]
+    ],
+    "loop": 1
+}
