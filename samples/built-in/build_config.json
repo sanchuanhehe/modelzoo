@@ -1,6 +1,14 @@
 [
   {
     "buildTarget": "modelzoo-app",
+    "relativePath": "embodied_intelligence/Pi0",
+    "chip": "Hi3591P",
+    "buildDef": "Hi3591P",
+    "needSmoke": "false",
+    "description": "具身智能"
+  },
+  {
+    "buildTarget": "modelzoo-app",
     "relativePath": "embodied_intelligence/GraspNet",
     "chip": "Hi3591P",
     "buildDef": "Hi3591P",

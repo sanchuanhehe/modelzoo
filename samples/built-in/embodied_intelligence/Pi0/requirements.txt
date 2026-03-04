@@ -1,0 +1,11 @@
+datasets==3.6.0
+torch==2.7.1
+transformers==4.55.4
+decorator==5.2.1
+onnx==1.20.1
+pytest==9.0.2
+onnxscript==0.5.7
+pillow==12.1.0
+av==16.1.0
+onnxruntime==1.23.2
+numpy==1.26.0

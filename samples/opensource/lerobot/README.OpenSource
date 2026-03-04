@@ -1,0 +1,10 @@
+[
+    {
+        "Name": "lerobot",                   # 上游开源软件名全称
+        "License": "Apache License 2.0",             # 上游开源软件中包含的许可证信息
+        "License File": "/LICENSE.OpenSource",         # 许可证所在文件路径
+        "Version Number": "0.3.4",       # 该软件的版本
+        "Upstream URL": "https://github.com/huggingface/lerobot/tree/main",   # 上游软件地址
+        "Description": "Making AI for Robotics more accessible with end-to-end learning"           # 开源软件功能描述
+    }
+]

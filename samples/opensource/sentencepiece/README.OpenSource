@@ -1,0 +1,10 @@
+[
+    {
+        "Name": "sentencepiece",                   # 上游开源软件名全称
+        "License": "Apache License 2.0",             # 上游开源软件中包含的许可证信息
+        "License File": "/LICENSE.OpenSource",         # 许可证所在文件路径
+        "Version Number": "0.1.96",       # 该软件的版本
+        "Upstream URL": "https://github.com/google/sentencepiece/releases/tag/v0.1.96",   # 上游软件包发布地址
+        "Description": "Unsupervised text tokenizer for Neural Network-based text generation"           # 开源软件功能描述
+    }
+]

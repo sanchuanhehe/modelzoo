@@ -63,7 +63,8 @@ enum ModelType {
     CRNN,
     HRNet,
     TinySam,
-    GraspNet
+    GraspNet,
+    Pi0
 };
 
 using ProcessFunc = std::function<bool(std::vector<std::string>&, std::vector<TensorBuf>&, std::vector<TensorDesc>&)>;

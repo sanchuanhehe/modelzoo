@@ -187,7 +187,7 @@ GraspNet是一种基于点云输入的多阶段抓取姿态预测模型，由抓
 
 1. 获取权重文件。
 
-   使用[链接](https://pan.baidu.com/s/1Eme60l39tTZrilF0I86R5A)下载，预训练模型权重（checkpoint-rs.tar），并将其放置于
+   使用[链接](https://pan.baidu.com/s/1Eme60l39tTZrilF0I86R5A)下载，预训练模型权重（checkpoint-rs.tar），并将其放置于`graspnet-baseline`项目目录下
 
 2. 导出onnx文件和om转换前的环境准备
     ```
@@ -200,8 +200,8 @@ GraspNet是一种基于点云输入的多阶段抓取姿态预测模型，由抓
     pip3 install .
     # 3）下载ais-bench工具
     # 从https://gitee.com/ascend/tools/tree/master/ais-bench_workload/tool/ais_bench 下载ais-bench安装包及其依赖包
-    wget https://gitee.com/link?target=https%3A%2F%2Faisbench.obs.myhuaweicloud.com%2Fpacket%2Fais_bench_infer%2F0.0.2%2Fait%2Faclruntime-0.0.2-cp38-cp38-linux_aarch64.whl
-    wget https://gitee.com/link?target=https%3A%2F%2Faisbench.obs.myhuaweicloud.com%2Fpacket%2Fais_bench_infer%2F0.0.2%2Fait%2Fais_bench-0.0.2-py3-none-any.whl
+    wget https://aisbench.obs.myhuaweicloud.com/packet/ais_bench_infer/0.0.2/ait/aclruntime-0.0.2-cp38-cp38-linux_aarch64.whl
+    wget https://aisbench.obs.myhuaweicloud.com/packet/ais_bench_infer/0.0.2/ait/ais_bench-0.0.2-py3-none-any.whl
     pip3 install aclruntime-0.0.2-cp38-cp38-linux_aarch64.whl
     pip3 install ais_bench-0.0.2-py3-none-any.whl
     ```
@@ -247,6 +247,12 @@ GraspNet是一种基于点云输入的多阶段抓取姿态预测模型，由抓
     ```
     python3 graspnet_infer.py --model_path graspnet_linux_aarch64.om
     ```
+    3）若遇到ModuleNotFoundError: No module named 'tbe'报错，可通过以下方法解决：
+    ```
+    cd /usr/local/Ascend/latest/aarch64-linux/lib64
+    pip3 install te-0.4.0-py3-none-any.whl
+    pip3 install opc_tool-0.1.0-py3-none-any.whl
+    pip3 install op_compile_tool-0.1.0-py3-none-any.whl
 
 ## 模型推理<a name="section741711594518"></a>
 
@@ -346,6 +352,6 @@ GraspNet是一种基于点云输入的多阶段抓取姿态预测模型，由抓
 
 调用ACL接口推理计算，GraspNet模型的性能和精度参考下列数据。
 
-| 芯片型号     | Batch Size | 数据集        | MAE (平均绝对误差) | RMSE (均方根误差) | 性能 (FPS)  |
-| ----------- | ---------- | ------------- | ------------ ---- | -------------- - | ---------- |
+| 芯片型号    | Batch Size | 数据集         | MAE (平均绝对误差) | RMSE (均方根误差) | 性能 (FPS) |
+| ----------- | ---------- | ------------  | ----------------- | ---------------- | ---------- |
 | Hi3591P     | 1          | example_data  | 0.0439            | 0.1832           | 0.75       |
