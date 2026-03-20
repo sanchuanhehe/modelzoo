@@ -89,7 +89,7 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
 2. 环境版本配套要求：
    | 芯片型号 | 算力引擎 | soc_version | 环境准备指导 | CANN包版本 | 编译工具链 | 板端OS | SDK |
    | -------- | ------- | ----------- | ------------ | ---------- | ---------- | --- | ---- |
-   | Hi3403V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [5.20.t6.2.b060](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | aarch64-openeuler-linux-gnu-g++ | [openEuler](https://pages.openeuler.openatom.cn/embedded/docs/build/html/master/bsp/arm64/hisilicon/hieulerpi/update.html) | SS928 V100R001C02SPC022 |
+   | Hi3403V100 | NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [5.20.t6.2.b060](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | aarch64-openeuler-linux-gnu-g++ | [openEuler](https://pages.openeuler.openatom.cn/embedded/docs/build/html/master/bsp/arm64/hisilicon/hieulerpi/update.html) | SS928 V100R001C02SPC022 |
 
    系统驱动安装，参考：https://gitee.com/HiSpark/ss928v100_gcc/tree/Beta-v0.9.2
    
