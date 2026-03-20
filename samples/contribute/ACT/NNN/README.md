@@ -165,15 +165,16 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
    ```bash
    cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-g++ -DCMAKE_C_COMPILER=/usr/bin/cc -DCMAKE_SKIP_RPATH=TRUE -DCMAKE_CXX_FLAGS="-I/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/include" -DCMAKE_CXX_LINK_FLAGS="-L/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/devlib -lascendcl -lpthread -ldl" -DCMAKE_CXX_COMPILER_WORKS=1
    ```
-   参数	说明				
-   -Dtarget=board	必选，指定编译目标为板端运行				
-   -DCMAKE_BUILD_TYPE=Release	可选，编译模式（Release = 生产模式，Debug = 调试模式）				
-   -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gnu-g++	必选，指定 C++ 交叉编译工具链为 aarch64-mix210-linux-gnu-g++				
-   -DCMAKE_C_COMPILER=/usr/bin/cc	指定 C 语言编译器路径为系统默认的 /usr/bin/cc				
-   -DCMAKE_SKIP_RPATH=TRUE	禁用运行时库路径（RPATH）的生成，避免编译产物依赖特定库路径				
-   -DCMAKE_CXX_FLAGS="-I/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/include"	C++ 编译选项：添加 Ascend（昇腾）工具链的头文件搜索路径（-I 为头文件目录指定参数）				
-   -DCMAKE_CXX_LINK_FLAGS="-L/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/devlib -lascendcl -lpthread -ldl"	C++ 链接选项：	- -L：指定昇腾工具链的库文件搜索路径	- -lascendcl：链接昇腾 CL（Ascend Compute Library）库	- -lpthread：链接线程库	- -ldl：链接动态链接库（动态加载 so 文件所需）	
-   -DCMAKE_CXX_COMPILER_WORKS=1	强制指定 C++ 编译器可用
+   | 参数 | 说明 |
+   |------|------|				
+   |-Dtarget=board |必选,指定编译目标为板端运行				
+   |-DCMAKE_BUILD_TYPE=Release |可选，编译模式（Release = 生产模式，Debug = 调试模式）				
+   |-DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gnu-g++ | 必选，指定 C++ 交叉编译工具链为 aarch64-mix210-linux-gnu-g++				
+   |-DCMAKE_C_COMPILER=/usr/bin/cc | 必选,指定 C 语言编译器路径为系统默认的 /usr/bin/cc				
+   |-DCMAKE_SKIP_RPATH=TRUE |可选,禁用运行时库路径（RPATH）的生成，避免编译产物依赖特定库路径				
+   |-DCMAKE_CXX_FLAGS="-I/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/include" |必选,C++ 编译选项：添加 Ascend（昇腾）工具链的头文件搜索路径
+   |-DCMAKE_CXX_LINK_FLAGS="-L/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/devlib -lascendcl -lpthread -ldl" | 必选,C++ 链接	
+   |-DCMAKE_CXX_COMPILER_WORKS=1 |必选,强制指定 C++ 编译器可用
 
 3. 编译生成可执行文件：
    ```bash
