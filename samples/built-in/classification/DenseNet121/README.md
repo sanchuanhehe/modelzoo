@@ -1,7 +1,3 @@
-
-
-
-
 # 基于DenseNet121网络实现图片分类
 
 - [概述](#ZH-CN_TOPIC_0000001172161501)
@@ -11,14 +7,16 @@
 
 - [环境准备](#ZH-CN_TOPIC_0000001126281702)
 
-- [快速上手](#ZH-CN_TOPIC_0000001126281700)
+- [模型推理](#ZH-CN_TOPIC_0000001126281700)
 
-  - [获取源码](#section4622531142816)
+  - [快速开始(推荐)](#section4622531142816)
+  - [安装依赖](#section183221994410)
   - [准备数据集](#section183221994411)
   - [模型转化](#section741711594517)
-  - [模型推理](#section741711594518)
+  - [精度&性能评估](#section741711594518)
 
 - [模型推理性能&精度](#ZH-CN_TOPIC_0000001172201573)
+
 
   ------
 
@@ -93,7 +91,7 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
     cat /proc/umap/sys
     #该设备芯片名为SS928V100 （自行替换）
     回显如下：
-    [SYS] Version: [SS928V100XXXXXXXXX
+    [SYS] Version: [SS928V100XXXXXXXXX]
     ```
 
 2. 该模型需要以下环境
@@ -107,13 +105,70 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 | Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  SS928 V100R001C02SPC022  |  aarch64-mix210-linux-gcc |  Linux |  SS928 V100R001C02SPC022 |
 
 
-# 快速上手<a name="ZH-CN_TOPIC_0000001126281700"></a>
+# 模型推理<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
-## 获取源码<a name="section4622531142816"></a>
+## 快速开始（推荐）<a name="section4622531142816"></a>
 
-1. 获取本仓源码
+### 获取本仓源码
 
-2. 安装依赖。
+备注：以下所有命令均在模型目录下执行
+
+### 获取om模型文件
+
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+
+创建`model`文件夹，并将om模型文件移动到`./model`目录下。
+```
+mkdir -p model
+```
+备注：若需要体验om模型转化过程，请参考[安装依赖](#section183221994410)和[模型转化](#section741711594517)章节。
+
+### 编译代码和运行应用
+
+#### 编译代码
+
+1. 切换到样例目录，创建目录用于存放编译文件，例如，本文中，创建的目录为`build`。
+    ```
+    mkdir -p build
+    ```
+
+2. 切换到`build`目录，执行**cmake**生成编译文件。
+
+    当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
+
+    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
+
+    例如，开发环境为X86架构、运行环境为ARM架构时，执行以下命令进行交叉编译。交叉编译工具链按运行环境操作系统，可选toolchain_aarch64_linux.cmake或toolchain_aarch64_ohos.cmake；SOC_VERSION按算力引擎可选SS928V100或OPTG，请根据运行环境和算力引擎平台选择。
+    ```
+    cd build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
+    ```
+    比如
+    ```
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    ```
+
+3. 执行**make**命令，生成的可执行文件main在“./out“目录下。
+
+
+#### 运行应用
+
+1. 将modelzoo代码上传到板端运行环境。
+2. 以运行用户登录板端运行环境。
+3. 切换到可执行文件main所在的目录，给该目录下的main文件加执行权限。
+
+    ```
+    chmod +x main
+    ```
+
+4. 切换到可执行文件main所在的目录，运行可执行文件。本例中，模型执行后，基于推理结果，输出输入图片的top5置信度的类别标识。测试图片上模型推理命令参考：
+    
+    ```
+    ./main --model ../model/densenet121.om --input ../data/file_list_1.json
+    ```
+    备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
+
+## 安装依赖<a name="section183221994410"></a>
 
    ```
    # 建议使用 Python 3.7.5
@@ -137,28 +192,20 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
    ...
    ```
 
-2. 数据预处理，将原始数据集转换为模型的输入数据。
-    
-    执行 ../../../../utils/preprocess.py 脚本，完成数据预处理。
-    
-    ```
-    python3 ../../../../utils/preprocess.py ${input_path} ${output_path}
-    ```
-    2.1 Hi3403V100 SVP_NNN上的数据预处理命令
+2. 生成文件集file_list.json，将原始数据集图片地址转换为模型的输入数据。
+  
+    执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
     
     ```
-    python3 ../../../../utils/preprocess.py --input_path ../../../../datasets/ImageNet/val/ --output_path ./data --resize 256 --center_crop 224
+    python3 ../../../../utils/generate_file_list.py ${dataset_path}
     ```
-    
-    2.2 Hi3403V100 NNN上的的数据预处理命令
-    
+    例如:
     ```
-    python3 ../../../../utils/preprocess.py --input_path ../../../../datasets/ImageNet/val/ --output_path ./data --resize 256 --center_crop 224 --transpose 1
+    python3 ../../../../utils/generate_file_list.py ../../../../datasets/ImageNet/val
     ```
+  
    参数说明：
-
-   - --input_path：原数据集所在路径。
-   - --output_path：转化完后的数据保存路径， 默认在./data路径下
+   - --dataset_path：原数据集所在路径。
 
 ## 模型转化<a name="section741711594517"></a>
 
@@ -174,7 +221,7 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
     使用./scrpit/pth2onnx.py导出动态batch的onnx文件。
 
     ```
-    python3.7.5 ./scrpit/pth2onnx.py ${pth_file} ${onnx_file}
+    python3 ./scrpit/pth2onnx.py ${pth_file} ${onnx_file}
     ```
 
     参数说明:
@@ -195,7 +242,7 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
     ```
     Hi3403V100 NNN上的om模型转换命令:
     ```
-    atc --framework=5  --model="./model/densenet121.onnx" --input_shape="input_0:1,3,224,224" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/densenet_original" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
+    atc --framework=5  --model="./model/densenet121.onnx" --input_shape="input_0:1,3,224,224" --insert_op_conf="./model_cfg/SS928V100_NNN/insert_op.cfg" --output="./model/densenet121" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
     ```
     运行成功后生成densenet121.om模型文件。
 
@@ -205,73 +252,26 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
     - --input_shape：输入数据的shape。
     - --insert_op_conf：aipp算子配置，用于输入数据处理。
     - --output：输出的OM模型。
-    - --image_list: 量化校准数据。
+    - --image_list: 量化校准数据, 数据获取参考[准备数据集](#section183221994411)章节。
     - --compile_mode:编译模式，参数值1代表使用16bit量化数据，使用8bit量化权重。
     - --enable_small_channel:使能small channel优化。
     - --enable_single_stream:推理时使用一条stream。
     - --soc_version：处理器型号。
-    
-    注意：如果出现命令找不到，配置环境变量。
+
+
+## 精度&性能评估<a name="section741711594518"></a>
+
+1. 登录到板端运行环境，切换到可执行文件main所在的目录，执行数据集上推理命令。
     ```
-    source /usr/local/Ascend/ascend-toolkit/set_env.sh
-    ```
-
-
-
-## 模型推理<a name="section741711594518"></a>
-
-
-
-**步骤1：编译代码。**
-
-1.  切换到样例目录，创建目录用于存放编译文件，例如，本文中，创建的目录为“build“。
-    ```
-    mkdir -p build
+    ./main --model ../model/densenet121.om --input ../data/file_list.json
     ```
 
-2.  切换到“build“目录，执行**cmake**生成编译文件。
-    “../src“表示CMakeLists.txt文件所在的目录，请根据实际目录层级修改。
-
-    当开发环境与运行环境操作系统架构不同时，执行以下命令进行交叉编译。
-
-    例如，开发环境为X86架构、运行环境为ARM架构时，执行以下命令进行交叉编译。交叉编译工具链按运行环境操作系统，可选toolchain_aarch64_linux.cmake或toolchain_aarch64_ohos.cmake；SOC_VERSION按算力引擎可选SS928V100或OPTG，请根据运行环境和算力引擎平台选择。
-	  
-	  ```
-    cd build
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${toolchain.cmake} -DSOC_VERSION=${soc_version}
-	  ```
-    比如
-    ```
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
-    ```
-
-3.  执行**make**命令，生成的可执行文件main在“./out“目录下。
-
-
-**步骤2：运行应用。**
-
-1.  以运行用户将开发环境的样例目录及目录下的文件上传到运行环境（Host），例如“$HOME/acl\_sample”。
-2.  以运行用户登录运行环境（Host）。
-3.  切换到可执行文件main所在的目录，例如“../out”，给该目录下的main文件加执行权限。
-
-    ```
-    chmod +x main
-    ```
-
-4.  切换到可执行文件main所在的目录，例如“$HOME/acl\_sample/out”，运行可执行文件。
-    ```
-    ./main --acl ../src/acl.json --model ../model/densenet121.om --input ../data/file_list.txt
-    ```
-
-**步骤3：输出后处理**
-本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。
-
-1. 精度验证。
-
+2. 精度验证。
+    本例中，模型执行后，基于推理结果，输出各输入图片的top5置信度的类别标识。
     调用脚本与数据集标签val_label.txt比对，可以获得Accuracy数据，结果保存在accuracy.txt中。
 
     ```
-    python ./script/accuracy.py --output ${result_dir} --label ${gt_file} --result ${--result_file}
+    python3 ./script/accuracy.py --output ${result_dir} --label ${gt_file} --result ${--result_file}
     ```
 
     参数说明：
@@ -282,7 +282,7 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 
     - --result：输出精度结果所在的位置。
 
-    例如 `python ./script/accuracy.py --output ./out/result/txt/ --label ../../../../datasets/ImageNet/val_label.txt --result ./out/accuracy.txt`
+    例如 `python3 ./script/accuracy.py --output ./out/result/txt/ --label ../../../../datasets/ImageNet/val_label.txt --result ./out/accuracy.txt`
 
     SVP_NNN平台上精度结果：
       ```
@@ -295,18 +295,16 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
      ```
 
 
-2. 验证batch_size的om模型的性能，参考命令如下：
+3. 验证batch_size的om模型的性能，参考命令如下：
 
     ```
-    ./main --acl ../src/acl.json --model ../model/densenet121.om --input ../data/file_list_1.txt --loop 100
+    ./main --model ../model/densenet121.om --input ../data/file_list_1.json
     ```
 
-    参数说明：(此模式下，输入路径文本文件file_list_1.txt内容为一张图片路径)
+    参数说明：(此模式下，输入路径文本文件file_list_1.json内容为一张图片路径，文件中loop参数表示循环次数，建议设置为1000)
 
     - --model：om模型路径。
-    - --acl: acl.json文件的路径，默认放在src目录下。
     - --input: 输入的图像数据列表路径
-    - --loop： 循环执行多少次取结果，loop为1的时候第一次加载，耗时比多次执行长，建议loop取100次求平均值
 
     在板端会输出显示，SVP_NNN平台上性能结果如下：
     ```

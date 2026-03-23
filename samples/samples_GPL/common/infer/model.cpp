@@ -67,7 +67,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::Unet, { std::bind(UnetPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, ImageprocessOptions(572, -1, true)), UnetPostprocess } }, // unet模型需要中心剪裁572大小，不进行resize
     { ModelType::Yolov10s, { std::bind(Yolo3Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYolo10Box } },
     { ModelType::Yolov3, { std::bind(Yolo3Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYolo3Box } },
-    { ModelType::Yolov8s, { std::bind(Yolov8sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYoloV8sBox } }
+    { ModelType::Yolov8s, { std::bind(Yolov8sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYoloV8sBox } },
+    { ModelType::Yolov5, { std::bind(Yolov7Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), std::bind(GetYoloV7Box, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true) } }
 };
 #else
 const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::modelTypeToProcessMap_ = {
@@ -80,7 +81,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::Yolov11sPose, { Yolo11sPoseNS::Yolov11sPosePreprocess, Yolo11sPoseNS::Yolov11sPosePostprocess } },
     { ModelType::Unet, { std::bind(UnetPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, ImageprocessOptions(572, -1, true)), UnetPostprocess } },
     { ModelType::Yolov3, { std::bind(Yolo3Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYolo3Box } },
-    { ModelType::Yolov8s, { std::bind(Yolov8sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYoloV8sBox } }
+    { ModelType::Yolov8s, { std::bind(Yolov8sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYoloV8sBox } },
+    { ModelType::Yolov5, { std::bind(Yolov7Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), std::bind(GetYoloV7Box, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false) } },
 };
 #endif
 

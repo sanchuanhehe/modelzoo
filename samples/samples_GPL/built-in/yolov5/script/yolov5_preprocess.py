@@ -29,11 +29,11 @@ def main(opt, cfg):
     for img_path in tqdm(os.listdir(input_path)):
         # Read image
         paths_name = img_path[:-4]  # 'test1
-        
+
         im0 = cv2.imread(os.path.join(input_path, img_path))
         h0, w0, _ = im0.shape
         shapes_kv[paths_name] = (h0, w0)
-        
+
         im = letterbox(im0)  # padded resize
         im = np.array(im)
         im = im.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
@@ -51,7 +51,7 @@ def main(opt, cfg):
         json.dump(shapes_kv, f, indent=4)  # indent 美化格式
 
 
-def letterbox(img, target_size=[640, 640], scaleup=True):
+def letterbox(img, target_size=[640, 640], scaleup=False):
     """保持比例缩放图片并填充至目标尺寸"""
     shape = img.shape[:2]
 

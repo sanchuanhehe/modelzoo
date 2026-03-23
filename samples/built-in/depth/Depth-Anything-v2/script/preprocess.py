@@ -24,9 +24,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms import Compose
 
+extra_path = os.path.abspath("/home/wubingdong/workspace/modelzoo-dev/samples/common/built-in/depth/Depth-Anything-v2/Depth-Anything-V2")
+sys.path.append(extra_path)
+
 from depth_anything_v2.util.transform import Resize, NormalizeImage, PrepareForNet
 
-def image2tensor(raw_image, image_path, shape_kv, input_size=518):        
+def image2tensor(raw_image, image_path, shape_kv, input_size=518):
     transform = Compose([
         Resize(
             width=input_size,
@@ -42,11 +45,11 @@ def image2tensor(raw_image, image_path, shape_kv, input_size=518):
         NormalizeImage(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         PrepareForNet(),
     ])
-        
+
     h, w = raw_image.shape[:2]
-        
+
     image = cv2.cvtColor(raw_image, cv2.COLOR_BGR2RGB) / 255.0
-        
+
     image = transform({'image': image})['image']
     image = torch.from_numpy(image).unsqueeze(0)
     image = image.to('cpu')
@@ -54,7 +57,7 @@ def image2tensor(raw_image, image_path, shape_kv, input_size=518):
     return img, (h, w)
 
 def main():
-    input_path = '../data/DA-2K/DA-2K/images/'
+    input_path = '../data/DA-2K/images/'
     output_path = os.path.realpath('../data')
     if not os.path.isdir(output_path + '/img/'):
         os.makedirs(os.path.realpath(output_path+ '/img/'))
