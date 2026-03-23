@@ -106,30 +106,29 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
         auto& kMean = config["mean"];
         auto& kStd = config["std"];
         if (!kMean.is_array()) {
-            file.close();
             throw std::runtime_error("'mean' must be array");
-
+            file.close();
         }
         for (const auto& val : kMean) {
             param.kMean.emplace_back(float(val));
         }
         if (!kStd.is_array()) {
-            file.close();
             throw std::runtime_error("'std' must be array");
+            file.close();
         }
         for (const auto& val : kStd) {
             param.kStd.emplace_back(float(val));
         }
     } catch (const json::parse_error& e) {
-        LOG(ERROR) << "JSON parse error: " << e.what();
+        LOG(ERROR) << "JSON 解析错误: " << e.what();
         file.close();
         return false;
     } catch (const json::type_error& e) {
-        LOG(ERROR) << "Data type error: " << e.what();
+        LOG(ERROR) << "数据类型错误: " << e.what();
         file.close();
         return false;
     } catch (const std::exception& e) {
-        LOG(ERROR) << "Running error: " << e.what();
+        LOG(ERROR) << "运行时错误: " << e.what();
         file.close();
         return false;
     }

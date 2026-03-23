@@ -22,6 +22,14 @@ set(COMMON_PATH "../../../../common/")
 
 add_subdirectory(${COMMON_PATH} ./common_build)
 
+# Compile options
+add_compile_options(
+    -std=c++14
+    -fPIC
+    -fstack-protector-all
+    -D_FORTIFY_SOURCE=2 -O2
+)
+
 include_directories(
     ${COMMON_PATH}/infer/platform
     ${COMMON_PATH}/include
@@ -32,12 +40,6 @@ link_directories(
     ${LIB_PATH}
 )
 
-if(SOC_VERSION STREQUAL "SS928V100")
-    add_executable(main main.cpp  superpoint_utils.cpp)
-    target_link_libraries(main infer_common stdc++)
-    install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-else()
-    add_executable(main main_dlite.cpp)
-    target_link_libraries(main infer_common stdc++)
-    install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-endif ()
+add_executable(main main.cpp)
+target_link_libraries(main infer_common stdc++)
+install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

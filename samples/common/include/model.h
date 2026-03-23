@@ -64,7 +64,16 @@ enum ModelType {
     HRNet,
     TinySam,
     GraspNet,
-    Pi0
+    ClipImg,
+    ClipTxt,
+    Pi0,
+    SqueezeNet1_1,
+    DenseNet121,
+    ShuffleNetV2,
+    MobileNetV2,
+    ResNet18,
+    ResNet101,
+    DepthAnythingV2
 };
 
 using ProcessFunc = std::function<bool(std::vector<std::string>&, std::vector<TensorBuf>&, std::vector<TensorDesc>&)>;
@@ -82,6 +91,7 @@ public:
     std::vector<Tensor> Infer(std::vector<Tensor>& tensors, std::string filePath);
 
     std::vector<TensorBuf> Infer(std::vector<TensorBuf>& tensorBufs);
+    int Infer(std::vector<TensorBuf>& inBufs, std::vector<TensorBuf>& outBufs);
     std::pair<std::vector<TensorDesc>, std::vector<TensorDesc>> GetModelInfo();
 
     void SetPreProcessFunc(ProcessFunc func);

@@ -1,10 +1,1 @@
-{  
-    "profiler":{  
-        "output":"/mnt/workspace/modelzoo/samples/built-in/classification/mobileNetV2/profiling",  
-        "aicpu":"on",  
-        "aic_metrics":"ArithmeticUtilization",  
-        "interval":"0",  
-        "acl_api":"on",  
-        "switch":"on"  
-    }  
-}
+{}

@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include "image_process.h"
+#include "vit_preprocess.h"
 #include "post_process.h"
 #include "yolo4_preprocess.h"
 #include "yolo4_postprocess.h"
@@ -57,6 +58,12 @@
 #include "fastspeech2_postprocess.h"
 #include "pi0_preprocess.h"
 #include "pi0_postprocess.h"
+#include "clip_txt_preprocess.h"
+#include "clip_preprocess.h"
+#include "clip_postprocess.h"
+#include "vit_preprocess.h"
+#include "depthanythingv2_preprocess.h"
+#include "depthanythingv2_postprocess.h"
 
 namespace Infer {
 constexpr float MS2S = 1000.0f;
@@ -78,8 +85,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
                             ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
     { ModelType::SwinT, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                             ImageprocessOptions(256, 224, true, PillowResize::INTERPOLATION_BICUBIC)), PrintTop5AndDumpResult} },
-    { ModelType::VitB16, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                            ImageprocessOptions(248, 224, true, PillowResize::INTERPOLATION_BICUBIC)), PrintTop5AndDumpResult} },
+    { ModelType::VitB16, {std::bind(VitPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                            VitPrerocessOptions(248, 224, true, PillowResize::INTERPOLATION_BICUBIC)), PrintTop5AndDumpResult} },
     { ModelType::VGG16, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                         ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
     { ModelType::FaceNet, {FaceNetNS::FaceNetPreprocess, FaceNetNS::FaceNetPostprocess} },
@@ -97,7 +104,23 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::CRNN, {CRNNPreprocess, CRNNPostProcess} },
     { ModelType::VDSR, {VDSRPreprocess, VDSRPostProcess} },
     { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
-    { ModelType::TinySam, {nullptr, nullptr} }
+    { ModelType::TinySam, {nullptr, nullptr} },
+    { ModelType::ClipImg, {ClipImgPreprocess, Clip::ClipImgPostprocess} },
+    { ModelType::ClipTxt, {ClipTxtPreprocess, Clip::ClipTxtPostprocess} },
+    { ModelType::SuperPoint, {SuperPointPreprocess, SuperPointPostprocess}},
+    { ModelType::SqueezeNet1_1, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::DenseNet121, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::ShuffleNetV2, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::MobileNetV2, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::ResNet18, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::ResNet101, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::DepthAnythingV2, { std::bind(DepthAnythingV2Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), DepthAnythingV2Postprocess } },
 };
 #else
 const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::modelTypeToProcessMap_ = {
@@ -127,7 +150,21 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
     { ModelType::PaddleOCR_Det, {OcrDetPreprocess, OcrDetPostprocess} },
     { ModelType::GraspNet, {Grasp::GraspNetPreprocess, Grasp::GraspNetPostprocess} },
-    { ModelType::Pi0, {Pi0Preprocess, Pi0Postprocess} }
+    { ModelType::EfficientNet, {EfficientNetPreprocess, PrintTop5AndDumpResult} },
+    { ModelType::Pi0, {Pi0Preprocess, Pi0Postprocess} },
+    { ModelType::SqueezeNet1_1, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                    ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::DenseNet121, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                    ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::ShuffleNetV2, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::MobileNetV2, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::ResNet18, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::ResNet101, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::DepthAnythingV2, { std::bind(DepthAnythingV2Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), DepthAnythingV2Postprocess } },
 };
 #endif
 
@@ -297,6 +334,15 @@ std::vector<TensorBuf> Model::Infer(std::vector<TensorBuf>& tensorBufs)
         return {};
     }
     return outBuf;
+}
+
+int Model::Infer(std::vector<TensorBuf>& inBufs, std::vector<TensorBuf>& outBufs)
+{
+    if (mdl_->Execute(inBufs, outBufs) != 0) {
+        LOG(ERROR) << "failed to execute model";
+        return 0;
+    }
+    return 0;
 }
 
 std::pair<std::vector<TensorDesc>, std::vector<TensorDesc>> Model::GetModelInfo()
