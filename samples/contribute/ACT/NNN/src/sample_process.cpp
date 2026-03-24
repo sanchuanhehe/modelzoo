@@ -1,19 +1,12 @@
-/*
- * Copyright (c) 2026 Huawei Technologies Co., Ltd
- * This file is part of [Hispark/modelzoo].
- *
- * [Hispark/modelzoo] is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License only.
- *
- * [Hispark/modelzoo] is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with [Hispark/modelzoo].  If not, see <https://www.gnu.org/licenses/>.
- */
+/**
+* @file sample_process.cpp
+*
+* Copyright (C) 2020. Huawei Technologies Co., Ltd. All rights reserved.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
 
 #include "sample_process.h"
 #include "model_process.h"
