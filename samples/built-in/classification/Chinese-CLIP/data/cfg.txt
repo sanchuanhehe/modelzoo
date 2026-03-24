@@ -1,0 +1,20 @@
+# 输入txt文件路径, 不可为空, 如果测试效果，请使用”../data/label_cn_1.txt“，如果测试精度，请修改为”../data/label_cn.txt“。如果测试性能，请修改为"../data/file_list_txt_1.json"
+txt_list="../data/label_cn_1.txt"
+
+# 输入img文件路径, 不可为空
+img_list="../data/file_list_img_1.json"
+
+# rotary_position_emb0.bin 文件路径, 不可为空
+result_dir="../out/result/"
+
+# img输出结果文件路径, 不可为空
+img_result="../out/result/img/"
+
+# txt输出结果文件路径, 不可为空
+txt_result="../out/result/txt/"
+
+# 是否进行精度验证。0：不进行精度验证，1：进行精度验证，请同步也修改输入img路径和输入txt路径。
+accuary="0"
+
+# 是否进行性能验证。0：不进行性能验证，1：进行性能验证。请同步也修改输入img路径和输入txt路径。注意：精度和性能不可以同时为1
+performance="0"

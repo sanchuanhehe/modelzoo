@@ -4,8 +4,8 @@
   "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet18",
   "modelParameter": {
     "输入": "224x224",
-    "参数量": "11.685M",
-    "计算量": "3.643GFLOPs"
+    "参数量": "11.685 M",
+    "计算量": "3.643 GFLOPs"
   },
   "isBeta": false,
   "betaDesc": "",
@@ -19,7 +19,7 @@
     }
   ],
   "modelFrame": [
-    "Pytorch"
+    "PyTorch"
   ],
   "modelDatasets": {
     "desc": "数据集ImageNet",
@@ -66,7 +66,7 @@
       ],
       "performance": [
         {
-          "quantMode": "a8w8",
+          "quantMode": "A8W8",
           "detail": [
             {
               "performance": 1.35,

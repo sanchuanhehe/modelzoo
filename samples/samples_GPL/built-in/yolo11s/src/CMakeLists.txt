@@ -31,10 +31,6 @@ link_directories(
     ${LIB_PATH}
 )
 
-if(SOC_VERSION STREQUAL "SS928V100")
-    add_executable(main main.cpp)
-else()
-    add_executable(main main_dlite.cpp)
-endif ()
+add_executable(main main.cpp)
 target_link_libraries(main infer_common)
 install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

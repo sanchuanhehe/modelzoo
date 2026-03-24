@@ -4,8 +4,8 @@
   "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Swin-Transformer",
   "modelParameter": {
     "输入": "224x224",
-    "参数量": "28.798M",
-    "计算量": "9.567GFLOPs"
+    "参数量": "28.798 M",
+    "计算量": "9.567 GFLOPs"
   },
   "isBeta": true,
   "betaDesc": "Hi3403V100 NNN引擎上模型性能待进一步优化",
@@ -19,7 +19,7 @@
     }
   ],
   "modelFrame": [
-    "Pytorch"
+    "PyTorch"
   ],
   "modelDatasets": {
     "desc": "数据集ImageNet",
@@ -66,17 +66,17 @@
       ],
       "performance": [
         {
-          "quantMode": "a8w8",
+          "quantMode": "A8W8",
           "detail": [
             {
               "performance": 25.675,
               "performanceUnit": "耗时（ms）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 38.949,
               "performanceUnit": "性能（fps）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 295.711,
@@ -116,17 +116,17 @@
       ],
       "performance": [
         {
-          "quantMode": "fp16",
+          "quantMode": "FP16",
           "detail": [
             {
               "performance": 101.97,
               "performanceUnit": "耗时（ms）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 9.81,
               "performanceUnit": "性能（fps）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 494.766,
