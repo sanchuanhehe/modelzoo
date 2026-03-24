@@ -1,6 +1,6 @@
 {
   "modelName": "MiniCPM-4v-0.5B",
-  "modelDesc": "MiniCPM-4v-0.5B 是一款紧凑型高性能大语言模型系列，其核心理念在于“以小博大”，通过极致的参数与结构优化，在较小的计算规模下实现超越同级别模型的综合能力。在近年来的大模型发展格局中，其凭借出色的端侧部署能力受到广泛关注。",
+  "modelDesc": "MiniCPM-4v-0.5B: 小参数, 大智慧——端侧多模态模型首选\n\n由面壁智能(OpenBMB)打造的MiniCPM-4v-0.5B, 以0.53B的精简参数量，在端侧设备上实现了卓越的图文理解与交互能力。专为边缘计算场景设计，让每一分算力都发挥最大价值。\n\n三大核心优势：\n1. 极致架构，轻装上阵\n通过创新的稀疏感知训练和视觉压缩技术，实现 16:1 视觉特征压缩比，在保证高精度的同时，极大降低了推理算力消耗与内存占用。\n2. 高能数据，以小博大\n依托独家高密度数据体系，数据真被成本下降90%。通过汇聚全球高质量语料进行精细化对齐，用最优质的数据训练模型，实现越级性能表现。\n3. 高效训练，成本锐减\n采用原创 WSD 调度策略与“模型风洞”技术，相比传统方案，搜索算力节省超99%，整体训练成本节省约60%，为端侧模型的持续迭代提供高效路径。\n\n海思平台深度赋能：\n现已适配 Hi3403V100 平台，持续生成速度达 21 tokens/s，为边缘侧设备提供流程、敏捷的智能视觉体验。",
   "modelRepository": "",
   "modelParameter": {
     "输入": "图片: 512x512; Embedding: 200 Tokens",
@@ -28,7 +28,7 @@
   "srcModelLicense": [
     {
       "desc": "源模型",
-      "link": ""
+      "link": "https://mb-data-backup.obs.cn-north-4.myhuaweicloud.com/user/jiachao/OM%20%E6%96%87%E4%BB%B6%202.zip?AccessKeyId=HPUA2FP6SKIBEDLHP6HL&Expires=1805167766&Signature=ypfYmM/49tx3mxFyOHgvHvv9QeE%3D"
     }
   ],
   "modelLicense": [
@@ -65,7 +65,7 @@
       ],
       "performance": [
         {
-          "quantMode": "a16w8",
+          "quantMode": "A16W8",
           "detail": [
             {
               "performance": 21.300,

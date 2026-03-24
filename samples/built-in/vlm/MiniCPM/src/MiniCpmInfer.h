@@ -38,6 +38,7 @@ constexpr int ZERO = 0;
 class MiniCpmInfer {
 public:
     MiniCpmInfer();
+    void UnLoad();
     string InferSingle(const string& imgPath, const string& text);
     int GetTTFT();
     float GetTPS();

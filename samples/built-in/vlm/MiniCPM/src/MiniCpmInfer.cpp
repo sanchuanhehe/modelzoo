@@ -138,3 +138,19 @@ float MiniCpmInfer::GetTPS()
     }
     return decodeTokenNum_ * TIME_CHANGE / sumDecodeTokenTime_;
 }
+
+void MiniCpmInfer::UnLoad()
+{
+    if (visionModel_->Unload() != 0) {
+        LOG(ERROR) << "Fail to unload vision model";
+    }
+    if (resampleModel_->Unload() != 0) {
+        LOG(ERROR) << "Fail to unload resample model";
+    }
+    if (prefillModel_->Unload() != 0) {
+        LOG(ERROR) << "Fail to unload prefill model";
+    }
+    if (decodeModel_->Unload() != 0) {
+        LOG(ERROR) << "Fail to unload decode model";
+    }
+}

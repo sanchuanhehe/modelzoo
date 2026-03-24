@@ -345,6 +345,110 @@
   },
   {
     "buildTarget": "modelzoo-app",
+    "relativePath": "classification/ResNet101",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/ResNet101",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/ShuffleNetV2",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/ShuffleNetV2",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/DenseNet121",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/MobileNetV2",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/DenseNet121",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/MobileNetV2",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/Swin-Transformer",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "检测网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/Swin-Transformer",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/SqueezeNet1_1",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/SqueezeNet1_1",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/ResNet18",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
     "relativePath": "vlm/MiniCPM",
     "chip": "SS928V100",
     "buildDef": "SS928V100",

@@ -45,6 +45,7 @@ int main(int argc, char* argv[])
         }
     }
     LOG(INFO) << "Avg TTFT:" << model.GetTTFT() << " ms; TPS: " << model.GetTPS() << " token/s";
+    model.UnLoad();
     EnvDeinit();
     return 0;
 }
