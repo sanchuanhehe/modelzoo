@@ -1,14 +1,24 @@
-// 包含工具类头文件
+/**
+* Copyright 2020 Huawei Technologies Co., Ltd
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+
+* http://www.apache.org/licenses/LICENSE-2.0
+
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
 #include "utils.h"
-// 包含字符串操作相关头文件
 #include <cstring>
-// 包含文件输入输出流头文件
 #include <fstream>
-// 包含标准输入输出头文件
 #include <iostream>
-// 包含文件状态获取相关头文件
 #include <sys/stat.h>
-// 包含昇腾ACL核心接口头文件
 #include "acl/acl.h"
 
 // 功能：数据内存初始化，将指定内存区域全部置为0
