@@ -73,7 +73,8 @@ enum ModelType {
     MobileNetV2,
     ResNet18,
     ResNet101,
-    DepthAnythingV2
+    DepthAnythingV2,
+    MiniCPM
 };
 
 using ProcessFunc = std::function<bool(std::vector<std::string>&, std::vector<TensorBuf>&, std::vector<TensorDesc>&)>;

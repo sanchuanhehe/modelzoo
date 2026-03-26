@@ -1,0 +1,26 @@
+# vision.om 文件路径, 不可为空
+vision_om_path="../model/vision.om"
+
+# resample.om 文件路径, 不可为空
+resample_om_path="../model/resample.om"
+
+# prefill_decode.om 文件路径, 不可为空
+prefill_decode_om_path="../model/prefill_decode.om"
+
+# decode.om 文件路径, 不可为空
+decode_om_path="../model/decode.om"
+
+# rotary_position_emb0.bin 文件路径, 不可为空
+rotary_position_emb0_bin_path="../data/rotary_position_emb0.bin"
+
+# rotary_position_emb1.bin 文件路径, 不可为空
+rotary_position_emb1_bin_path="../data/rotary_position_emb1.bin"
+
+# token_emb.bin 文件路径, 不可为空
+token_emb_bin_path="../data/token_emb.bin"
+
+# tokenizer.json 文件路径, 不可为空
+tokenizer_json_path="../data/tokenizer.json"
+
+# 推理结果保存路径, 不可为空
+result_dir="../out/result/txt/"

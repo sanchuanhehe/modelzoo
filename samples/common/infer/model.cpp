@@ -121,6 +121,7 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::ResNet101, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                         ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
     { ModelType::DepthAnythingV2, { std::bind(DepthAnythingV2Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), DepthAnythingV2Postprocess } },
+    { ModelType::MiniCPM, {nullptr, nullptr} }
 };
 #else
 const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::modelTypeToProcessMap_ = {

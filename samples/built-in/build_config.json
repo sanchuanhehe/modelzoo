@@ -446,5 +446,13 @@
     "buildDef": "SS928V100",
     "needSmoke": "false",
     "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "vlm/MiniCPM",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "VLM"
   }
 ]

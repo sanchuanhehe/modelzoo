@@ -1,0 +1,95 @@
+{
+  "modelName": "MiniCPM-4v-0.5B",
+  "modelDesc": "MiniCPM-4v-0.5B: 小参数, 大智慧——端侧多模态模型\n\n由面壁智能(OpenBMB)打造的MiniCPM-4v-0.5B, 以0.53B的精简参数量，在端侧设备上实现了卓越的图文理解与交互能力。专为边缘计算场景设计，让每一分算力都充分发挥价值。\n\n三大核心优势：\n1. 创新架构，轻装上阵\n通过创新的稀疏感知训练和视觉压缩技术，实现 16:1 视觉特征压缩比，在保证高精度的同时，极大降低了推理算力消耗与内存占用。\n2. 高能数据，以小博大\n依托高密度数据体系，数据准备成本下降90%。通过汇聚全球高质量语料进行精细化对齐，用优质的数据训练模型，实现越级性能表现。\n3. 高效训练，成本锐减\n采用原创 WSD 调度策略与“模型风洞”技术，相比传统方案，搜索算力节省超99%，整体训练成本节省约60%，为端侧模型的持续迭代提供高效路径。\n\n海思平台技术支撑：\n现已适配 Hi3403V100 平台，持续生成速度达 21 tokens/s，为边缘侧设备提供流程、敏捷的智能视觉体验。",
+  "modelRepository": "",
+  "modelParameter": {
+    "输入": "图片: 512x512; Embedding: 200 Tokens",
+    "参数量": "520.333 M",
+    "计算量": "413.886 GFLOPs"
+  },
+  "isBeta": true,
+  "betaDesc": "Hi3403V100 SVP_NNN引擎上模型性能待进一步优化",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "多模态",
+      "tags": [
+        "VLM"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "PyTorch"
+  ],
+  "modelDatasets": {
+    "desc": "",
+    "link": ""
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://mb-data-backup.obs.cn-north-4.myhuaweicloud.com/user/jiachao/OM%20%E6%96%87%E4%BB%B6%202.zip?AccessKeyId=HPUA2FP6SKIBEDLHP6HL&Expires=1805167766&Signature=ypfYmM/49tx3mxFyOHgvHvv9QeE%3D"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/vlm/MiniCPM/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/vlm/MiniCPM/doc/快速开始.md/"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3403V100 SVP_NNN",
+      "tools": [
+        {
+          "name": "CANN工具",
+          "link": "",
+          "desc": "6.10.t01spc030b700\n(请联系FAE获取)"
+        },
+        {
+          "name": "编译工具链",
+          "link": "",
+          "desc": "aarch64-mix210-linux-gcc"
+        },
+        {
+          "name": "SDK",
+          "link": "",
+          "desc": "SS928V100V1.0.2.5 B060\n(请联系FAE获取)"
+        }
+      ],
+      "os": [
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "A16W8",
+          "detail": [
+            {
+              "performance": 21.300,
+              "performanceUnit": "TPS（tokens/s）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 519.74,
+              "performanceUnit": "TTFT（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 544.514,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 1217.676,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
