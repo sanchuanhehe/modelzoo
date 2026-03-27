@@ -454,5 +454,13 @@
     "buildDef": "SS928V100",
     "needSmoke": "false",
     "description": "VLM"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "tracking/deepsort",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "目标跟踪"
   }
 ]

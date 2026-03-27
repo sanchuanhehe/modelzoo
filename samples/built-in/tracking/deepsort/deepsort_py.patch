@@ -1,0 +1,227 @@
+diff --git a/deepsort.py b/deepsort.py
+index a9b6bdd..dbe9f56 100644
+--- a/deepsort.py
++++ b/deepsort.py
+@@ -146,9 +146,9 @@ class VideoTracker(object):
+ 
+ def parse_args():
+     parser = argparse.ArgumentParser()
+-    parser.add_argument("--VIDEO_PATH", type=str, default='demo.avi')
++    parser.add_argument("--VIDEO_PATH", type=str, default='/mnt/winshare/modelzoo-dev/datasets/MOT16/train/MOT16-02/video/video.mp4')
+     parser.add_argument("--config_mmdetection", type=str, default="./configs/mmdet.yaml")
+-    parser.add_argument("--config_detection", type=str, default="./configs/mask_rcnn.yaml")
++    parser.add_argument("--config_detection", type=str, default="./configs/yolov5s.yaml")
+     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
+     parser.add_argument("--config_fastreid", type=str, default="./configs/fastreid.yaml")
+     parser.add_argument("--fastreid", action="store_true")
+diff --git a/detector/YOLOv5/detector.py b/detector/YOLOv5/detector.py
+index ef9542f..123a7dc 100644
+--- a/detector/YOLOv5/detector.py
++++ b/detector/YOLOv5/detector.py
+@@ -8,6 +8,18 @@ import torch
+ import torch.backends.cudnn as cudnn
+ import numpy as np
+ 
++import torch.nn as nn
++
++# 强制修复 Upsample 缺失属性的全局补丁
++def patched_forward(self, input):
++    if not hasattr(self, 'recompute_scale_factor'):
++        self.recompute_scale_factor = None
++    return self._orig_forward(input)
++
++if not hasattr(nn.Upsample, '_orig_forward'):
++    nn.Upsample._orig_forward = nn.Upsample.forward
++    nn.Upsample.forward = patched_forward
++
+ FILE = Path(__file__).resolve()
+ ROOT = FILE.parents[0]  # YOLOv5 root directory
+ if str(ROOT) not in sys.path:
+@@ -25,7 +37,7 @@ from detector.YOLOv5.utils.torch_utils import select_device, time_sync
+ 
+ class YOLOv5(object):
+     def __init__(self, weight='yolov5s.pt', data='data/coco128.yaml', imgsz=[640, 640],
+-                 conf_thres=0.25, nms_thres=0.45, max_det=1000, device='cuda:0', dnn=False):
++                 conf_thres=0.25, nms_thres=0.45, max_det=1000, device='cpu', dnn=False):
+         super().__init__()
+         self.device = select_device(device)
+         self.net = DetectMultiBackend(weight, device=self.device, dnn=dnn, data=data)
+diff --git a/detector/__init__.py b/detector/__init__.py
+index d3392de..2a6ff97 100644
+--- a/detector/__init__.py
++++ b/detector/__init__.py
+@@ -1,7 +1,7 @@
+ from .YOLOv3 import YOLOv3
+-from .MMDet import MMDet
++# from .MMDet import MMDet
+ from .YOLOv5 import YOLOv5
+-from .Mask_RCNN import Mask_RCNN
++# from .Mask_RCNN import Mask_RCNN
+ 
+ __all__ = ['build_detector']
+ 
+diff --git a/utils/io.py b/utils/io.py
+index 35bec62..a26126b 100644
+--- a/utils/io.py
++++ b/utils/io.py
+@@ -7,7 +7,8 @@ import numpy as np
+ 
+ def write_results(filename, results, data_type):
+     if data_type == 'mot':
+-        save_format = '{frame},{id},{cls},{x1},{y1},{w},{h},-1,-1,-1,-1\n'
++        # save_format = '{frame},{id},{cls},{x1},{y1},{w},{h},-1,-1,-1,-1\n'
++        save_format = '{frame},{id},{x1},{y1},{w},{h},-1,-1,-1,-1\n'
+     elif data_type == 'kitti':
+         save_format = '{frame} {id} pedestrian 0 0 -10 {x1} {y1} {x2} {y2} -10 -10 -10 -1000 -1000 -1000 -10\n'
+     else:
+diff --git a/utils/log.py b/utils/log.py
+index 5b8c940..0878edd 100644
+--- a/utils/log.py
++++ b/utils/log.py
+@@ -2,16 +2,19 @@ import logging
+ 
+ 
+ def get_logger(name='root'):
+-    formatter = logging.Formatter(
+-        # fmt='%(asctime)s [%(levelname)s]: %(filename)s(%(funcName)s:%(lineno)s) >> %(message)s')
+-        fmt='%(asctime)s [%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+-
+-    handler = logging.StreamHandler()
+-    handler.setFormatter(formatter)
+-
+     logger = logging.getLogger(name)
+-    logger.setLevel(logging.INFO)
+-    logger.addHandler(handler)
+-    return logger
++    # 避免重复设置日志级别（如果已设置过）
++    if logger.level != logging.INFO:
++        logger.setLevel(logging.INFO)
+ 
++    # 检查是否已有处理器，有则不再添加
++    if not logger.handlers:
++        formatter = logging.Formatter(
++            fmt='%(asctime)s [%(levelname)s]: %(message)s',
++            datefmt='%Y-%m-%d %H:%M:%S'
++        )
++        handler = logging.StreamHandler()
++        handler.setFormatter(formatter)
++        logger.addHandler(handler)
+ 
++    return logger
+diff --git a/yolov3_deepsort_eval.py b/yolov3_deepsort_eval.py
+index f0036d2..bbc5816 100644
+--- a/yolov3_deepsort_eval.py
++++ b/yolov3_deepsort_eval.py
+@@ -5,41 +5,61 @@ import argparse
+ from pathlib import Path
+ 
+ from utils.log import get_logger
+-from yolov3_deepsort import VideoTracker
++from deepsort import VideoTracker
+ from utils.parser import get_config
+ 
+ import motmetrics as mm
++
+ mm.lap.default_solver = 'lap'
+ from utils.evaluation import Evaluator
+ 
++
+ def mkdir_if_missing(dir):
+     os.makedirs(dir, exist_ok=True)
+ 
++
+ def main(data_root='', seqs=('',), args=""):
+     logger = get_logger()
+     logger.setLevel(logging.INFO)
+     data_type = 'mot'
+-    result_root = os.path.join(Path(data_root), "mot_results")
++    result_root = "../out/mot_results"
+     mkdir_if_missing(result_root)
+ 
+     cfg = get_config()
+     cfg.merge_from_file(args.config_detection)
+     cfg.merge_from_file(args.config_deepsort)
++    cfg.USE_SEGMENT = False
++    cfg.USE_MMDET = False
++    cfg.USE_FASTREID = False
+ 
+-    # run tracking
+-    accs = []
+-    for seq in seqs:
+-        logger.info('start seq: {}'.format(seq))
+-        result_filename = os.path.join(result_root, '{}.txt'.format(seq))
+-        video_path = data_root+"/"+seq+"/video/video.mp4"
++    # 尝试加载已保存的accs结果
++    accs_cache_path = "./accs_cache.npy"
++    if os.path.exists(accs_cache_path):
++        logger.info(f"发现已保存的accs结果，直接加载: {accs_cache_path}")
++        import pickle
++        with open(accs_cache_path, 'rb') as f:
++            accs = pickle.load(f)
++    else:
++        # 没有缓存文件，执行跟踪和评估
++        accs = []
++        for seq in seqs:
++            logger.info('start seq: {}'.format(seq))
++            video_path = data_root + "/" + seq + "/video/video.mp4"
++            args.save_path = f"{result_root}/{seq}"
++            result_filename = os.path.join(args.save_path, 'results.txt')
++            with VideoTracker(cfg, args, video_path) as vdo_trk:
++                vdo_trk.run()
+ 
+-        with VideoTracker(cfg, args, video_path, result_filename) as vdo_trk:
+-            vdo_trk.run()
++            # eval
++            logger.info('Evaluate seq: {}'.format(seq))
++            evaluator = Evaluator(data_root, seq, data_type)
++            accs.append(evaluator.eval_file(result_filename))
+ 
+-        # eval
+-        logger.info('Evaluate seq: {}'.format(seq))
+-        evaluator = Evaluator(data_root, seq, data_type)
+-        accs.append(evaluator.eval_file(result_filename))
++        # 保存accs结果到缓存文件
++        logger.info(f"保存accs结果到缓存文件: {accs_cache_path}")
++        import pickle
++        with open(accs_cache_path, 'wb') as f:
++            pickle.dump(accs, f)
+ 
+     # get summary
+     metrics = mm.metrics.motchallenge_metrics
+@@ -56,7 +76,7 @@ def main(data_root='', seqs=('',), args=""):
+ 
+ def parse_args():
+     parser = argparse.ArgumentParser()
+-    parser.add_argument("--config_detection", type=str, default="./configs/yolov3.yaml")
++    parser.add_argument("--config_detection", type=str, default="./configs/yolov5s.yaml")
+     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
+     parser.add_argument("--ignore_display", dest="display", action="store_false", default=False)
+     parser.add_argument("--frame_interval", type=int, default=1)
+@@ -65,8 +85,10 @@ def parse_args():
+     parser.add_argument("--save_path", type=str, default="./demo/demo.avi")
+     parser.add_argument("--cpu", dest="use_cuda", action="store_false", default=True)
+     parser.add_argument("--camera", action="store", dest="cam", type=int, default="-1")
++    parser.add_argument("--segment", default=False)
+     return parser.parse_args()
+ 
++
+ if __name__ == '__main__':
+     args = parse_args()
+ 
+@@ -77,11 +99,12 @@ if __name__ == '__main__':
+                   MOT16-10
+                   MOT16-11
+                   MOT16-13
+-                  '''        
+-    data_root = 'data/dataset/MOT16/train/'
++                  '''
++    # seqs_str = '''MOT16-02'''
++    data_root = '/home/hispark/pic/MOT16/train/'
+ 
+     seqs = [seq.strip() for seq in seqs_str.split()]
+ 
+     main(data_root=data_root,
+          seqs=seqs,
+-         args=args)
+\ No newline at end of file
++         args=args)
