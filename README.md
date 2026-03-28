@@ -437,7 +437,26 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td></td>
     <td>1 x 40</td>
     </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/vlm/MiniCPM">MiniCPM-4v-0.5B</a>
+    </td>
+    <td></td>
+    <td>21.3TPS</td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/tracking/deepsort">DeepSort</a>
+    </td>
+    <td>MOTA16</td>
+    <td>693.28</td>
+    <td>70.49</td>
+    <td>640 x 640</td>
+    </tr>
 </table>
+
 
 
 
@@ -455,7 +474,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 |          | [**ShuffleNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ShuffleNetV2) | [**InceptionV3**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/InceptionV3) |                         **YOLOv9s**                          |                                                              |                        |
 |          | [**ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet50) | [**SE-ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SEResNet50) |                      **Yolov8s-world**                       |                                                              |                        |
 |          | [**MobileNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/MobileNetV2) | [**YOLOv3**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov3) |                        **centernet**                         |                                                              |                        |
-|          | [**EfficientNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/EfficientNetV2) | [**YOLOv4**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/yolov4) |                         **deepsort**                         |                                                              |                        |
+|          | [**EfficientNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/EfficientNetV2) | [**YOLOv4**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/yolov4) | **[DeepSort](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/tracking/deepsort)** |                                                              |                        |
 |          | [**DenseNet121**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/DenseNet121) | [**YOLOv6s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov6s) | [**LRStereo-B**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/depth/LRStereo-B) |                                                              |                        |
 |          | [**Swin-Transformer**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Swin-Transformer) | [**YOLOv7**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov7) | **[Yolov8s-seg](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-seg)** |                                                              |                        |
 |          | [**Vit-B-16**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Vit-B-16) | [**YOLOv10s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov10s) | **[TinySAM](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/segmentation/TinySam)** |                                                              |                        |
@@ -466,14 +485,14 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 |          | [**PFLD**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/PFLD) |                                                              | [**CRNN**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/ocr/CRNN) |                                                              |                        |
 |          | [**SuperPoint**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/point/SuperPoint) |                                                              | [**VDSR**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/super_resolution/VDSR) |                                                              |                        |
 |          | [**UNet**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/UNet) |                                                              | **[FastSpeech2](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/audio/FastSpeech2)** |                                                              |                        |
-|          | [**YOLOv5s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov5) |                                                              |                    **minicpm(VLM 0.5B)**                     |                                                              |                        |
+|          | [**YOLOv5s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov5) |                                                              | **[MiniCPM-4v-0.5B](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/vlm/MiniCPM)** |                                                              |                        |
 |          | [**YOLOv8l**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8l) |                                                              |                                                              |                                                              |                        |
 |          | [**YOLOv8s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s) |                                                              |                                                              |                                                              |                        |
 |          | [**YOLO11s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s) |                                                              |                                                              |                                                              |                        |
 |          | [**YOLO11s-seg**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s-seg) |                                                              |                                                              |                                                              |                        |
 |   NNN    | [**SqueezeNet1_1**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SqueezeNet1_1) | [**VGG16**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/vgg16) |                         **CN-CLIP**                          | [**YOLOv8s-OBB**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-obb) |      **YOLOV10s**      |
 |          | [**ShuffleNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ShuffleNetV2) | [**InceptionV3**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/InceptionV3) | [**YOLOv3**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov3) |                        **centernet**                         |   **Yolov8s-world**    |
-|          | [**ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet50) | [**SE-ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SEResNet50) | [**YOLOv4**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/yolov4) |                         **deepsort**                         | **tinysan(MobileSam)** |
+|          | [**ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet50) | [**SE-ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SEResNet50) | [**YOLOv4**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/yolov4) | **[DeepSort](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/tracking/deepsort)** | **tinysan(MobileSam)** |
 |          | [**MobileNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/MobileNetV2) | [**EfficientNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/EfficientNetV2) | [**YOLOv8s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s) |                     **DepthAnythingV2**                      |                        |
 |          | [**DenseNet121**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/DenseNet121) | [**Swin-Transformer**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Swin-Transformer) |                         **YOLOv9s**                          | [**SiameseNetwork**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/recognition/SiameseNetwork) |                        |
 |          | [**ResNet101**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet101) | [**Vit-B-16**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Vit-B-16) | **[YOLO11s](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s)** | [**Facenet**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/recognition/FaceNet) |                        |
