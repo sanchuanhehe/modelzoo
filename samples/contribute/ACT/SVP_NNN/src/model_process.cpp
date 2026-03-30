@@ -17,15 +17,41 @@
 
 #include "model_process.h"
 
+#include <algorithm>
 #include <map>
 #include <sstream>
 #include <fstream>
 #include <cstring> 
 #include "utils.h"
+#include "worker_types.h"
 
 using namespace std;
 
 static const int BYTE_BIT_NUM = 8; // 1 byte = 8 bit
+
+namespace {
+
+uint32_t MapElementType(svp_acl_data_type dataType)
+{
+    switch (dataType) {
+        case SVP_ACL_FLOAT:
+            return WORKER_ELEM_FLOAT32;
+        case SVP_ACL_FLOAT16:
+            return WORKER_ELEM_FLOAT16;
+        case SVP_ACL_INT8:
+            return WORKER_ELEM_INT8;
+        case SVP_ACL_UINT8:
+            return WORKER_ELEM_UINT8;
+        case SVP_ACL_INT32:
+            return WORKER_ELEM_INT32;
+        case SVP_ACL_INT64:
+            return WORKER_ELEM_INT64;
+        default:
+            return WORKER_ELEM_UNKNOWN;
+    }
+}
+
+}  // namespace
 
 ModelProcess::ModelProcess()
 {
@@ -33,18 +59,17 @@ ModelProcess::ModelProcess()
 
 ModelProcess::~ModelProcess()
 {
-    Unload();
-    DestroyDesc();
-    DestroyInput();
-    DestroyOutput();
+    // Resource ownership is managed explicitly by SampleProcess::DestroyResource().
+    // Avoid calling ACL-related cleanup here because SampleProcess finalizes ACL
+    // before this member destructor runs.
 }
 
 void ModelProcess::DestroyResource()
 {
-    Unload();
-    DestroyDesc();
     DestroyInput();
     DestroyOutput();
+    DestroyDesc();
+    Unload();
 }
 
 Result ModelProcess::LoadModelFromFileWithMem(const std::string& modelPath)
@@ -52,10 +77,45 @@ Result ModelProcess::LoadModelFromFileWithMem(const std::string& modelPath)
     uint32_t fileSize = 0;
     modelMemPtr_ = Utils::ReadBinFile(modelPath, fileSize);
     modelMemSize_ = fileSize;
+    if (modelMemPtr_ == nullptr || modelMemSize_ == 0) {
+        ERROR_LOG("read model file failed, model file is %s", modelPath.c_str());
+        return FAILED;
+    }
+
+    svp_acl_mdl_config_handle* handle = svp_acl_mdl_create_config_handle();
+    if (handle != nullptr) {
+        const size_t loadType = SVP_ACL_MDL_LOAD_FROM_MEM;
+        svp_acl_error cfgRet = svp_acl_mdl_set_config_opt(
+            handle, SVP_ACL_MDL_LOAD_TYPE_SIZET, &loadType, sizeof(loadType));
+        if (cfgRet == SVP_ACL_SUCCESS) {
+            cfgRet = svp_acl_mdl_set_config_opt(
+                handle, SVP_ACL_MDL_MEM_ADDR_PTR, &modelMemPtr_, sizeof(modelMemPtr_));
+        }
+        if (cfgRet == SVP_ACL_SUCCESS) {
+            cfgRet = svp_acl_mdl_set_config_opt(
+                handle, SVP_ACL_MDL_MEM_SIZET, &modelMemSize_, sizeof(modelMemSize_));
+        }
+        if (cfgRet == SVP_ACL_SUCCESS) {
+            cfgRet = svp_acl_mdl_load_with_config(handle, &modelId_);
+        }
+        (void)svp_acl_mdl_destroy_config_handle(handle);
+
+        if (cfgRet == SVP_ACL_SUCCESS) {
+            loadFlag_ = true;
+            INFO_LOG("load model %s success by config(mem), modelId=%u", modelPath.c_str(), modelId_);
+            return SUCCESS;
+        }
+        WARN_LOG("load model by config(mem) failed, ret=%d, fallback to load_from_mem", static_cast<int>(cfgRet));
+    } else {
+        WARN_LOG("create model config handle failed, fallback to load_from_mem");
+    }
+
     svp_acl_error ret = svp_acl_mdl_load_from_mem(static_cast<uint8_t* >(modelMemPtr_), modelMemSize_, &modelId_);
     if (ret != SVP_ACL_SUCCESS) {
         svp_acl_rt_free(modelMemPtr_);
-        ERROR_LOG("load model from file failed, model file is %s", modelPath.c_str());
+        modelMemPtr_ = nullptr;
+        modelMemSize_ = 0;
+        ERROR_LOG("load model from file failed, model file is %s, ret=%d", modelPath.c_str(), static_cast<int>(ret));
         return FAILED;
     }
 
@@ -285,6 +345,14 @@ size_t ModelProcess::GetInputNum() const {
     return svp_acl_mdl_get_num_inputs(modelDesc_);
 }
 
+size_t ModelProcess::GetOutputNum() const
+{
+    if (modelDesc_ == nullptr) {
+        return 0;
+    }
+    return svp_acl_mdl_get_num_outputs(modelDesc_);
+}
+
 // 新增：获取指定索引输入的参数（大小、stride、维度）
 Result ModelProcess::GetInputStrideParam(int index, size_t& buf_size, size_t& stride, svp_acl_mdl_io_dims& dims) const {
     if (modelDesc_ == nullptr || index < 0 || static_cast<size_t>(index) >= GetInputNum()) {
@@ -311,7 +379,15 @@ Result ModelProcess::CreateInputFromData(const std::vector<const void*>& input_d
     // 初始化输入数据集
     if (input_ != nullptr) { DestroyInput(); }
     input_ = svp_acl_mdl_create_dataset();
-    if (input_ == nullptr) { ERROR_LOG("Create input dataset failed"); return FAILED; }
+    if (input_ == nullptr) {
+        ERROR_LOG("Create input dataset failed");
+        for (size_t i = 0; i < input_datas.size(); ++i) {
+            if (input_datas[i] != nullptr) {
+                svp_acl_rt_free(const_cast<void*>(input_datas[i]));
+            }
+        }
+        return FAILED;
+    }
 
     // 为每个输入创建缓冲区并绑定数据
     for (size_t i = 0; i < input_datas.size(); ++i) {
@@ -322,6 +398,22 @@ Result ModelProcess::CreateInputFromData(const std::vector<const void*>& input_d
         // 获取当前输入的参数
         if (GetInputStrideParam(i, buf_size, stride, dims) != SUCCESS) {
             ERROR_LOG("Get input %zu param failed", i);
+            DestroyInput();
+            for (size_t rest = i; rest < input_datas.size(); ++rest) {
+                if (input_datas[rest] != nullptr) {
+                    svp_acl_rt_free(const_cast<void*>(input_datas[rest]));
+                }
+            }
+            return FAILED;
+        }
+        if (i >= input_sizes.size() || input_sizes[i] > buf_size) {
+            ERROR_LOG("Input %zu size mismatch, input=%zu expected<=%zu", i, i < input_sizes.size() ? input_sizes[i] : 0U, buf_size);
+            DestroyInput();
+            for (size_t rest = i; rest < input_datas.size(); ++rest) {
+                if (input_datas[rest] != nullptr) {
+                    svp_acl_rt_free(const_cast<void*>(input_datas[rest]));
+                }
+            }
             return FAILED;
         }
 
@@ -330,6 +422,12 @@ Result ModelProcess::CreateInputFromData(const std::vector<const void*>& input_d
             const_cast<void*>(input_datas[i]), buf_size, stride);
         if (input_buf == nullptr) {
             ERROR_LOG("Create input %zu buffer failed", i);
+            DestroyInput();
+            for (size_t rest = i; rest < input_datas.size(); ++rest) {
+                if (input_datas[rest] != nullptr) {
+                    svp_acl_rt_free(const_cast<void*>(input_datas[rest]));
+                }
+            }
             return FAILED;
         }
 
@@ -337,6 +435,12 @@ Result ModelProcess::CreateInputFromData(const std::vector<const void*>& input_d
         if (svp_acl_mdl_add_dataset_buffer(input_, input_buf) != SVP_ACL_SUCCESS) {
             ERROR_LOG("Add input %zu buffer to dataset failed", i);
             svp_acl_destroy_data_buffer(input_buf);
+            DestroyInput();
+            for (size_t rest = i; rest < input_datas.size(); ++rest) {
+                if (input_datas[rest] != nullptr) {
+                    svp_acl_rt_free(const_cast<void*>(input_datas[rest]));
+                }
+            }
             return FAILED;
         }
     }
@@ -397,6 +501,102 @@ Result ModelProcess::CreateInputFromData(const void* data, size_t data_size)
     return CreateInput(device_buf, bufSize, stride);
 }
 
+Result ModelProcess::GetPackedOutputData(
+    size_t index,
+    std::vector<uint8_t>& packed,
+    std::vector<int64_t>& dims,
+    uint32_t& elem_type) const
+{
+    packed.clear();
+    dims.clear();
+    elem_type = WORKER_ELEM_UNKNOWN;
+
+    if (output_ == nullptr || modelDesc_ == nullptr) {
+        ERROR_LOG("output dataset is null");
+        return FAILED;
+    }
+    if (index >= svp_acl_mdl_get_dataset_num_buffers(output_)) {
+        ERROR_LOG("output index %zu out of range", index);
+        return FAILED;
+    }
+
+    svp_acl_data_buffer* dataBuffer = svp_acl_mdl_get_dataset_buffer(output_, index);
+    if (dataBuffer == nullptr) {
+        ERROR_LOG("output[%zu] dataBuffer nullptr invalid", index);
+        return FAILED;
+    }
+
+    uint8_t* outData = static_cast<uint8_t*>(svp_acl_get_data_buffer_addr(dataBuffer));
+    size_t outSize = svp_acl_get_data_buffer_size(dataBuffer);
+    if (outData == nullptr || outSize == 0) {
+        ERROR_LOG("output[%zu] data invalid, size=%zu", index, outSize);
+        return FAILED;
+    }
+
+    size_t bufSize = 0;
+    size_t stride = 0;
+    svp_acl_mdl_io_dims ioDims;
+    if (GetOutputStrideParam(static_cast<int>(index), bufSize, stride, ioDims) != SUCCESS) {
+        ERROR_LOG("Get output %zu stride param failed", index);
+        return FAILED;
+    }
+    if (ioDims.dim_count == 0) {
+        ERROR_LOG("output[%zu] dims invalid", index);
+        return FAILED;
+    }
+
+    svp_acl_data_type dataType = svp_acl_mdl_get_output_data_type(modelDesc_, index);
+    const size_t elemByteSize = svp_acl_data_type_size(dataType) / BYTE_BIT_NUM;
+    if (elemByteSize == 0) {
+        ERROR_LOG("output[%zu] elem byte size invalid", index);
+        return FAILED;
+    }
+
+    elem_type = MapElementType(dataType);
+    if (elem_type == WORKER_ELEM_UNKNOWN) {
+        ERROR_LOG("output[%zu] data type unsupported", index);
+        return FAILED;
+    }
+
+    dims.reserve(ioDims.dim_count);
+    uint64_t rowCount = 1;
+    for (size_t i = 0; i < ioDims.dim_count; ++i) {
+        dims.push_back(ioDims.dims[i]);
+        if (i + 1 < ioDims.dim_count) {
+            rowCount *= static_cast<uint64_t>(std::max<int64_t>(ioDims.dims[i], 1));
+        }
+    }
+
+    const uint64_t lastDim = static_cast<uint64_t>(std::max<int64_t>(ioDims.dims[ioDims.dim_count - 1], 0));
+    const uint64_t rowBytes = lastDim * elemByteSize;
+    const uint64_t totalBytes = rowCount * rowBytes;
+    if (totalBytes == 0) {
+        packed.clear();
+        return SUCCESS;
+    }
+    if (stride < rowBytes) {
+        ERROR_LOG("output[%zu] stride(%zu) smaller than rowBytes(%llu)", index, stride,
+            static_cast<unsigned long long>(rowBytes));
+        return FAILED;
+    }
+
+    packed.resize(static_cast<size_t>(totalBytes));
+    for (uint64_t row = 0; row < rowCount; ++row) {
+        const size_t srcOffset = static_cast<size_t>(row * stride);
+        const size_t dstOffset = static_cast<size_t>(row * rowBytes);
+        if (srcOffset + static_cast<size_t>(rowBytes) > outSize || dstOffset + static_cast<size_t>(rowBytes) > packed.size()) {
+            ERROR_LOG("output[%zu] row copy overflow detected", index);
+            packed.clear();
+            dims.clear();
+            elem_type = WORKER_ELEM_UNKNOWN;
+            return FAILED;
+        }
+        std::memcpy(&packed[dstOffset], outData + srcOffset, static_cast<size_t>(rowBytes));
+    }
+
+    return SUCCESS;
+}
+
 void ModelProcess::DumpModelOutputResult() const
 {
     stringstream ss;
@@ -411,48 +611,29 @@ void ModelProcess::DumpModelOutputResult() const
 }
 
 void ModelProcess::OutputModelResult() const {
-    if (output_ == nullptr) {
+    if (output_ == nullptr || modelDesc_ == nullptr) {
         ERROR_LOG("Output dataset is null, cannot output result");
         return;
     }
 
-    // 获取输出数量
-    size_t outputNum = svp_acl_mdl_get_num_outputs(modelDesc_);
-    INFO_LOG("Total output count: %zu", outputNum);
-
-    // 遍历每个输出
-    for (size_t i = 1; i < outputNum; ++i) {
-        // 获取当前输出缓冲区
-        svp_acl_data_buffer* dataBuffer = svp_acl_mdl_get_dataset_buffer(output_, i);
-        if (dataBuffer == nullptr) {
-            ERROR_LOG("Output[%zu] buffer is null", i);
+    INFO_LOG("Total output count: %zu", GetOutputNum());
+    for (size_t i = 0; i < GetOutputNum(); ++i) {
+        std::vector<uint8_t> packed;
+        std::vector<int64_t> dims;
+        uint32_t elemType = WORKER_ELEM_UNKNOWN;
+        if (GetPackedOutputData(i, packed, dims, elemType) != SUCCESS) {
             continue;
         }
-
-        // 获取输出数据地址和大小
-        int8_t* outputData = static_cast<int8_t*>(svp_acl_get_data_buffer_addr(dataBuffer));
-        size_t outputSize = svp_acl_get_data_buffer_size(dataBuffer);
-        if (outputData == nullptr || outputSize == 0) {
-            ERROR_LOG("Output[%zu] data is invalid (size: %zu)", i, outputSize);
-            continue;
+        std::ostringstream oss;
+        oss << "Output[" << i << "] elem_type=" << elemType << " dims=[";
+        for (size_t dimIdx = 0; dimIdx < dims.size(); ++dimIdx) {
+            if (dimIdx != 0) {
+                oss << ", ";
+            }
+            oss << dims[dimIdx];
         }
-
-        // 打印当前输出的基本信息
-        INFO_LOG("\nOutput[%zu] (size: %zu bytes):", i, outputSize);
-        INFO_LOG("----------------------------------------");
-
-        // 打印全部输出数据（根据实际数据类型调整，此处假设为float）
-        // 注意：需根据模型输出的实际数据类型（如int32_t、float等）修改指针类型
-        size_t dataCount = outputSize / sizeof(float);  // 假设输出为float类型
-        float* floatData = reinterpret_cast<float*>(outputData);
-
-        // 打印输出数据的数量
-        printf("Total data count: %zu\n", dataCount);
-        std::cout << "FLOAT_OUTPUT_START " << i << " " << dataCount << std::endl;
-        for (size_t j = 0; j < dataCount; ++j) {
-            std::cout << floatData[j] << " ";
-        }
-        std::cout << std::endl << "FLOAT_OUTPUT_END " << i << std::endl;
+        oss << "] bytes=" << packed.size();
+        INFO_LOG("%s", oss.str().c_str());
     }
 }
 
@@ -481,7 +662,6 @@ Result ModelProcess::Execute()
         return FAILED;
     }
     executeNum_++;
-    INFO_LOG("model execute success");
     return SUCCESS;
 }
 
@@ -583,11 +763,6 @@ void ModelProcess::Unload()
     svp_acl_error ret = svp_acl_mdl_unload(modelId_);
     if (ret != SVP_ACL_SUCCESS) {
         ERROR_LOG("unload model failed, modelId is %u", modelId_);
-    }
-
-    if (modelDesc_ != nullptr) {
-        (void)svp_acl_mdl_destroy_desc(modelDesc_);
-        modelDesc_ = nullptr;
     }
 
     if (modelMemPtr_ != nullptr) {

@@ -86,15 +86,24 @@ void* Utils::ReadBinFile(const std::string& fileName, uint32_t &fileSize)
     }
     binFile.seekg(0, binFile.beg);
     void* binFileBufferData = nullptr;
-    svp_acl_error ret = svp_acl_rt_malloc(&binFileBufferData, binFileBufferLen, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
-    if (ret != SVP_ACL_SUCCESS) {
-        ERROR_LOG("malloc device buffer failed. size is %u", binFileBufferLen);
+    svp_acl_error ret = svp_acl_rt_malloc(
+        &binFileBufferData,
+        static_cast<size_t>(binFileBufferLen),
+        SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+    if (ret != SVP_ACL_SUCCESS || binFileBufferData == nullptr) {
+        ERROR_LOG("malloc device buffer failed. size is %u, ret=%d", binFileBufferLen, static_cast<int>(ret));
         binFile.close();
         return nullptr;
     }
-    InitData(static_cast<int8_t*>(binFileBufferData), binFileBufferLen);
+    InitData(static_cast<int8_t*>(binFileBufferData), static_cast<size_t>(binFileBufferLen));
 
     binFile.read(static_cast<char *>(binFileBufferData), binFileBufferLen);
+    if (!binFile) {
+        ERROR_LOG("read file %s into device buffer failed", fileName.c_str());
+        svp_acl_rt_free(binFileBufferData);
+        binFile.close();
+        return nullptr;
+    }
     binFile.close();
     fileSize = static_cast<uint32_t>(binFileBufferLen);
     return binFileBufferData;
@@ -135,8 +144,8 @@ void* Utils::ReadBinFileWithStride(const std::string& fileName, const svp_acl_md
     }
     size_t bufferSize = loopTimes * stride;
     svp_acl_error ret = svp_acl_rt_malloc(&binFileBufferData, bufferSize, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
-    if (ret != SVP_ACL_SUCCESS) {
-        ERROR_LOG("malloc device buffer failed. size is %u", binFileBufferLen);
+    if (ret != SVP_ACL_SUCCESS || binFileBufferData == nullptr) {
+        ERROR_LOG("malloc device buffer failed. size is %u, ret=%d", binFileBufferLen, static_cast<int>(ret));
         binFile.close();
         return nullptr;
     }

@@ -7,86 +7,139 @@
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
-#include <fstream>
 #include <iostream>
+#include <string>
+#include <vector>
+#include "acl/svp_acl.h"
+#include "protocol.h"
 #include "sample_process.h"
 #include "utils.h"
-#include <vector>
-#include <string>
+
 using namespace std;
 
+namespace {
+
+static const uint16_t kExpectedInputCount = 3;
+
+void FreeInputBuffers(const vector<const void*>& input_datas)
+{
+    for (size_t i = 0; i < input_datas.size(); ++i) {
+        if (input_datas[i] != nullptr) {
+            svp_acl_rt_free(const_cast<void*>(input_datas[i]));
+        }
+    }
+}
+
+}  // namespace
+
 int main() {
+    std::ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
     // 初始化推理环境（只执行一次）
     SampleProcess sample;
     if (sample.InitResource() != SUCCESS) {
-        cerr << "Init resource failed" << endl;
+        ERROR_LOG("Init resource failed");
         return -1;
     }
 
     // 加载模型（只执行一次）
     if (sample.LoadModel() != SUCCESS) {
-        cerr << "Load model failed" << endl;
-        sample.DestroyResource();
+        ERROR_LOG("Load model failed");
         return -1;
     }
 
-    // 循环处理多次输入
+    // 循环处理多次请求
     while (true) {
-        vector<const void*> input_datas;
-        vector<size_t> input_sizes;
-        const int INPUT_COUNT = 3;
+        RequestHeader requestHeader;
+        string protocolError;
+        const ReadHeaderStatus headerStatus = ReadRequestHeader(cin, requestHeader, protocolError);
+        if (headerStatus == READ_HEADER_EOF) {
+            break;
+        }
+        if (headerStatus == READ_HEADER_ERROR) {
+            ERROR_LOG("Read request header failed: %s", protocolError.c_str());
+            break;
+        }
 
-        // 读取输入数据（保持原有逻辑）
-        bool readSuccess = true;
-        for (int i = 0; i < INPUT_COUNT; ++i) {
-            uint32_t data_size;
-            cin.read(reinterpret_cast<char*>(&data_size), sizeof(data_size));
-            if (!cin.good()) {
-                cerr << "Read input " << i << " size failed" << endl;
-                readSuccess = false;
+        if (requestHeader.magic != WORKER_PROTOCOL_MAGIC
+            || requestHeader.version != WORKER_PROTOCOL_VERSION) {
+            ERROR_LOG(
+                "Invalid protocol header: magic=0x%x version=%u",
+                requestHeader.magic,
+                requestHeader.version);
+            break;
+        }
+
+        vector<const void*> input_datas(kExpectedInputCount, nullptr);
+        vector<size_t> input_sizes(kExpectedInputCount, 0U);
+        bool requestOk = true;
+
+        if (requestHeader.input_count != kExpectedInputCount) {
+            requestOk = false;
+            protocolError = "unexpected input_count";
+        }
+
+        for (uint16_t i = 0; i < requestHeader.input_count; ++i) {
+            InputEntryHeader inputHeader;
+            if (!ReadInputEntryHeader(cin, inputHeader, protocolError)) {
+                ERROR_LOG("Read input header failed: %s", protocolError.c_str());
+                requestOk = false;
+                break;
+            }
+
+            if (inputHeader.input_index >= kExpectedInputCount || input_datas[inputHeader.input_index] != nullptr) {
+                requestOk = false;
+                protocolError = "invalid or duplicated input_index";
                 break;
             }
 
             void* data = nullptr;
-            svp_acl_error ret = svp_acl_rt_malloc(&data, data_size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
-            if (ret != SVP_ACL_SUCCESS || data == nullptr) {
-                cerr << "Malloc buffer for input " << i << " failed" << endl;
-                readSuccess = false;
-                break;
+            if (inputHeader.byte_size > 0) {
+                svp_acl_error ret = svp_acl_rt_malloc(&data, inputHeader.byte_size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+                if (ret != SVP_ACL_SUCCESS || data == nullptr) {
+                    protocolError = "failed to allocate device buffer for input";
+                    requestOk = false;
+                    break;
+                }
+
+                if (!ReadExact(cin, reinterpret_cast<char*>(data), inputHeader.byte_size, protocolError)) {
+                    svp_acl_rt_free(data);
+                    data = nullptr;
+                    requestOk = false;
+                    break;
+                }
             }
 
-            cin.read(reinterpret_cast<char*>(data), data_size);
-            if (!cin.good()) {
-                cerr << "Read input " << i << " data failed" << endl;
-                svp_acl_rt_free(data);
-                readSuccess = false;
-                break;
-            }
-
-            input_datas.push_back(data);
-            input_sizes.push_back(data_size);
+            input_datas[inputHeader.input_index] = data;
+            input_sizes[inputHeader.input_index] = inputHeader.byte_size;
         }
 
-        // 检查是否读取失败（比如到达输入末尾）
-        if (!readSuccess) {
-            // 释放已分配的内存
-            for (auto ptr : input_datas) svp_acl_rt_free(ptr);
+        if (!requestOk) {
+            FreeInputBuffers(input_datas);
+
+            InferenceResponse response = MakeErrorResponse(
+                requestHeader.request_id,
+                WORKER_ERROR_BAD_REQUEST,
+                protocolError.empty() ? "bad request frame" : protocolError);
+            string writeError;
+            if (!WriteResponseFrame(cout, response, writeError)) {
+                ERROR_LOG("Write error response failed: %s", writeError.c_str());
+                break;
+            }
+            continue;
+        }
+
+        InferenceResponse response = sample.ProcessOnce(
+            input_datas,
+            input_sizes,
+            requestHeader.request_id);
+
+        string writeError;
+        if (!WriteResponseFrame(cout, response, writeError)) {
+            ERROR_LOG("Write response failed: %s", writeError.c_str());
             break;
         }
-
-        // 设置输入并执行推理
-        sample.SetInputDatas(input_datas, input_sizes);
-        if (sample.Process() != SUCCESS) {
-            cerr << "Inference failed" << endl;
-        } else {
-            cout << "3-input inference success" << endl;  // 注意这里修正了原代码的数字错误（5->3）
-        }
-
-        // 释放当前批次的输入内存
-        for (auto data : input_datas) svp_acl_rt_free(data);
     }
-
-    // 最后释放所有资源
-    sample.DestroyResource();
     return 0;
 }
