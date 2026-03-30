@@ -120,15 +120,15 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
             param.kStd.emplace_back(float(val));
         }
     } catch (const json::parse_error& e) {
-        LOG(ERROR) << "JSON 解析错误: " << e.what();
+        LOG(ERROR) << "JSON parse error: " << e.what();
         file.close();
         return false;
     } catch (const json::type_error& e) {
-        LOG(ERROR) << "数据类型错误: " << e.what();
+        LOG(ERROR) << "Data type error: " << e.what();
         file.close();
         return false;
     } catch (const std::exception& e) {
-        LOG(ERROR) << "运行时错误: " << e.what();
+        LOG(ERROR) << "Running error: " << e.what();
         file.close();
         return false;
     }

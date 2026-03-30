@@ -129,6 +129,14 @@
   },
   {
     "buildTarget": "modelzoo-app",
+    "relativePath": "classification/Chinese-CLIP",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "图文检索"
+  },
+  {
+    "buildTarget": "modelzoo-app",
     "relativePath": "classification/EfficientNetV2",
     "chip": "SS928V100",
     "buildDef": "OPTG",

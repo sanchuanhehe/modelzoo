@@ -91,6 +91,7 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
 | Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
 | Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t14.7.b140  |  aarch64-mix210-linux-gcc |  Linux |  SS928 V100R001C02SPC022 |
 
 # 模型推理<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
@@ -169,7 +170,7 @@ pip3 install -r requirements.txt
 git clone https://github.com/OFA-Sys/Chinese-CLIP.git
 cd Chinese-CLIP
 git reset 2c38d03557e50eadc72972b272cebf840dbc34ea --hard
-git apply ../clip.patch
+git apply ../clip.patch # dpico核使用clip.patch, dlite核需要修改命令为 git apply ../clip_dlite.patch
 cd ..
 ``
 ```
@@ -205,7 +206,7 @@ cd ..
     ```
     例如:
     ```
-    python3 ../../../../utils/generate_file_list.py data/datasets/cifar-100/test
+    python3 ../../../../utils/generate_file_list.py -r data/datasets/cifar-100/test
     ```
 
    参数说明：
@@ -238,13 +239,13 @@ cd ..
     vit-b-16.img.fp32.onnx和vit-b-16.txt.fp32.onnx
 
 3. 使用 onnx-simplifier 简化 onnx 模型。
-      1. 文本模型
+      1. 图像模型
       
             ```
             onnxsim model/vit-b-16.img.fp32.onnx model/vit-b-16_img_sim.onnx --overwrite-input-shape "image:1,3,224,224"
             ```
         
-      2. 图像模型
+      2. 文本模型
       
             ```
             onnxsim model/vit-b-16.txt.fp32.onnx model/vit-b-16_txt_sim.onnx --overwrite-input-shape "text:1,512"
@@ -254,13 +255,31 @@ cd ..
    
     Hi3403V100 SVP_NNN上的om模型转换命令:
     1、图像
+    1. Hi3403V100 SVP_NNN上的om模型转换命令
+
     ```
-    atc --framework=5  --model="./model/vit-b-16_img_sim.onnx" --input_shape="image:1,3,224,224" --output="./model/clip_img" --image_list="./data/img/0.bin" --compile_mode=6 --matmul_per_channel_enable=1 --softmax_optimize_enable=1 --fusion_switch_file=TransformerFusion:on --soc_version=SS928V100
+    atc --framework=5  --model="./dpico/vit-b-16_img_sim.onnx" --input_shape="image:1,3,224,224" --output="./dpico/clip_img" --image_list="./data/img/0.bin" --compile_mode=6 --matmul_per_channel_enable=1 --softmax_optimize_enable=1 --fusion_switch_file=TransformerFusion:on --soc_version=SS928V100
     ```
+
+    2. Hi3403V100 NNN上的om模型转换命令
+
+    ```
+    atc --framework=5 --model="./model/vit-b-16_img_sim.onnx" --input_shape="image:1,3,224,224" --output="./model/clip_img" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
+    ```
+
     2、文本
+    1. Hi3403V100 SVP_NNN上的om模型转换命令
+
     ```
-    atc --framework=5  --model="./model/vit-b-16_txt_sim.onnx" --input_type=text:FP32 --output="./model/clip_text" --image_list="./data/quant_text.txt" --compile_mode=6 --matmul_per_channel_enable=1 --fusion_switch_file=TransformerFusion:on --force_to_cpu=/bert/embeddings/word_embeddings/Gather --gfpq_param_file=./data/calibration_param.txt --soc_version=SS928V100
+    atc --framework=5  --model="./dpico/vit-b-16_txt_sim.onnx" --input_type=text:FP32 --output="./dpico/clip_text" --image_list="./data/quant_text.txt" --compile_mode=6 --matmul_per_channel_enable=1 --fusion_switch_file=TransformerFusion:on --force_to_cpu=/bert/embeddings/word_embeddings/Gather --gfpq_param_file=./data/calibration_param.txt --soc_version=SS928V100
     ```
+
+    2. Hi3403V100 NNN上的om模型转换命令
+
+    ```
+    atc --framework=5  --model="./model/vit-b-16_txt_sim.onnx" --output="./model/clip_text" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
+    ```
+
     运行成功后生成clip_img.om和clip_text.om模型文件。
 
     参数说明：
@@ -310,6 +329,11 @@ cd ..
     {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "9999"}, {"key": "Number of classes", "value": "100"}, {"key": "Top1 accuracy", "value": "63.68%"}, {"key": "Top2 accuracy", "value": "76.65%"}, {"key": "Top3 accuracy", "value": "82.44%"}, {"key": "Top4 accuracy", "value": "85.76%"}, {"key": "Top5 accuracy", "value": "87.79%"}]}
     ```
 
+    NNN平台上精度结果：
+    ```
+    {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "9999"}, {"key": "Number of classes", "value": "100"}, {"key": "Top1 accuracy", "value": "61.8%"}, {"key": "Top2 accuracy", "value": "75.31%"}, {"key": "Top3 accuracy", "value": "81.12%"}, {"key": "Top4 accuracy", "value": "84.56%"}, {"key": "Top5 accuracy", "value": "87.05%"}]}
+    ```
+
 2. 验证img的om模型的性能，参考命令如下：
 
     ```
@@ -327,6 +351,12 @@ cd ..
     ```
     [INFO]  time: 8975423, fps: 11.141536
     ```
+
+    NNN平台上性能结果如下：
+    ```
+    execution time: 1049.88ms, frame rate: 0.95fps
+    ```
+
     备注：txt模型性能
     ```
     ./main -a ../src/acl.json -t ../model/clip_text.om   -i ../data/cfg.txt  -l 1
@@ -338,4 +368,5 @@ cd ..
 | 芯片型号    | Batch Size | 数据集   |  Zero-shot Image Classification |       性能(FPS)|
 | ----------- | ---------- | -------- |  ------------------ |-----------------|
 | Hi3403V100 SVP_NNN | 1          | CIFAR100 |  0.6341            | 11.142   |
+| Hi3403V100 NNN | 1          | CIFAR100 |  0.618            | 0.95   |
 

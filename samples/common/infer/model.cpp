@@ -106,7 +106,7 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
     { ModelType::TinySam, {nullptr, nullptr} },
     { ModelType::ClipImg, {ClipImgPreprocess, Clip::ClipImgPostprocess} },
-    { ModelType::ClipTxt, {ClipTxtPreprocess, Clip::ClipTxtPostprocess} },
+    { ModelType::ClipTxt, {std::bind(ClipTxtPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), Clip::ClipTxtPostprocess} },
     { ModelType::SuperPoint, {SuperPointPreprocess, SuperPointPostprocess}},
     { ModelType::SqueezeNet1_1, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                         ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
@@ -166,6 +166,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::ResNet101, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                         ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
     { ModelType::DepthAnythingV2, { std::bind(DepthAnythingV2Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), DepthAnythingV2Postprocess } },
+    { ModelType::ClipImg, {ClipImgPreprocess, Clip::ClipImgPostprocess} },
+    { ModelType::ClipTxt, {std::bind(ClipTxtPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), Clip::ClipTxtPostprocess} },
 };
 #endif
 

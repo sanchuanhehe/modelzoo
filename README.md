@@ -146,7 +146,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     </td>
     <td>CIFAR100</td>
     <td>11.142</td>
-    <td></td>
+    <td>0.95</td>
     <td>224 x 224</td>
     </tr>
     <tr>
@@ -455,6 +455,24 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
     <td>70.49</td>
     <td>640 x 640</td>
     </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/embodied_intelligence/GraspNet">GraspNet</a>
+    </td>
+    <td>example_data</td>
+    <td></td>
+    <td>0.75</td>
+    <td>720 x 1280</td>
+    </tr>
+    <tr>
+    <td>
+    <a href="https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/embodied_intelligence/Pi0">Pi0</a>
+    </td>
+    <td>lerobot/aloha_sim_transfer_cube_scripted</td>
+    <td></td>
+    <td>4.52</td>
+    <td>480 x 640</td>
+    </tr>
 </table>
 
 
@@ -490,7 +508,7 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 |          | [**YOLOv8s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s) |                                                              |                                                              |                                                              |                        |
 |          | [**YOLO11s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s) |                                                              |                                                              |                                                              |                        |
 |          | [**YOLO11s-seg**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolo11s-seg) |                                                              |                                                              |                                                              |                        |
-|   NNN    | [**SqueezeNet1_1**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SqueezeNet1_1) | [**VGG16**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/vgg16) |                         **CN-CLIP**                          | [**YOLOv8s-OBB**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-obb) |      **YOLOV10s**      |
+|   NNN    | [**SqueezeNet1_1**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SqueezeNet1_1) | [**VGG16**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/vgg16) | [**Chinese-CLIP**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Chinese-CLIP) | [**YOLOv8s-OBB**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-obb) |      **YOLOV10s**      |
 |          | [**ShuffleNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ShuffleNetV2) | [**InceptionV3**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/InceptionV3) | [**YOLOv3**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov3) |                        **centernet**                         |   **Yolov8s-world**    |
 |          | [**ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/ResNet50) | [**SE-ResNet50**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/SEResNet50) | [**YOLOv4**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/detection/yolov4) | **[DeepSort](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/tracking/deepsort)** | **tinysan(MobileSam)** |
 |          | [**MobileNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/MobileNetV2) | [**EfficientNetV2**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/EfficientNetV2) | [**YOLOv8s**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s) |                     **DepthAnythingV2**                      |                        |
@@ -508,8 +526,11 @@ ModelZoo，HiSpark下的开源AI模型平台，涵盖计算机视觉、自然语
 ## Hi3591P   
 <div align="center">
 
-| **2026Q1** | **pi0** | **graspnet** |
-|:----------:|:-------:|:------------:|
+|                          **2026Q1**                          |                          **2026Q2**                          |       **2026Q3**       |
+| :----------------------------------------------------------: | :----------------------------------------------------------: | :--------------------: |
+| [**GraspNet**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/embodied_intelligence/GraspNet) |                        |                        | 
+| [**Pi0**](https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/embodied_intelligence/Pi0) |                        |                        | 
+
 
 </div>
 

@@ -1,0 +1,150 @@
+diff --git a/cn_clip/clip/model.py b/cn_clip/clip/model.py
+old mode 100644
+new mode 100755
+diff --git a/cn_clip/clip/modeling_bert.py b/cn_clip/clip/modeling_bert.py
+old mode 100644
+new mode 100755
+index 0d57665..7b86e33
+--- a/cn_clip/clip/modeling_bert.py
++++ b/cn_clip/clip/modeling_bert.py
+@@ -57,7 +57,78 @@ def swish(x):
+ ACT2FN = {"gelu": gelu, "relu": torch.nn.functional.relu, "swish": swish, "gelu_new": gelu_new}
+ 
+ 
+-BertLayerNorm = torch.nn.LayerNorm
++import torch
++import torch.nn as nn
++import torch.nn.functional as F
++
++class LayerNorm(nn.Module):
++    """
++    完整的LayerNorm实现，与torch.nn.LayerNorm功能完全一致
++    """
++    
++    def __init__(self, normalized_shape, eps=1e-12, elementwise_affine=True):
++        """
++        Args:
++            normalized_shape: 需要归一化的维度形状
++            eps: 防止除零的小常数
++            elementwise_affine: 是否使用可学习的缩放和偏移参数
++        """
++        super().__init__()  
++        
++        # 处理输入参数
++        if isinstance(normalized_shape, int):
++            normalized_shape = (normalized_shape,)
++        
++        self.normalized_shape = tuple(normalized_shape)
++        self.eps = eps
++        self.elementwise_affine = elementwise_affine
++        
++        # 初始化可学习参数
++        if self.elementwise_affine:
++            self.weight = nn.Parameter(torch.ones(self.normalized_shape))
++            self.bias = nn.Parameter(torch.zeros(self.normalized_shape))
++        else:
++            self.register_parameter('weight', None)
++            self.register_parameter('bias', None)
++    
++    def forward(self, x):
++        """
++        Args:
++            x: 输入张量，最后几个维度必须与normalized_shape匹配
++        Returns:
++            归一化后的张量
++        """
++        # 计算需要归一化的维度索引
++        normalized_dims = tuple(range(-len(self.normalized_shape), 0))
++        
++        # 检查输入形状
++        input_shape = x.shape
++        expected_shape = input_shape[-len(self.normalized_shape):]
++        assert expected_shape == self.normalized_shape, \
++            f"期望最后{len(self.normalized_shape)}维形状为{self.normalized_shape}，实际为{expected_shape}"
++        
++        # 计算均值和方差
++        # keepdim=True 保持维度以便广播
++        mean = x.mean(dim=normalized_dims, keepdim=True)
++        var = x.var(dim=normalized_dims, keepdim=True, unbiased=False)  # 使用有偏估计
++        
++        # 归一化
++        x_normalized = (x - mean) / torch.sqrt(var + self.eps)
++        
++        # 应用可学习参数
++        if self.elementwise_affine:
++            output = self.weight * x_normalized + self.bias
++        else:
++            output = x_normalized
++        
++        return output
++    
++    def extra_repr(self):
++        """返回模块的额外信息"""
++        return f'{self.normalized_shape}, eps={self.eps}, ' \
++               f'elementwise_affine={self.elementwise_affine}'
++# BertLayerNorm = torch.nn.LayerNorm
++BertLayerNorm = LayerNorm
+ 
+ class BertEmbeddings(nn.Module):
+     """Construct the embeddings from word, position and token_type embeddings.
+@@ -125,7 +196,7 @@ class BertSelfAttention(nn.Module):
+         value_layer = self.transpose_for_scores(mixed_value_layer)
+ 
+         # Take the dot product between "query" and "key" to get the raw attention scores.
+-        attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
++        attention_scores = torch.matmul(query_layer.half(), key_layer.half().transpose(-1, -2)).float()
+         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
+         if attention_mask is not None:
+             # Apply the attention mask is (precomputed for all layers in BertModel forward() function)
+diff --git a/cn_clip/deploy/pytorch_to_onnx.py b/cn_clip/deploy/pytorch_to_onnx.py
+old mode 100644
+new mode 100755
+index ceed11a..b12f4eb
+--- a/cn_clip/deploy/pytorch_to_onnx.py
++++ b/cn_clip/deploy/pytorch_to_onnx.py
+@@ -2,7 +2,7 @@
+ """
+ This script converts PyTorch implemented Chinese-CLIP (text or vision) model to ONNX format for CPU/GPU deployment.
+ """
+-
++import sys
+ import os
+ import argparse
+ from PIL import Image
+@@ -10,8 +10,9 @@ import torch
+ import torch.onnx
+ from onnx import load_model, save_model
+ from onnxmltools.utils import convert_float_to_float16
++sys.path.append('./Chinese-CLIP')
+ import cn_clip.clip as clip
+-from clip.utils import _MODELS, _MODEL_INFO, _download, available_models, create_model, image_transform
++from cn_clip.clip.utils import _MODELS, _MODEL_INFO, _download, available_models, create_model, image_transform
+ 
+ def parse_args():
+     parser = argparse.ArgumentParser()
+@@ -118,12 +119,13 @@ if __name__ == '__main__':
+                     input_names=['text'],
+                     output_names=['unnorm_text_features'],
+                     export_params=True,
++                    dynamic_axes=None,
+                     opset_version=13,
+                     verbose=True)
+         # convert text FP16 ONNX model based on the FP32 model
+         text_fp16_onnx_path = f"{args.save_onnx_path}.txt.fp16.onnx"
+         text_fp32_onnx_model = load_model(text_fp32_onnx_path)
+-        text_fp16_onnx_model = convert_float_to_float16(text_fp32_onnx_model, keep_io_types=True, disable_shape_infer=True)
++        text_fp16_onnx_model = convert_float_to_float16(text_fp32_onnx_model, keep_io_types=True, disable_shape_infer=True, check_fp16_ready=False)
+         save_model(text_fp16_onnx_model,
+                     text_fp16_onnx_path,
+                     location="{}.extra_file".format(os.path.split(text_fp16_onnx_path)[1]),
+@@ -143,7 +145,9 @@ if __name__ == '__main__':
+                     output_names=['unnorm_image_features'],
+                     export_params=True,
+                     do_constant_folding=False,
+-                    opset_version=13,
++                    dynamic_axes=None,
++                    opset_version=14,
++                    #opset_version=14,
+                     verbose=True)
+         # for ViT-H-14 FP32 model, make another conversion to deal with the generated small files
+         if args.model_arch == "ViT-H-14":
