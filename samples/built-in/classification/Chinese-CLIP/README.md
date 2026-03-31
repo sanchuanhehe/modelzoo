@@ -170,7 +170,7 @@ pip3 install -r requirements.txt
 git clone https://github.com/OFA-Sys/Chinese-CLIP.git
 cd Chinese-CLIP
 git reset 2c38d03557e50eadc72972b272cebf840dbc34ea --hard
-git apply ../clip.patch # dpico核使用clip.patch, dlite核需要修改命令为 git apply ../clip_dlite.patch
+git apply ../clip.patch # SVP_NNN算力引擎使用clip.patch, NNN算力引擎需要修改命令为 git apply ../clip_nnn.patch
 cd ..
 ``
 ```

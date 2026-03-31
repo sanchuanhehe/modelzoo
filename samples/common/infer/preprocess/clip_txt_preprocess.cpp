@@ -600,7 +600,8 @@ bool ReadSingleToBuf(std::vector<int64_t> allTokens, TensorDesc &desc,
 bool ClipTxtPreprocess(std::vector<std::string> &fileList,
                        std::vector<TensorBuf> &inBufs,
                        std::vector<TensorDesc> &inDescs,
-                       bool isDpico) {
+                       bool isDpico)
+{
   try {
     LOG(INFO) << "pre txt : " << fileList[0];
     // 创建分词器
