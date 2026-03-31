@@ -558,7 +558,8 @@ std::string PreprocessTextClip(const std::string &text) {
 }
 
 bool ReadSingleToBuf(std::vector<int64_t> allTokens, TensorDesc &desc,
-                     TensorBuf &inBuf, bool isDpico) {
+                     TensorBuf &inBuf, bool isDpico)
+{
   int BYTE_BIT_NUM = 8;
 
   int64_t loopTimes = 1;
