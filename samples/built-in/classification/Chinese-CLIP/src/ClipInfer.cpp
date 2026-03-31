@@ -87,8 +87,9 @@ bool ClipInfer::ReadTxtToVector(
 
     // 2. 逐行读取文件
     std::string line;
-    std::vector<std::string> tmp;
+
     while (std::getline(file, line)) {  // std::getline自动剔除换行符\n
+        std::vector<std::string> tmp;
         // 处理Windows换行符\r（std::getline不会剔除\r）
         if (!line.empty() && line.back() == '\r') {
             line.pop_back();

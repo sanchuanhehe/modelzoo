@@ -558,7 +558,8 @@ std::string PreprocessTextClip(const std::string &text) {
 }
 
 bool ReadSingleToBuf(std::vector<int64_t> allTokens, TensorDesc &desc,
-                     TensorBuf &inBuf) {
+                     TensorBuf &inBuf, bool isDpico)
+{
   int BYTE_BIT_NUM = 8;
 
   int64_t loopTimes = 1;
@@ -580,20 +581,28 @@ bool ReadSingleToBuf(std::vector<int64_t> allTokens, TensorDesc &desc,
   }
 
   // 检查类型是否为float32（typeSize=32比特）
-  if (desc.typeSize != 32) {
+  if (desc.typeSize != 32 && isDpico) {
     LOG(ERROR) << "Error: TensorDesc typeSize must be 32 (float32)";
     return false;
   }
 
   // 步骤5：将float数据写入inBuf（模仿原ReadImgFileToBuf的逻辑）
-  memcpy(static_cast<char *>(inBuf.GetRawPtr()), floatTokens.data(),
-         width * dataSize);
+  if (isDpico) {
+    memcpy(static_cast<char *>(inBuf.GetRawPtr()), floatTokens.data(),
+        width * dataSize);
+  } else {
+    memcpy(static_cast<char *>(inBuf.GetRawPtr()), allTokens.data(),
+        width * dataSize);
+  }
+
   return true;
 }
 
 bool ClipTxtPreprocess(std::vector<std::string> &fileList,
                        std::vector<TensorBuf> &inBufs,
-                       std::vector<TensorDesc> &inDescs) {
+                       std::vector<TensorDesc> &inDescs,
+                       bool isDpico)
+{
   try {
     LOG(INFO) << "pre txt : " << fileList[0];
     // 创建分词器
@@ -624,7 +633,7 @@ bool ClipTxtPreprocess(std::vector<std::string> &fileList,
     for (int i = tokens.size(); i < CONTEXT_LENGTH; i++) {
       tokens.push_back(0);
     }
-    ReadSingleToBuf(tokens, inDescs[0], inBufs[0]);
+    ReadSingleToBuf(tokens, inDescs[0], inBufs[0], isDpico);
   } catch (const std::exception &e) {
     LOG(ERROR) << "error: " << e.what();
     return -1;
