@@ -110,7 +110,7 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
 ### 模型转化
 通过PyTorch将多`.safetensors`权重文件夹转为`.onnx`文件，再用ATC工具转为`.om`离线推理模型：
 1. 准备权重文件：
-   模型下载链接：https://huggingface.co/datasets/lwh2017/grab_banana（待修改）
+   模型下载链接：https://huggingface.co/datasets/lwh2017/grab_banana
    ```bash
    mkdir model  # 创建模型目录
    # 将下载的模型权重文件夹（含.safetensors文件）放入model目录
