@@ -60,7 +60,7 @@
       ],
       "performance": [
         {
-          "quantMode": "fp16",
+          "quantMode": "FP16",
           "detail": [
             {
               "performance": 221.48,
@@ -70,6 +70,11 @@
             {
               "performance": 4.52,
               "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 2986.2,
+              "performanceUnit": "单帧内存带宽（MB）",
               "performanceDesc": ""
             },
             {

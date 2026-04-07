@@ -41,7 +41,8 @@ private:
   int maxInputCharsPerWord;
 
   // 检查字符是否是空白字符（兼容版，无需uchar_traits）
-  bool IsWhitespace(char32_t cp) const {
+  bool IsWhitespace(char32_t cp) const
+  {
     // 基础空白字符
     if (cp == U' ' || cp == U'\t' || cp == U'\n' || cp == U'\r') {
       return true;
@@ -58,7 +59,8 @@ private:
   }
 
   // 检查字符是否是控制字符（兼容版）
-  bool isonCtrol(char32_t cp) const {
+  bool isonCtrol(char32_t cp) const
+  {
     // 排除制表符/换行符
     if (cp == U'\t' || cp == U'\n' || cp == U'\r') {
       return false;
@@ -71,7 +73,8 @@ private:
   }
 
   // 检查字符是否是标点符号（兼容版）
-  bool isPunctuation(char32_t cp) const {
+  bool isPunctuation(char32_t cp) const
+  {
     // ASCII标点
     if ((cp >= 33 && cp <= 47) || (cp >= 58 && cp <= 64) ||
         (cp >= 91 && cp <= 96) || (cp >= 123 && cp <= 126)) {
@@ -91,7 +94,8 @@ private:
   }
 
   // 检查是否为中文字符（逻辑不变）
-  bool IsChineseChar(char32_t cp) const {
+  bool IsChineseChar(char32_t cp) const
+  {
     return (cp >= 0x4E00 && cp <= 0x9FFF) ||   // CJK 统一表意文字
            (cp >= 0x3400 && cp <= 0x4DBF) ||   // CJK 扩展 A
            (cp >= 0x20000 && cp <= 0x2A6DF) || // CJK 扩展 B
@@ -103,7 +107,8 @@ private:
   }
 
   // UTF-8 转 UTF-32
-  std::u32string Utf8ToUtf32(const std::string &utf8Str) const {
+  std::u32string Utf8ToUtf32(const std::string &utf8Str) const
+  {
     std::u32string result;
     const char *ptr = utf8Str.c_str();
     const char *end = ptr + utf8Str.length();
@@ -150,7 +155,8 @@ private:
   }
 
   // UTF-32 转 UTF-8
-  std::string Utf32ToUtf8(const std::u32string &utf32_str) const {
+  std::string Utf32ToUtf8(const std::u32string &utf32_str) const
+  {
     std::string result;
     for (char32_t cp : utf32_str) {
       if (cp <= 0x7F) {
@@ -173,7 +179,8 @@ private:
   }
 
   // 清理文本
-  std::u32string CleanText(const std::u32string &text) const {
+  std::u32string CleanText(const std::u32string &text) const
+  {
     std::u32string result;
     for (char32_t cp : text) {
       if (cp == 0 || cp == 0xFFFD || isonCtrol(cp)) {
@@ -189,7 +196,8 @@ private:
   }
 
   // 在中文字符周围添加空格
-  std::u32string TokenizeChineseChars(const std::u32string &text) const {
+  std::u32string TokenizeChineseChars(const std::u32string &text) const
+  {
     std::u32string result;
     for (char32_t cp : text) {
       if (IsChineseChar(cp)) {
@@ -204,7 +212,8 @@ private:
   }
 
   // 空白字符分词
-  std::vector<std::string> WhitespaceTokenize(const std::string &text) const {
+  std::vector<std::string> WhitespaceTokenize(const std::string &text) const
+  {
     std::vector<std::string> result;
     std::string CurrentToken;
 
@@ -228,7 +237,8 @@ private:
   }
 
   // 去除重音符号（替换uchar_traits，手动过滤重音）
-  std::string StripAccents(const std::string &text) const {
+  std::string StripAccents(const std::string &text) const
+  {
     std::u32string u32Text = Utf8ToUtf32(text);
     std::u32string result;
 
@@ -245,7 +255,8 @@ private:
   }
 
   // 根据标点分割
-  std::vector<std::string> SplitOnPunctuation(const std::string &text) const {
+  std::vector<std::string> SplitOnPunctuation(const std::string &text) const
+  {
     std::vector<std::string> result;
     std::u32string u32Text = Utf8ToUtf32(text);
 
@@ -270,7 +281,8 @@ private:
   }
 
   // 基础分词
-  std::vector<std::string> BasicTokenize(const std::string &text) const {
+  std::vector<std::string> BasicTokenize(const std::string &text) const
+  {
     // 1. 转换为UTF-32并清理
     std::u32string u32Text = Utf8ToUtf32(text);
     u32Text = CleanText(u32Text);
@@ -312,7 +324,8 @@ private:
     return WhitespaceTokenize(joined);
   }
 
-  std::vector<std::string> WordPieceTokenize(const std::string &token) const {
+  std::vector<std::string> WordPieceTokenize(const std::string &token) const
+  {
     std::vector<std::string> outputTokens;
 
     // 检查token长度
@@ -367,7 +380,8 @@ private:
 
   // ==================== 词汇表加载 ====================
   std::unordered_map<std::string, int>
-  loadVocab(const std::string &vocabFile) const {
+  loadVocab(const std::string &vocabFile) const
+  {
     std::unordered_map<std::string, int> vocabMap;
     std::ifstream file(vocabFile);
     if (!file.is_open()) {
@@ -394,7 +408,8 @@ private:
   }
 
   // 清理 tokenization 伪影
-  std::string CleanUpTokenization(const std::string &text) const {
+  std::string CleanUpTokenization(const std::string &text) const
+  {
     std::string result = text;
 
     std::vector<std::pair<std::string, std::string>> replacements = {
@@ -419,7 +434,8 @@ public:
                 bool lowerCase = true,
                 const std::string &unknown_token = "[UNK]", int maxChars = 200)
       : doLowerCase(lowerCase), unkToken(unknown_token),
-        maxInputCharsPerWord(maxChars) {
+        maxInputCharsPerWord(maxChars)
+  {
     vocab = loadVocab(vocabFile);
 
     // 构建反向词汇表
@@ -428,7 +444,8 @@ public:
     }
   }
 
-  std::vector<std::string> tokenize(const std::string &text) {
+  std::vector<std::string> tokenize(const std::string &text)
+  {
     std::vector<std::string> result;
 
     // 1. BasicTokenizer 分词
@@ -445,7 +462,8 @@ public:
 
   // 转换 tokens 为 IDs
   std::vector<int>
-  ConvertTokensToIds(const std::vector<std::string> &tokens) const {
+  ConvertTokensToIds(const std::vector<std::string> &tokens) const
+  {
     std::vector<int> ids;
     int unkId = 100;
     auto unkIt = vocab.find(unkToken);
@@ -466,7 +484,8 @@ public:
 
   // 转换 IDs 为 tokens
   std::vector<std::string>
-  ConvertIdsToTokens(const std::vector<int> &ids) const {
+  ConvertIdsToTokens(const std::vector<int> &ids) const
+  {
     std::vector<std::string> tokens;
     for (int id : ids) {
       auto it = invVocab.find(id);
@@ -481,7 +500,8 @@ public:
 
   // 转换 tokens 为字符串
   std::string ConvertTokensToString(const std::vector<std::string> &tokens,
-                                    bool cleanSpaces = true) const {
+                                    bool cleanSpaces = true) const
+  {
     std::string text;
     for (size_t i = 0; i < tokens.size(); ++i) {
       if (i > 0)
@@ -510,15 +530,20 @@ public:
   }
 
   // 获取词汇表大小
-  size_t vocabSize() const { return vocab.size(); }
+  size_t vocabSize() const
+  {
+    return vocab.size();
+  }
 
   // 检查 token 是否在词汇表中
-  bool hasToken(const std::string &token) const {
+  bool hasToken(const std::string &token) const
+  {
     return vocab.find(token) != vocab.end();
   }
 
   // 获取 token 的 ID
-  int GetTokenId(const std::string &token) const {
+  int GetTokenId(const std::string &token) const
+  {
     auto it = vocab.find(token);
     if (it != vocab.end()) {
       return it->second;
@@ -541,7 +566,8 @@ public:
 };
 
 // 文本预处理函数：转小写 + 替换中文引号为英文引号
-std::string PreprocessTextClip(const std::string &text) {
+std::string PreprocessTextClip(const std::string &text)
+{
   std::string processedText;
   for (char c : text) {
     // 转换为小写（中文不受影响，仅处理可能的英文字符）
