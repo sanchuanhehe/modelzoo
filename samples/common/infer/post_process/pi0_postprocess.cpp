@@ -36,8 +36,7 @@ static constexpr int FP32_BIT_NUM = 32;
 static constexpr int STATE_FILELIST_IDX = 1;
 
 using json = nlohmann::json;
-struct NormalizeParam
-{
+struct NormalizeParam {
     std::vector<float> kMean;
     std::vector<float> kStd;
 };
@@ -52,7 +51,9 @@ static std::vector<std::vector<float>> GetModelOutput(TensorBuf &outBufs, Tensor
     int64_t loopTimes = 1;
     if (outDescs.dimCount != 0) {
         width = outDescs.dims[outDescs.dimCount - 1]; // 最后一维是width
-        loopTimes = outDescs.defaultSize / dataSize / width;
+        if (width != 0) {
+            loopTimes = outDescs.defaultSize / dataSize / width;
+        }
     }
     LOG(INFO) << "LoadModelOutput: outDescs.defaultSize " << outDescs.defaultSize;
 
@@ -120,15 +121,15 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
             param.kStd.emplace_back(float(val));
         }
     } catch (const json::parse_error& e) {
-        LOG(ERROR) << "JSON 解析错误: " << e.what();
+        LOG(ERROR) << "JSON parse error: " << e.what();
         file.close();
         return false;
     } catch (const json::type_error& e) {
-        LOG(ERROR) << "数据类型错误: " << e.what();
+        LOG(ERROR) << "data type error: " << e.what();
         file.close();
         return false;
     } catch (const std::exception& e) {
-        LOG(ERROR) << "运行时错误: " << e.what();
+        LOG(ERROR) << "running exception: " << e.what();
         file.close();
         return false;
     }
@@ -139,7 +140,10 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
 static Result Unnormalize(const std::string& actionStatsPath, std::vector<std::vector<float>> &modelOut, int actionLen)
 {
     NormalizeParam param;
-    ParseActionStatsJsonFile(actionStatsPath, param);
+    if (!ParseActionStatsJsonFile(actionStatsPath, param)) {
+        LOG(ERROR) << "Parse action stats json file failed";
+        return FAILED;
+    }
     if (param.kMean.size() != actionLen || param.kStd.size() != actionLen) {
         LOG(ERROR) << "The number of kMean: "<< param.kMean.size() << " or kStd: "<< param.kStd.size() <<
         " is wrong, please check";

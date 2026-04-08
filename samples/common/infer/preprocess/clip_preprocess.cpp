@@ -36,7 +36,8 @@ constexpr int IMAGE_SIZE = 224;
 
 namespace Infer {
 static Result ReadImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc,
-                               TensorBuf &inBuf) {
+                               TensorBuf &inBuf)
+{
   LOG(INFO) << "ReadImgFileToBuf: desc.dimCount " << desc.dimCount;
   if (desc.defaultStride == 0) {
     desc.defaultStride =
@@ -68,7 +69,8 @@ static Result ReadImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc,
   return SUCCESS;
 }
 
-cv::Mat TensorAndNormalize(const cv::Mat &rgbImg) {
+cv::Mat TensorAndNormalize(const cv::Mat &rgbImg)
+{
   int H = rgbImg.rows;
   int W = rgbImg.cols;
   int totalPixels = H * W;
@@ -106,7 +108,8 @@ cv::Mat TensorAndNormalize(const cv::Mat &rgbImg) {
 
 bool ClipImgPreprocess(std::vector<std::string> &fileList,
                        std::vector<TensorBuf> &inBufs,
-                       std::vector<TensorDesc> &inDescs) {
+                       std::vector<TensorDesc> &inDescs)
+{
   // 处理每个图像
   for (size_t i = 0; i < fileList.size(); ++i) {
 

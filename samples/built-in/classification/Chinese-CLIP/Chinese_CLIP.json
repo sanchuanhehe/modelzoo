@@ -5,7 +5,7 @@
 	"modelParameter": {
 		"输入": "224x224",
 		"参数量": "86.193M",
-		"计算量": "36.381GFLOPS"
+		"计算量": "36.381GFLOPs"
 	},
 	"isBeta": false,
 	"betaDesc": "",
@@ -34,7 +34,7 @@
 	"modelLicense": [
 		{
 			"desc": "部署模型",
-			"link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Chinese-CLIP/LICENSE"
+			"link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/Chinese-CLIP/MIT-LICENSE.txt"
 		}
 	],
 	"quickStart": {
@@ -108,7 +108,7 @@
 				{
 					"name": "SDK",
 					"link": "",
-					"desc": "SPC022 (请联系FAE获取)"
+					"desc": "SS928 V100R001C02SPC022 (请联系FAE获取)"
 				}
 			],
 			"os": [

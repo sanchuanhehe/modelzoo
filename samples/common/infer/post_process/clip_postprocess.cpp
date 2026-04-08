@@ -39,7 +39,8 @@ constexpr int FEATDIM = 512;     // 特征维度（对应Python的512）
 constexpr int TEMPLATE_NUM = 11; // 每个类别对应11个模板
 constexpr float EPS = 1e-8f;     // 数值稳定性阈值
 
-std::string GetFileName(const std::string &path) {
+std::string GetFileName(const std::string &path)
+{
   size_t sep = path.find_last_of("/\\");
   size_t start = (sep == std::string::npos) ? 0 : sep + 1;
   size_t end = path.find_last_of(".");
@@ -48,7 +49,8 @@ std::string GetFileName(const std::string &path) {
              : path.substr(start, end - start);
 }
 
-cv::Mat Postprocess(const float *preds, int originalHeight, int originalWidth) {
+cv::Mat Postprocess(const float *preds, int originalHeight, int originalWidth)
+{
   // 转换为CHW格式Mat (3, H, W)
   cv::Mat chwMat(CHANNEL_NUM, TARGET_HEIGHT * TARGET_WIDTH, CV_32F);
   memcpy(chwMat.data, preds,
@@ -88,7 +90,8 @@ cv::Mat Postprocess(const float *preds, int originalHeight, int originalWidth) {
   return uint8Mat;
 }
 
-void L2Normalize(std::vector<std::vector<float>> &feats) {
+void L2Normalize(std::vector<std::vector<float>> &feats)
+{
   for (auto &row : feats) {
     // 使用double进行累加以提高精度
     double normSq = 0.0;
@@ -111,7 +114,8 @@ void L2Normalize(std::vector<std::vector<float>> &feats) {
  * @param feats 输入特征矩阵（shape: [M, FEATDIM]，每行长度必须=FEATDIM）
  * @return 平均后的特征（shape: [FEATDIM]）
  */
-std::vector<float> MeanByCol(std::vector<std::vector<float>> &feats) {
+std::vector<float> MeanByCol(std::vector<std::vector<float>> &feats)
+{
   std::vector<float> avgFeat(FEATDIM, 0.0f);
   int M = feats.size();
   if (M == 0) {
@@ -141,7 +145,8 @@ std::vector<float> MeanByCol(std::vector<std::vector<float>> &feats) {
  * @brief 单个向量L2归一化
  * @param vec 输入向量（shape: [FEATDIM]）
  */
-void NormalizeSingleVec(std::vector<float> &vec) {
+void NormalizeSingleVec(std::vector<float> &vec)
+{
   // 严格校验：向量长度必须=FEATDIM
   if (vec.size() != FEATDIM) {
     LOG(ERROR) << "Error: 向量长度=" << vec.size() << "，必须=" << FEATDIM;
@@ -165,8 +170,8 @@ void NormalizeSingleVec(std::vector<float> &vec) {
 }
 
 std::vector<std::vector<float>>
-StackDim(std::vector<std::vector<float>> &vectors // 每个vector是[C]
-) {
+StackDim(std::vector<std::vector<float>> &vectors) // 每个vector是[C]
+{
   int n = vectors.size();    // 向量个数
   int C = vectors[0].size(); // 每个向量的维度
 
@@ -197,7 +202,8 @@ const float TEMPERATURE = 100.0f; // 温度系数
 std::vector<float>
 MatmulWithScale(const std::vector<float> &imageFeats,
                 const std::vector<std::vector<float>> &classifier,
-                int batchSize, int featDim, int numClasses) {
+                int batchSize, int featDim, int numClasses)
+{
   // 初始化输出logits：batchSize * numClasses 个元素，初始值0
   std::vector<float> logits(batchSize * numClasses, 0.0f);
 
@@ -235,7 +241,8 @@ MatmulWithScale(const std::vector<float> &imageFeats,
  * @return 归一化后的概率分布（shape: [batchSize, numClasses]，行优先存储）
  */
 std::vector<float> Softmax(const std::vector<float> &logits, int batchSize,
-                           int numClasses) {
+                           int numClasses)
+{
   std::vector<float> probs(logits.size(), 0.0f);
 
   // 遍历每个样本，单独对其numClasses维度做Softmax
@@ -272,7 +279,8 @@ std::vector<float> Softmax(const std::vector<float> &logits, int batchSize,
 
 bool ClipImgPostprocess(std::vector<std::string> &fileList,
                         std::vector<Infer::TensorBuf> &outBufs,
-                        std::vector<Infer::TensorDesc> &outDescs) {
+                        std::vector<Infer::TensorDesc> &outDescs)
+{
   LOG(INFO) << "====== 开始后处理 ======";
   auto cfg = ReadCfgFile("../data/cfg.txt");
   std::string saveBin = cfg["img_result"];
@@ -303,7 +311,8 @@ bool ClipImgPostprocess(std::vector<std::string> &fileList,
 
 bool ClipTxtPostprocess(std::vector<std::string> &fileList,
                         std::vector<TensorBuf> &outBufs,
-                        std::vector<TensorDesc> &outDescs) {
+                        std::vector<TensorDesc> &outDescs)
+{
   LOG(INFO) << "====== 开始后处理 ======";
   auto cfg = ReadCfgFile("../data/cfg.txt");
   std::string saveBin = cfg["txt_result"];
