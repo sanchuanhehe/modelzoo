@@ -1,5 +1,5 @@
 /*
- * Copyright (c) ModelZoo. 2025-2025. All rights reserved.
+ * Copyright (c) ModelZoo. 2025-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -51,7 +51,8 @@ enum ModelType {
     Yolov6s,
     Yolov10s,
     Yolov8sObb,
-    Yolov8s
+    Yolov8s,
+    Yolov9s
 };
 
 using ProcessFunc = std::function<bool(std::vector<std::string>&, std::vector<TensorBuf>&, std::vector<TensorDesc>&)>;

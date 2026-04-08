@@ -1,0 +1,8 @@
+{
+    "loop": 300,
+    "fileList": [
+        [
+            "../datasets/coco/images/val2017/000000000139.jpg"
+        ]
+    ]
+}
