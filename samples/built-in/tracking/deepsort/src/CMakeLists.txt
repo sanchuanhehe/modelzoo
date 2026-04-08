@@ -53,7 +53,7 @@ include_directories(
 
 find_library(OpenCV_WORLD_SHARED_LIB
     NAMES libopencv_world.so.412
-    PATHS "../../../../opensource/opencv/lib/aarch64_ohos"
+    PATHS ${OPENCV_LIB_PATH}
     NO_DEFAULT_PATH
 )
 

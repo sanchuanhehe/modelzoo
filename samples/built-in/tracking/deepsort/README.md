@@ -21,7 +21,7 @@
 
 # 概述<a name="ZH-CN_TOPIC_0000001172161501"></a>
 
-DeepSORT（Deep Simple Online and Realtime Tracking）是一种经典的多目标追踪算法，在原始 SORT 算法基础上引入了深度外观特征（ReID），有效降低了 ID Switch 率。。该模型在 MOTA 数据集上进行了验证。
+DeepSORT（Deep Simple Online and Realtime Tracking）是一种经典的多目标追踪算法，在原始 SORT 算法基础上引入了深度外观特征（ReID），有效降低了 ID Switch 率。该模型在 MOT16 数据集上进行了验证。
 
 - 参考实现：
 
@@ -44,8 +44,8 @@ DeepSORT（Deep Simple Online and Realtime Tracking）是一种经典的多目�
   | 输出数据 | 数据类型 | 大小        | 数据排布格式        |
   | -------- | -------- | ----------- | ----------- |
   | feature_map_1  | FP32     |  1 x 3 x 80 x 80 x 85 | NCHW         |
-  | feature_map_2  | FP32     |  1 x 3 x 80 x 80 x 85 | NCHW         |
-  | feature_map_3  | FP32     |  1 x 3 x 80 x 80 x 85 | NCHW         |
+  | feature_map_2  | FP32     |  1 x 3 x 40 x 40 x 85 | NCHW         |
+  | feature_map_3  | FP32     |  1 x 3 x 20 x 20 x 85 | NCHW         |
 ### ReID
 - 输入数据
   | 输入数据 | 数据类型 | 大小             | 数据排布格式 |
@@ -156,7 +156,7 @@ mkdir -p model
     ```
     比如
     ```
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_ohos.cmake -DSOC_VERSION=SS928V100
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_linux.cmake -DSOC_VERSION=SS928V100
     ```
 
 3. 执行**make**命令，生成的可执行文件main在“./out“目录下。
@@ -175,7 +175,7 @@ mkdir -p model
 4. 切换到可执行文件main所在的目录，运行可执行文件。测试图片上模型推理命令参考：
     
     ```
-    ./main model/yolov5s.om model/reid_net.om datasets/MOT16/train/MOT16-09/img1
+    ./main ../model/yolov5s.om ../model/reid_net.om ../datasets/MOT16/train/MOT16-09/img1
     ```
     备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
 
@@ -188,26 +188,53 @@ pip3 install -r requirements.txt
 
 ## 准备数据集<a name="section183221994411"></a>
 
-   该模型通常使用 [MOA16数据集](https://motchallenge.net/data/MOT16/) 进行训练和验证。
+   该模型通常使用 [MOT16数据集](https://motchallenge.net/data/MOT16/) 进行训练和验证。
 
-   在 `samples/built-in/tracking/deepsort/` 目录下创建 `datasets` 文件夹（或建立软链接），将下载的数据集拷贝到该目录并进行解压。
+   在 `samples/built-in/tracking/deepsort/` 目录下创建 `datasets` 文件夹（或建立软链接），将下载的数据集拷贝到该目录并进行解压，解压结果如下：
+
+   ```
+   datasets
+   └── MOT16
+    ├── test
+    │   ├── MOT16-01
+    │   ├── MOT16-03
+    │   ├── MOT16-06
+    │   ├── MOT16-07
+    │   ├── MOT16-08
+    │   ├── MOT16-12
+    │   └── MOT16-14
+    └── train
+        ├── MOT16-02
+        ├── MOT16-04
+        ├── MOT16-05
+        ├── MOT16-09
+        ├── MOT16-10
+        ├── MOT16-11
+        └── MOT16-13
+   ```
 
 
 
 ## 模型转化<a name="section741711594517"></a>
 
-使用 Ultralytics 导出 ONNX，再使用 ATC 工具转为 OM 模型。
+使用 `export_onnx.py` 导出 ONNX，再使用 ATC 工具转为 OM 模型。
 
 1. 获取 DeepSort 源码
 
    ```bash
     git clone https://github.com/ZQPei/deep_sort_pytorch.git
+    git reset 4f910afc16860ff05c6be408b120a49524bd4f68
     cd deep_sort_pytorch
     patch -p1 < ../deepsort_py.patch
     cd ..
    ```
 
 2. 导出onnx。
+   下载权重文件：
+   YOLO: https://github.com/ultralytics/yolov5/releases/download/v6.1/yolov5s.pt
+   下载后归档在`deep_sort_pytorch/detector/YOLOv5`
+   ReID: https://drive.google.com/drive/folders/1xhG0kRH1EX5B9_Iz8gQJb7UNnn_riXi6
+   下载后归档在`deep_sort_pytorch/deep_sort/deep/checkpoint`
 
    在 `samples/built-in/tracking/deepsort/deep_sort_pytorch` 目录下执行，生成 `model/*.onnx` 文件。
 
@@ -217,48 +244,51 @@ pip3 install -r requirements.txt
    python export_onnx.py --output_dir ../model
    ```
 
-2. 生成模型校准数据。
+3. 生成模型校准数据。
    
-      选取几张图片生成模型校准数据，引用的图片数据默认在samples/samples_GPL/built-in/yolov8s-obb/data/file_list.json中描述（当前仅包含3张示例图片，用于量化校准已足够）。校准数据文件默认保存在out/preprocess/bin目录下。
+      选取几张图片生成模型校准数据，引用的图片数据默认在 datasets/MOT16/train。校准数据文件默认保存在datasets/prep_data_aipp目录下。
 
       ```sh
       cd samples/built-in/tracking/deepsort/script
       python generate_real_bin.py
       ```
 
-3. 使用 ATC 工具将 ONNX 模型转 OM 模型。
+4. 使用 ATC 工具将 ONNX 模型转 OM 模型。
 
       Hi3403V100 SVP_NNN 上的 om 模型转换命令
 
       ```bash
       cd samples/built-in/tracking/deepsort
-      atc --compile_mode=6 --framework=5 --model=model/yolov5s.onnx --input_shape=images:1,3,640,640 --output=model/yolov5s --soc_version=SS928V100 --image_list=./datasets/prep_data_aipp/yolo_real.bin
+      atc --framework=5 --model=model/yolov5s.onnx --input_shape=images:1,3,640,640 --output=model/yolov5s --soc_version=SS928V100 --image_list=./datasets/prep_data_aipp/yolo_real.bin
 
-      atc --compile_mode=6 --framework=5 --model=model/reid_net.onnx --input_shape=input:1,3,128,64 --output=model/reid_net --soc_version=SS928V100 --image_list=./datasets/prep_data_aipp/reid_real.bin
+      atc --framework=5 --model=model/reid_net.onnx --input_shape=input:1,3,128,64 --output=model/reid_net --soc_version=SS928V100 --image_list=./datasets/prep_data_aipp/reid_real.bin
       ```
       
       Hi3403V100 NNN上的 om 模型转换命令
       ```bash
       cd samples/built-in/tracking/deepsort
-      atc --framework=5 --model==model/yolov5s.onnx --input_shape=images:1,3,640,640 --output=/home/hispark/code/deepsort/ZQpei/deep_sort_pytorch/om_output/yolov5s --enable_single_stream=true --soc_version=OPTG 
+      atc --framework=5 --model=model/yolov5s.onnx --input_shape=images:1,3,640,640 --output=model/yolov5s --enable_single_stream=true --soc_version=OPTG 
 
-      atc --framework=5 --model=/home/hispark/code/deepsort/ZQpei/deep_sort_pytorch/onnx_output/reid_net.onnx --input_shape=input:1,3,128,64 --output=/home/hispark/code/deepsort/ZQpei/deep_sort_pytorch/om_output/reid_net --enable_single_stream=true --soc_version=OPTG 
+      atc --framework=5 --model=model/reid_net.onnx --input_shape=input:1,3,128,64 --output=model/reid_net --enable_single_stream=true --soc_version=OPTG 
       ```
       运行成功后生成 `model/yolov5s.om` 和 `model/reid_net.om` 模型文件。
 
 ## 精度&性能评估<a name="section741711594518"></a>
 
-1.  修改配置文件 `cfg.txt`（可选用于调整置信度等参数）。
+1.  修改配置文件 `data/deepsort.json`（可选用于调整置信度等参数）。
 2.  运行推理。（**your_path**是板端文件系统具体的路径前缀）
 
     ```bash
     cd ${your_path}/modelzoo/samples/built-in/tracking/deepsort/out
     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${your_path}/modelzoo/samples/samples_GPL/opensource/opencv/lib"
-    ./main model/yolov5s.om model/reid_net.om datasets/MOT16/train/MOT16-09/img1
+    for folder in MOT16-02 MOT16-04 MOT16-05 MOT16-09 MOT16-10 MOT16-11 MOT16-13; do
+        ./main ../model/yolov5s.om ../model/reid_net.om ../datasets/MOT16/train/$folder/img1
+    done
     ```
     图片推理结果会保存在 `out` 目录下。
     
     > **注意**：图片路径下图片文件名需要按照时间升序排列。
+
 
 3. 精度验证。
 
@@ -266,7 +296,7 @@ pip3 install -r requirements.txt
 
    ```bash
     # 指定结果目录和 GT 目录
-    python evaluate_mot.py --ts_dir ${your_path}/modelzoo/samples/built-in/tracking/deepsort/out --gt_dir ${your_path}/modelzoo/samples/built-in/tracking/deepsort/datasets/MOT16
+    python evaluate_mot.py --ts_dir ${your_path}/modelzoo/samples/built-in/tracking/deepsort/out --gt_dir ${your_path}/modelzoo/samples/built-in/tracking/deepsort/datasets/MOT16/train
     # 只评估单个序列
     python evaluate_mot.py --gt /path/to/gt.txt --ts /path/to/result.txt
    ```
@@ -290,14 +320,14 @@ pip3 install -r requirements.txt
    
    ```
               IDF1   IDP   IDR  Rcll  Prcn  GT MT  PT  ML   FP    FN  IDs    FM  MOTA  MOTP  IDt  IDa IDm
-    MOT16-02 12.0% 24.3%  8.0% 25.4% 77.2%  54  5  18  31 1341 13295  496   499 15.1% 0.238  204  289  20
-    MOT16-04 22.2% 35.8% 16.1% 40.9% 90.8%  83  7  39  37 1965 28111 1167  1229 34.3% 0.208  417  711  25
-    MOT16-05 18.1% 21.5% 15.7% 57.8% 79.1% 125 22  81  22 1043  2879  470   390 35.6% 0.252  332  188  75
-    MOT16-09 29.8% 32.3% 27.6% 64.2% 75.0%  25  5  18   2 1125  1882  305   284 37.0% 0.209   75  211   4
-    MOT16-10 23.1% 32.6% 17.9% 44.3% 80.9%  54  7  24  23 1285  6860  509   598 29.7% 0.247  121  363  15
-    MOT16-11 30.9% 36.8% 26.6% 59.0% 81.5%  69 11  32  26 1232  3761  436   399 40.8% 0.171   69  333  10
-    MOT16-13 12.2% 23.1%  8.3% 30.4% 84.7% 107  6  48  53  629  7966  521   552 20.4% 0.260  195  340  36
-    OVERALL  20.9% 31.7% 15.6% 41.3% 84.1% 517 63 260 194 8620 64754 3904  3951 30.0% 0.219 1413 2435 185
+    MOT16-02 12.7% 25.6%  8.4% 25.3% 76.9%  54  5  19  30 1357 13323  489   512 14.9% 0.236  174  308  18
+    MOT16-04 25.5% 41.1% 18.5% 40.8% 90.8%  83  6  39  38 1975 28163 1188  1210 34.1% 0.206  352  783  21
+    MOT16-05 21.1% 25.0% 18.3% 57.9% 79.1% 125 20  84  21 1046  2870  455   402 35.9% 0.249  287  223  73
+    MOT16-09 29.2% 31.6% 27.1% 64.6% 75.4%  25  6  17   2 1109  1862  301   290 37.8% 0.214   76  204   6
+    MOT16-10 30.9% 44.6% 23.7% 43.5% 82.0%  54  7  22  25 1177  6956  499   604 29.9% 0.247   93  385  15
+    MOT16-11 33.5% 40.0% 28.7% 59.1% 82.3%  69  9  34  26 1165  3753  457   431 41.4% 0.171   62  357   8
+    MOT16-13 13.0% 25.2%  8.7% 29.5% 85.3% 107  4  49  54  581  8069  563   594 19.5% 0.258  163  395  31
+    OVERALL  23.8% 36.3% 17.7% 41.1% 84.4% 517 57 264 196 8410 64996 3952  4043 29.9% 0.218 1207 2655 172
     ```
    
 4. 推理耗时和 FPS(ReID)。
@@ -307,7 +337,7 @@ pip3 install -r requirements.txt
 
    ```sh
     cd ${your_path}/modelzoo/samples/built-in/tracking/deepsort/out
-    ./main model/yolov5s.om model/reid_net.om datasets/MOT16/train/MOT16-09/img1 data/deepsort.json data/deepsort.json
+    ./main ../model/yolov5s.om ../model/reid_net.om ../datasets/MOT16/train/MOT16-09/img1 ../data/deepsort.json
    ```
    
    Hi3403V100 SVP_NNN平台上性能结果：
@@ -328,5 +358,5 @@ pip3 install -r requirements.txt
 
 | 芯片型号    | Batch Size | 数据集   | MOTA | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ |
-| Hi3403V100 SVP_NNN | 1          | MOTA16   | 30.0%    | 693.28 |
-| Hi3403V100 NNN | 1          | MOTA16   | 29.9%    | 70.49 |
+| Hi3403V100 SVP_NNN | 1          | MOT16   | 30.0%    | 693.28 |
+| Hi3403V100 NNN | 1          | MOT16   | 29.9%    | 70.49 |
