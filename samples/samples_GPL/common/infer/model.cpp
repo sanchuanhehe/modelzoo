@@ -1,5 +1,5 @@
 /*
- * Copyright (c) ModelZoo. 2025-2025. All rights reserved.
+ * Copyright (c) ModelZoo. 2025-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -43,6 +43,8 @@
 #include "yolov8s_preprocess.h"
 #include "yolov8s_seg_postprocess.h"
 #include "yolov8s_seg_preprocess.h"
+#include "yolov9s_postprocess.h"
+#include "yolov9s_preprocess.h"
 
 namespace Infer {
 struct ExecuteParam {
@@ -68,7 +70,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::Yolov10s, { std::bind(Yolo3Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYolo10Box } },
     { ModelType::Yolov3, { std::bind(Yolo3Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYolo3Box } },
     { ModelType::Yolov8s, { std::bind(Yolov8sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYoloV8sBox } },
-    { ModelType::Yolov5, { std::bind(Yolov7Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), std::bind(GetYoloV7Box, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true) } }
+    { ModelType::Yolov5, { std::bind(Yolov7Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), std::bind(GetYoloV7Box, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true) } },
+    { ModelType::Yolov9s, { std::bind(Yolov9sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYoloV9sBox } }
 };
 #else
 const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::modelTypeToProcessMap_ = {
@@ -83,6 +86,7 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::Yolov3, { std::bind(Yolo3Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYolo3Box } },
     { ModelType::Yolov8s, { std::bind(Yolov8sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYoloV8sBox } },
     { ModelType::Yolov5, { std::bind(Yolov7Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), std::bind(GetYoloV7Box, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false) } },
+    { ModelType::Yolov9s, { std::bind(Yolov9sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYoloV9sBox } }
 };
 #endif
 
