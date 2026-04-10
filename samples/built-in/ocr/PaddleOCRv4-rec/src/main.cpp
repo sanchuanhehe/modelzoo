@@ -31,21 +31,21 @@ int main(int argc, char *argv[])
     std::unique_ptr<Model> model = std::make_unique<Model>();
     if (model->Load(inferParam.omModelPath, Infer::PaddleOCR_Rec) != 0) {
         LOG(ERROR) << "fail to load model";
-        return 0;
+        return -1;
     }
     auto ret = model->Infer(inferParam.imglistPath);
     if (ret.size() == 0) {
         LOG(ERROR) << "fail to infer model";
         model->Unload();
         EnvDeinit();
-        return 0;
+        return -1;
     }
     ret.clear();
     ret.shrink_to_fit();
     if (model->Unload() != 0) {
         LOG(ERROR) << "fail to unload model";
         EnvDeinit();
-        return 0;
+        return -1;
     }
     EnvDeinit();
     return 0;

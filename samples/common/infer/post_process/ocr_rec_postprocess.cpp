@@ -128,7 +128,6 @@ namespace Infer
         }
         file << predition << "\n";
         file.close();
-        LOG(INFO) << " saveTXT:  " << predition;
         return SUCCESS;
     }
 
@@ -225,7 +224,7 @@ namespace Infer
         SaveTxt(inputFile, result);
     }
 
-    bool OcrRecPostprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs)
+    bool OcrRecPostprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs, bool isDpico)
     {
         std::vector<std::vector<cv::Point>> bbox;
 

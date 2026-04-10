@@ -18,5 +18,5 @@
 #include "model.h"
 
 namespace Infer {
-bool OcrRecPostprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs);
+bool OcrRecPostprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs, bool isDpico);
 }

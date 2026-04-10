@@ -33,14 +33,6 @@ static constexpr int BYTE_BIT_NUM = 8;
 static Result ReadImgToBufDpico(const cv::Mat& mat, const TensorDesc& desc,
     TensorBuf& inBuf)
 {
-    // printf("dims:%zu %zu %zu %zu stride:%zu\n", desc.dims[0], desc.dims[1], desc.dims[2], desc.dims[3], desc.defaultStride);
-    // printf("size:%zu\n", inBuf.size);
-    // size_t matTotalBytes = mat.total() * mat.elemSize();
-    // size_t bufTotalBytes = desc.dims[desc.dimCount - 1] * desc.typeSize / BYTE_BIT_NUM;
-    // for (size_t i = 0; i < desc.dimCount - 1; i++) {
-    //     bufTotalBytes *= desc.dims[i];
-    // }
-
     char* bufPtr = static_cast<char*>(inBuf.GetRawPtr());
     size_t width = desc.dims[desc.dimCount - 1];
     size_t lineSize = width * desc.typeSize / BYTE_BIT_NUM;

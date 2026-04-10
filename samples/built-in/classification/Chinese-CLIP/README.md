@@ -220,9 +220,8 @@ cd ..
 
 
 1. 获取权重文件。
-
     点击下面链接下载模型权重文件clip_cn_vit-b-16.pt：
-    [百度网盘](https://pan.baidu.com/s/19GrWVd4TVGN0BEyl9uTPiw?pwd=q2na) , 提取码为：q2na
+    [百度网盘](https://pan.baidu.com/s/19GrWVd4TVGN0BEyl9uTPiw?pwd=q2na) ，提取码为：q2na
 
 2. 导出onnx文件。
 

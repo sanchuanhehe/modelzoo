@@ -15,14 +15,14 @@
 
 #include "depthanythingv2_postprocess.h"
 
+#include "log.h"
 #include <fstream>
 #include <iostream>
-#include <vector>
-#include <string>
-#include <sys/stat.h>
 #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
-#include "log.h"
+#include <string>
+#include <sys/stat.h>
+#include <vector>
 
 using json = nlohmann::json;
 
@@ -71,17 +71,21 @@ static void CreateResultDirs()
 
     mode_t oldUmask = umask(0);
     struct stat info;
-    if (stat(resultPath.c_str(), &info) != 0) mkdir(resultPath.c_str(), 0777);
+    if (stat(resultPath.c_str(), &info) != 0)
+        mkdir(resultPath.c_str(), 0777);
 
     std::string jpgPath = resultPath + "/jpg";
-    if (stat(jpgPath.c_str(), &info) != 0) mkdir(jpgPath.c_str(), 0777);
+    if (stat(jpgPath.c_str(), &info) != 0)
+        mkdir(jpgPath.c_str(), 0777);
 
     std::string binPath = resultPath + "/bin";
-    if (stat(binPath.c_str(), &info) != 0) mkdir(binPath.c_str(), 0777);
+    if (stat(binPath.c_str(), &info) != 0)
+        mkdir(binPath.c_str(), 0777);
     umask(oldUmask);
 }
 
-static cv::Mat VisualizeDepthMap(const cv::Mat& depthMap, const std::string& outputPath = "", int colormap = cv::COLORMAP_JET)
+static cv::Mat VisualizeDepthMap(
+    const cv::Mat &depthMap, const std::string &outputPath = "", int colormap = cv::COLORMAP_JET)
 {
     CV_Assert(depthMap.type() == CV_32FC1 || depthMap.type() == CV_64FC1);
     cv::Mat processedDepth = depthMap.clone();
@@ -93,7 +97,8 @@ static cv::Mat VisualizeDepthMap(const cv::Mat& depthMap, const std::string& out
         for (int i = 0; i < processedDepth.rows; ++i) {
             for (int j = 0; j < processedDepth.cols; ++j) {
                 float value = processedDepth.at<float>(i, j);
-                if (std::isnan(value) || std::isinf(value)) processedDepth.at<float>(i, j) = 0.0f;
+                if (std::isnan(value) || std::isinf(value))
+                    processedDepth.at<float>(i, j) = 0.0f;
                 else if (value > 0) {
                     minVal = std::min(minVal, static_cast<double>(value));
                     maxVal = std::max(maxVal, static_cast<double>(value));
@@ -102,12 +107,15 @@ static cv::Mat VisualizeDepthMap(const cv::Mat& depthMap, const std::string& out
         }
     }
 
-    if (minVal > maxVal) { minVal = 0; maxVal = 1; }
+    if (minVal > maxVal) {
+        minVal = 0;
+        maxVal = 1;
+    }
 
     cv::Mat depthNormalized;
     if (maxVal > minVal) {
-        processedDepth.convertTo(depthNormalized, CV_32F, 255.0 / (maxVal - minVal),
-                                 -minVal * 255.0 / (maxVal - minVal));
+        processedDepth.convertTo(
+            depthNormalized, CV_32F, 255.0 / (maxVal - minVal), -minVal * 255.0 / (maxVal - minVal));
     } else {
         depthNormalized = cv::Mat::zeros(processedDepth.size(), CV_32F);
     }
@@ -124,17 +132,22 @@ static cv::Mat VisualizeDepthMap(const cv::Mat& depthMap, const std::string& out
     return depthColored;
 }
 
-bool DepthAnythingV2Postprocess(std::vector<std::string>& fileList,
-                                std::vector<TensorBuf>& tensorBufs,
-                                std::vector<TensorDesc>& tensorDescs)
+bool DepthAnythingV2Postprocess(
+    std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs)
 {
     LOG(INFO) << "start post";
-    const std::string& filePath = fileList[0];
+    const std::string &filePath = fileList[0];
 
     CreateResultDirs();
 
     std::vector<float> temp;
-    if (ExtractTensorData(tensorBufs[0], tensorDescs[0], temp) != SUCCESS) return false;
+    if (tensorDescs[0].defaultStride == 0) {
+        tensorDescs[0].defaultStride =
+            tensorDescs[0].dims[tensorDescs[0].dimCount - 1] * tensorDescs[0].typeSize / BYTE_BIT_NUM;
+        tensorBufs[0].stride = tensorDescs[0].defaultStride;
+    }
+    if (ExtractTensorData(tensorBufs[0], tensorDescs[0], temp) != SUCCESS)
+        return false;
 
     size_t start = filePath.find_last_of("/");
     size_t end = filePath.find_last_of(".");
@@ -176,7 +189,7 @@ bool DepthAnythingV2Postprocess(std::vector<std::string>& fileList,
     };
 
     double scaleHeight = static_cast<double>(inputSize) / h;
-    double scaleWidth  = static_cast<double>(inputSize) / w;
+    double scaleWidth = static_cast<double>(inputSize) / w;
 
     if (scaleWidth < scaleHeight) {
         scaleHeight = scaleWidth;
@@ -210,8 +223,7 @@ bool DepthAnythingV2Postprocess(std::vector<std::string>& fileList,
     std::string binName = "../out/result/bin/" + fileName + "_0.bin";
     std::ofstream fout(binName, std::ios::out | std::ios::binary);
     if (fout.good()) {
-        CV_Assert(resizedDepth.isContinuous());
-        fout.write(reinterpret_cast<const char*>(resizedDepth.data), resizedDepth.total() * resizedDepth.elemSize());
+        fout.write(reinterpret_cast<const char *>(resizedDepth.data), resizedDepth.total() * resizedDepth.elemSize());
         fout.close();
     } else {
         LOG(ERROR) << "Failed to save bin file";
@@ -223,4 +235,4 @@ bool DepthAnythingV2Postprocess(std::vector<std::string>& fileList,
     return true;
 }
 
-} // namespace Infer
+}  // namespace Infer

@@ -470,5 +470,13 @@
     "buildDef": "SS928V100",
     "needSmoke": "false",
     "description": "目标跟踪"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "ocr/PaddleOCRv4-rec",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "文字识别"
   }
 ]

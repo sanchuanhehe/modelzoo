@@ -19,6 +19,8 @@ project(ACL_INFER_SAMPLE)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY  "../out")
 set(COMMON_PATH "../../../../common/")
 
+option(ENABLE_SVP_ACCELERATE "Enable accelerate" ON)
+
 add_subdirectory(${COMMON_PATH} ./common_build)
 
 include_directories(

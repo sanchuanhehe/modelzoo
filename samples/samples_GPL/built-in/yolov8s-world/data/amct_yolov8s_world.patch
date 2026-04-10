@@ -1,0 +1,85 @@
+diff --git a/ultralytics/hub/auth.py b/ultralytics/hub/auth.py
+index 95da44e3d..8b9053f58 100644
+--- a/ultralytics/hub/auth.py
++++ b/ultralytics/hub/auth.py
+@@ -90,7 +90,8 @@ class Auth:
+             (bool): True if authentication is successful, False otherwise.
+         """
+         try:
+-            if header := self.get_auth_header():
++            header = self.get_auth_header()
++            if header:
+                 r = requests.post(f"{HUB_API_ROOT}/v1/auth", headers=header)
+                 if not r.json().get("success", False):
+                     raise ConnectionError("Unable to authenticate.")
+diff --git a/ultralytics/nn/tasks.py b/ultralytics/nn/tasks.py
+index e9453a84a..04b201fd8 100644
+--- a/ultralytics/nn/tasks.py
++++ b/ultralytics/nn/tasks.py
+@@ -306,6 +306,12 @@ class DetectionModel(BaseModel):
+             self.info()
+             LOGGER.info("")
+ 
++    def forward(self, x, *args, **kwargs):
++        if self.training:
++            return super().forward(x, *args, **kwargs)
++        else:
++            return self.predict(x)
++
+     def _predict_augment(self, x):
+         """Perform augmentations on input image x and return augmented inference and train outputs."""
+         img_size = x.shape[-2:]  # height, width
+@@ -585,6 +591,12 @@ class WorldModel(DetectionModel):
+         self.txt_feats = txt_feats.reshape(-1, len(text), txt_feats.shape[-1])
+         self.model[-1].nc = len(text)
+ 
++    def forward(self, x, *args, **kwargs):
++        if self.training:
++            return super().forward(x, *args, **kwargs)
++        else:
++            return self.predict(x, args[0])
++
+     def predict(self, x, profile=False, visualize=False, txt_feats=None, augment=False, embed=None):
+         """
+         Perform a forward pass through the model.
+diff --git a/ultralytics/utils/__init__.py b/ultralytics/utils/__init__.py
+index 28c7e336c..6e823db3e 100644
+--- a/ultralytics/utils/__init__.py
++++ b/ultralytics/utils/__init__.py
+@@ -1,7 +1,10 @@
+ # Ultralytics YOLO 🚀, AGPL-3.0 license
+ 
+ import contextlib
+-import importlib.metadata
++try:
++    import importlib.metadata as importlib_metadata
++except:
++    import importlib_metadata
+ import inspect
+ import logging.config
+ import os
+@@ -44,7 +47,7 @@ LOGGING_NAME = "ultralytics"
+ MACOS, LINUX, WINDOWS = (platform.system() == x for x in ["Darwin", "Linux", "Windows"])  # environment booleans
+ ARM64 = platform.machine() in {"arm64", "aarch64"}  # ARM64 booleans
+ PYTHON_VERSION = platform.python_version()
+-TORCHVISION_VERSION = importlib.metadata.version("torchvision")  # faster than importing torchvision
++TORCHVISION_VERSION = importlib_metadata.version("torchvision")  # faster than importing torchvision
+ HELP_MSG = """
+     Usage examples for running YOLOv8:
+ 
+diff --git a/ultralytics/utils/checks.py b/ultralytics/utils/checks.py
+index 9fe852a3b..4a33e4a01 100644
+--- a/ultralytics/utils/checks.py
++++ b/ultralytics/utils/checks.py
+@@ -10,7 +10,10 @@ import re
+ import shutil
+ import subprocess
+ import time
+-from importlib import metadata
++try:
++    from importlib import metadata
++except:
++    from importlib_metadata import metadata
+ from pathlib import Path
+ from typing import Optional
+ 

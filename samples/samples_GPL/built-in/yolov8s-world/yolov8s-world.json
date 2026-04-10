@@ -1,0 +1,142 @@
+{
+  "modelName": "Yolov8s-World",
+  "modelDesc": "Yolov8s-World 是 Ultralytics 推出的一种基于 YOLO-World 架构的轻量级目标检测模型，它通过视觉-语言预训练实现了无需针对特定类别进行训练即可识别任意物体的 “开放词汇” (Open-Vocabulary) 实时检测功能。",
+  "modelRepository": "https://gitee.com/Hispark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-world",
+  "modelParameter": {
+    "输入": "640x640",
+    "参数量": "12.746 M",
+    "计算量": "34.636 GFLOPs"
+  },
+  "isBeta": false,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "Vision",
+      "tags": [
+        "目标检测"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "PyTorch"
+  ],
+  "modelDatasets": {
+    "desc": "coco2017 val数据集",
+    "link": "https://cocodataset.org/#download"
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://github.com/ultralytics/ultralytics/blob/master/LICENSE"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/blob/master/samples/samples_GPL/built-in/yolov8s-world/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/yolov8s-world/doc/快速开始.md"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3403V100 SVP_NNN",
+      "tools": [
+        {
+          "name": "CANN工具",
+          "link": "",
+          "desc": "6.10.t01spc030b700(请联系FAE获取)"
+        },
+        {
+          "name": "编译工具链",
+          "link": "https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8",
+          "desc": "高效编译，精准适配AI性能优化，应用流畅运行"
+        },
+        {
+          "name": "SDK",
+          "link": "https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/ ",
+          "desc": "稳定、易用的设计，支撑客户快速产品量产"
+        }
+      ],
+      "os": [
+        "OpenHarmony",
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "A8W8",
+          "detail": [
+            {
+              "performance": 103.419,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 41.71,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 139.937,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 239.352,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chipset": "Hi3403V100 NNN",
+      "os": [
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "FP16",
+          "detail": [
+            {
+              "performance": 48.415,
+              "performanceUnit": "耗时（ms）"
+            },
+            {
+              "performance": 20.64,
+              "performanceUnit": "性能（fps）"
+            },
+            {
+              "performance": 442.179,
+              "performanceUnit": "单帧内存带宽（MB）"
+            },
+            {
+              "performance": 132.621,
+              "performanceUnit": "内存（MB）"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "CANN工具",
+          "link": "",
+          "desc": "5.30.t14.7.b140 (请联系FAE获取)"
+        },
+        {
+          "name": "编译工具链",
+          "link": "",
+          "desc": "aarch64-mix210-linux-gcc (请联系FAE获取)"
+        },
+        {
+          "name": "SDK",
+          "link": "",
+          "desc": "SS928 V100R001C02SPC022 (请联系FAE获取)"
+        }
+      ]
+    }
+  ]
+}

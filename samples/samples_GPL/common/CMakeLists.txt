@@ -45,6 +45,7 @@ endif()
 
 # 平台相关ACL配置
 set(ACL_UTILS_DIR ./infer/platform ./infer/preprocess ./infer/post_process)
+
 if(SOC_VERSION STREQUAL "SS928V100")
     add_definitions(-DSVP_ACL_PLATFORM)
     list(APPEND ACL_UTILS_DIR ./infer/platform/svp_nnn)
@@ -54,6 +55,12 @@ if(SOC_VERSION STREQUAL "SS928V100")
         set(ACL_LIB_LIST svp_acl pthread securec dl protobuf-c)
     elseif(OHOS_PLATFORM)
         set(ACL_LIB_LIST svp_acl pthread securec dl protobuf-c ot_osal ot_base ot_irq ot_sys ss_mpi ss_voice_engine ss_upvqe ss_dnvqe)
+    endif()
+    if(ENABLE_SVP_ACCELERATE)
+        add_definitions(-DENABLE_SVP_ACCELERATE)
+        message(STATUS "SVP NPU accelerate is enabled")
+    else()
+        message(STATUS "SVP NPU accelerate is disabled (use CPU fallback)")
     endif()
 elseif(SOC_VERSION STREQUAL "Hi3516CV610")
     add_definitions(-DSVP_ACL_PLATFORM)
@@ -97,7 +104,7 @@ file(GLOB UTILS_SRC_LIST "./utils/*cpp")
 set(PILLOW_RESIZE_SRC "../opensource/pillow-resize/src/PillowResize/PillowResize.cc")
 
 # 静态库：infer_common
-add_library(infer_common STATIC 
+add_library(infer_common STATIC
     ${PLATFORM_SRC_LIST} ${INFER_SRC_LIST} ${PREPROCESS_SRC_LIST}
     ${POSTPROCESS_SRC_LIST} ${UTILS_SRC_LIST} ${PILLOW_RESIZE_SRC} log/log.cpp
 )

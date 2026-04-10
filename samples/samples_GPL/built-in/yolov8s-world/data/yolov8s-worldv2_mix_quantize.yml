@@ -1,0 +1,96 @@
+common_config:
+  quant_enable: false
+  weight_quant_params:
+    quantizer: ArqWeightFakeQuantize
+  activation_quant_params:
+    quantizer: UlqFakeQuantize
+override_layer_types:
+- layer_type:
+  - torch.nn.Conv2d
+  - torch.nn.ConvTranspose2d
+  weight_quant_params:
+    quantizer: ArqWeightFakeQuantize
+    quantizer_args:
+      observer: ArqObserver
+      num_bits: 8
+  activation_quant_params:
+    quantizer: UlqFakeQuantize
+    quantizer_args:
+      observer: IFMRObserver
+      num_bits: 8
+      batch_num: 1
+- layer_type:
+  - torch.nn.Linear
+  weight_quant_params:
+    quantizer: ArqWeightFakeQuantize
+    quantizer_args:
+      observer: ArqObserver
+      num_bits: 8
+  activation_quant_params:
+    quantizer_args:
+      observer: IFMRObserver
+      num_bits: 8
+      batch_num: 1
+- layer_type:
+  - torch.nn.AdaptiveAvgPool2d
+  - torch.nn.AdaptiveMaxPool2d
+  - torch.nn.AvgPool2d
+  - torch.nn.MaxPool2d
+  - torch.cat
+  - torch.reshape
+  - reshape
+  - view
+  - torch.split
+  - split
+  activation_quant_params:
+    quantizer: UlqFakeQuantize
+    quantizer_args:
+      observer: IFMRObserver
+      num_bits: 8
+      batch_num: 1
+- layer_type:
+  - torch.matmul
+  - operator.matmul
+  - matmul
+  activation_quant_params:
+    quantizer: LuqActivationFakeQuantize
+    quantizer_args:
+      observer: IFMRObserver
+      num_bits: 8
+      batch_num: 1
+      qscheme: symmetric
+      with_offset: false
+override_layer_configs:
+- layer_name:
+  - model_12_cv2_conv
+  - model_15_cv2_conv
+  - model_22_dfl_conv
+  weight_quant_params:
+    quantizer: ArqWeightFakeQuantize
+    quantizer_args:
+      observer: ArqObserver
+      num_bits: 8
+      channel_wise: true
+  activation_quant_params:
+    quantizer: UlqFakeQuantize
+    quantizer_args:
+      num_bits: 16
+      batch_num: 1
+      observer: IFMRObserver
+- layer_name:
+  - matmul
+  activation_quant_params:
+  - quantizer: LuqActivationFakeQuantize
+    quantizer_args:
+      observer: IFMRObserver
+      num_bits: 16
+      batch_num: 1
+      qscheme: symmetric
+      with_offset: false
+  - quantizer: LuqActivationFakeQuantize
+    quantizer_args:
+      observer: IFMRObserver
+      num_bits: 8
+      batch_num: 1
+      qscheme: symmetric
+      with_offset: false

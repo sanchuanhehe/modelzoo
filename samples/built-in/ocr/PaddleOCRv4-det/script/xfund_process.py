@@ -108,7 +108,7 @@ class XFund2PaddleOCRRec:
                             continue
 
                          # 调整为REC输入尺寸
-                        rec_img = self._resize_to_rec_input(cropped_img)
+                        rec_img = cropped_img
                         if rec_img is None:
                             print(f"警告：调整尺寸失败 {img_name} - {text}，跳过")
                             continue
@@ -298,7 +298,7 @@ class XFund2PaddleOCRRec:
                 json_gt.append(json_tmp) 
                 # 写入所有标注
                 f_label.write(json.dumps(annotations, ensure_ascii=False) + '\n')
-        pred_json_file = "./datasets/end_gt_xfund.json"
+        pred_json_file = "./end_gt_xfund.json"
         #print("json_result: ", json_result)
         with open(pred_json_file, 'w') as f:
             json.dump(json_gt, f)

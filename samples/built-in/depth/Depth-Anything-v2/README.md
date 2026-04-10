@@ -199,11 +199,11 @@ mkdir -p model
     执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
     
     ```
-    python3 ../../../../utils/generate_file_list.py ${dataset_path}
+    python3 ./script/generate_file_list.py ${dataset_path}
     ```
     例如:
     ```
-    python3 ../../../../utils/generate_file_list.py -r data/DA-2K
+    python3 ./script/generate_file_list.py -r data/DA-2K/images/
     ```
   
    参数说明：
@@ -227,20 +227,25 @@ mkdir -p model
     #当前目录中
     mkdir model
     cd Depth-Anything-V2
-    cp ../script/pth2onnx.py ./
-    python ./pth2onnx.py
+    cp ../script/pth2onnx_xxx.py ./
+    python ./pth2onnx_xxx.py
     cd ..
     ```
-    生成模型depth_anything_v2_vits.onnx。在model目录下
+    生成模型depth_anything_v2_vits.onnx。在model目录下.
+    注意：NNN使用pth2onnx_nnn.py脚本，SVP_NNN使用pth2onnx_svp_nnn.py脚本。
 
 3. 使用ATC工具将ONNX模型转OM模型。
 
     执行ATC命令。
-    1. Hi3403V100 SVP_NNN上的om模型转换命令
+    1. Hi3403V100 SVP_NNN上的om模型转换命令(需要参考准备数据集，下载好数据集)
         ```
+        python ./script/preprocess.py
         atc --framework=5 --model="./model/depth_anything_v2_vits.onnx" --input_shape="input:1,3,518,518" --output="./model/depthanything" --image_list="./data/img/123949917_fd08c80d60_b.bin" --compile_mode=1 --softmax_optimize_enable=1 --fusion_switch_file=TransformerFusion:on --soc_version=SS928V100 
         ```
-   
+    2. Hi3403V100 NNN上的om模型转换命令
+        ```
+        atc --framework=5 --model="./model/depth_anything_v2_vits.onnx" --input_format="NCHW" --input_shape="input:1,3,518,518" --output="./model/depthanything" --enable_single_stream=true --soc_version=OPTG
+        ```
         运行成功后生成depthanything.om模型文件。
 
         参数说明：
@@ -255,7 +260,7 @@ mkdir -p model
         - --enable_single_stream:推理时使用一条stream。
         - --soc_version：处理器型号。
 
-## 模型推理<a name="section741711594518"></a>
+## 精度&性能评估<a name="section741711594518"></a>
 
 **步骤1：编译代码。**
 
@@ -312,18 +317,24 @@ mkdir -p model
     调用脚本与数据集标签val_label.txt比对，可以获得Accuracy数据。
 
     ```
-    python ./script/accuracy.py
+    cd ./script
+    python ./accuracy.py
     ```
 
     参数说明：
 
-    - --output：推理结果所在路径，默认为./out/result/bin/
+    - --output：推理结果所在路径，默认为out/result/bin/
 
-    例如：  `python ./script/postprocess.py --output ./out/result/bin/`
+    例如：  `python ./accuracy.py --output ../out/result/bin/`
       
-    SVP_NNN平台上精度结果：
+    Hi3403V100 SVP_NNN平台上精度结果：
     ```
     accuary:  0.933752417794971
+    ```
+    Hi3403V100 NNN平台上精度结果：
+
+    ```
+    Accuracy: 0.9326
     ```
 
 2. 验证batch_size的om模型的性能，参考命令如下：
@@ -349,3 +360,4 @@ mkdir -p model
 | 芯片型号    | Batch Size | 数据集   | 精度指标 |性能(fps) |
 | ----------- | ---------- | -------- | ------------------ |----------- |
 | Hi3403V100 SVP_NNN | 1          | DA-2K  |  0.93           |3.756    |
+| Hi3403V100 NNN | 1          | DA-2K  |  0.93           |0.07    |
