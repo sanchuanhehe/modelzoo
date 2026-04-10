@@ -82,8 +82,8 @@ PP-OCRv4检测模型在PP-OCRv3检测模型的基础上，在网络结构，训�
 
 | 芯片型号  | 算力引擎   | soc_version | 环境准备指导  | CANN包版本 | 编译工具链 | 板端OS  | SDK  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | 6.10.t01spc030b700  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  6.10.t01spc030b700  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 
 | Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t11.7.b110  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022                                                       |
 
 # 模型推理<a name="ZH-CN_TOPIC_0000001126281700"></a>
@@ -179,7 +179,7 @@ pip3 install -r requirements.txt
         python ./script/xfund_process.py
         python3 ../../../../utils/generate_file_list.py datasets/xfund_ppocr/images/
         ```
-    2. 生成量化数据
+    2. 生成量化数据(需要先下载开源模型源码，见下述模型转化章节)
         ```
         python3 ./script/quant_det.py
         ```
@@ -225,7 +225,7 @@ pip3 install -r requirements.txt
          
          python ./converter/ch_ppocr_v4_rec_converter.py --yaml_path ./configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml --src_model_path ckpt/ch_PP-OCRv4_rec_train/
          
-         python ./tools/infer/predict_system.py --image_dir ./doc/imgs/11.jpg --det_model_path ./ch_ptocr_v4_det_infer.pth --det_yaml_path ./configs/det/ch_PP-OCRv4/ch_PP-OCRv4_det_student.yml --rec_model_path 3,48,320 --rec_model_path ./ch_ptocr_v4_rec_infer.pth --rec_yaml_path ./configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml
+         python ./tools/infer/predict_system.py --image_dir ./doc/imgs/11.jpg --det_model_path ./ch_ptocr_v4_det_infer.pth --det_yaml_path ./configs/det/ch_PP-OCRv4/ch_PP-OCRv4_det_student.yml --rec_image_shape "3,48,320" --rec_model_path ./ch_ptocr_v4_rec_infer.pth --rec_yaml_path ./configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml
          
          python ./onnx_model_sim.py
 
@@ -278,13 +278,12 @@ pip3 install -r requirements.txt
     - --out_path：推理结果所在路径，默认为./out/result/bin/
 
     - --gt_path：真值标签文件所在路径。
-      
     
     运行eval_det_iou.py脚本会输出：
 
     Hi3403V100 SVP_NNN平台上精度结果：
     ```
-     {'precision': 0.8412493677288824, 'recall': 0.8879030035822542, 'hmean': 0.8639468132027842}
+    {'precision': 0.8586859133897461, 'recall': 0.9039017735334244, 'hmean': 0.8807138796890873}
     ```
     Hi3403V100 NNN平台上精度结果：
     ```
@@ -303,7 +302,7 @@ pip3 install -r requirements.txt
 
     在板端会输出显示，Hi3403V100 SVP_NNN平台上性能结果如下：
     ```
-    fps: 0.076
+    execution time: 69.6864ms, frame rate: 14.35fps
     ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
@@ -312,5 +311,5 @@ pip3 install -r requirements.txt
 
 | 芯片型号    | Batch Size | 数据集   | precision | recall | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| Hi3403V100 SVP_NNN | 1     | XFUND  | 84.12% | 88.79% | 0.076 |
+| Hi3403V100 SVP_NNN | 1     | XFUND  | 85.87% | 90.39% | 14.35 |
 | Hi3403V100 NNN | 1     | XFUND  | 86.14% | 91.38% | 3.57 |

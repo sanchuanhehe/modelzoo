@@ -69,22 +69,22 @@
 					"quantMode": "a8w8",
 					"detail": [
 						{
-							"performance": 13200,
+							"performance": 69.686,
 							"performanceUnit": "耗时（ms）",
 							"performanceDesc": ""
 						},
 						{
-							"performance": 0.076,
+							"performance": 14.35,
 							"performanceUnit": "性能（fps）",
 							"performanceDesc": ""
 						},
 						{
-							"performance": 1297.35,
+							"performance": 555.06,
 							"performanceUnit": "单帧内存带宽（MB）",
 							"performanceDesc": ""
 						},
 						{
-							"performance": 120.160,
+							"performance": 100.082,
 							"performanceUnit": "内存（MB）",
 							"performanceDesc": ""
 						}

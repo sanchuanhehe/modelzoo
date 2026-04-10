@@ -64,6 +64,7 @@ enum ModelType {
     HRNet,
     TinySam,
     GraspNet,
+    MiniCPM,
     ClipImg,
     ClipTxt,
     Pi0,
@@ -73,8 +74,7 @@ enum ModelType {
     MobileNetV2,
     ResNet18,
     ResNet101,
-    DepthAnythingV2,
-    MiniCPM
+    DepthAnythingV2
 };
 
 using ProcessFunc = std::function<bool(std::vector<std::string>&, std::vector<TensorBuf>&, std::vector<TensorDesc>&)>;

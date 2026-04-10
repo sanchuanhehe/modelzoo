@@ -59,13 +59,40 @@ int32_t DevDeInit()
     return 0;
 }
 
+int32_t InitData(int8_t * data, size_t size)
+{
+    memset(data, 0, size);
+    return 0;
+}
+
 int32_t DevMalloc(void **devPtr, size_t size)
 {
+#ifdef ENABLE_SVP_ACCELERATE
+    int ret = svp_acl_rt_malloc_cached(devPtr, size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+#else
     int ret = svp_acl_rt_malloc(devPtr, size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+#endif
+    
     if (ret != 0) {
         ERROR_LOG("malloc mem failed. size is %u", size);
         return -1;
     }
+    return 0;
+}
+
+int32_t DevFlush(void *devPtr, size_t size)
+{
+#ifdef ENABLE_SVP_ACCELERATE
+    if(devPtr == nullptr) {
+        INFO_LOG("flush mem empty");
+        return -1;
+    }
+    int ret = svp_acl_rt_mem_flush(devPtr, size);
+    if (ret != 0) {
+        DevFree(devPtr);
+        return -1;
+    }
+#endif
     return 0;
 }
 
@@ -91,7 +118,11 @@ TensorBuf::TensorBuf(size_t dataSize, size_t dataStride): data(nullptr), size(da
 {
     void* ptr = nullptr;
     if (dataSize > 0) {
-        DevMalloc(&ptr, dataSize);
+        int ret = DevMalloc(&ptr, dataSize);
+        if (ret == 0) {
+            InitData(static_cast<int8_t*>(ptr), size);
+            DevFlush(ptr, size);
+        }
     }
     data.reset(ptr, [](void* p) {
         if (p != nullptr) {
@@ -105,6 +136,7 @@ TensorBuf::TensorBuf(void* externalData, size_t dataSize, size_t dataStride)
     data.reset(externalData, [](void* p) {}); // 空删除器，不释放外部内存
     size = dataSize;
     stride = dataStride;
+    DevFlush(data.get(), size);
 }
 
 TensorBuf TensorBuf::DeepCopy() 
@@ -121,6 +153,7 @@ TensorBuf TensorBuf::DeepCopy()
                 DevFree(p);
             } 
         });
+        DevFlush(newData, size); 
     }
     return newBuf;
 }
@@ -298,8 +331,11 @@ int32_t SvpAclMdl::ReadFile(const std::string& filePath, void *&ptr, uint32_t &s
         file.close();
         return -1;
     }
-
+#ifdef ENABLE_SVP_ACCELERATE
+    auto ret = svp_acl_rt_malloc_cached(&ptr, size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+#else
     auto ret = svp_acl_rt_malloc(&ptr, size, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+#endif
     if (ret != 0) {
         ERROR_LOG("svp_acl_rt_malloc model buffer failed. size is %u", size);
         file.close();
@@ -309,6 +345,7 @@ int32_t SvpAclMdl::ReadFile(const std::string& filePath, void *&ptr, uint32_t &s
     file.seekg(0, file.beg);
     file.read(static_cast<char *>(ptr), size);
     file.close();
+    DevFlush(ptr, size);
     return 0;
 }
 
@@ -563,6 +600,7 @@ int32_t SvpAclMdl::SetInBuf(size_t index, TensorBuf& buf)
         ERROR_LOG("update input %zuth databuffer failed", index);
         return -1;
     }
+    DevFlush(buf.data.get(), buf.size);
     return 0;
 }
 
@@ -594,6 +632,8 @@ int32_t SvpAclMdl::SetOutBuf(size_t index, TensorBuf& buf)
         ERROR_LOG("update output %zuth databuffer failed", index);
         return -1;
     }
+
+    DevFlush(buf.data.get(), buf.size);
     return 0;
 }
 

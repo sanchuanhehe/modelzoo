@@ -117,6 +117,11 @@ int32_t DevMalloc(void **devPtr, size_t size)
     return 0;
 }
 
+int32_t DevFlush(void *devPtr, size_t size)
+{
+    return 0;
+}
+
 int32_t DevFree(void *devPtr)
 {
     aclrtSetDevice(0);

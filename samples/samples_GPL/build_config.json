@@ -209,18 +209,26 @@
   },
   {
     "buildTarget": "modelzoo-app",
-    "relativePath": "built-in/yolov9s",
-    "chip": "SS928V100",
-    "buildDef": "OPTG",
-    "needSmoke": "false",
-    "description": "检测网"
-  },
-  {
-    "buildTarget": "modelzoo-app",
-    "relativePath": "built-in/yolov9s",
+    "relativePath": "built-in/yolov8s-world",
     "chip": "SS928V100",
     "buildDef": "SS928V100",
     "needSmoke": "false",
-    "description": "检测网"
+    "description": "分割网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s-world",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分割网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "built-in/yolov8s-world",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分割网"
   }
 ]

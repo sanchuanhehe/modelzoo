@@ -97,6 +97,7 @@ int32_t DevInit(const std::string& configPath = "");
 int32_t DevDeInit();
 
 int32_t DevMalloc(void **devPtr, size_t size);
+int32_t DevFlush(void *devPtr, size_t size);
 int32_t DevFree(void *devPtr);
 int32_t DevMemcpy(void *dst, size_t destMax, const void *src, size_t count);
 

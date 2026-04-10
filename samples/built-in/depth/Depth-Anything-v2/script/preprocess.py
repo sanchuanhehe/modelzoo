@@ -24,7 +24,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms import Compose
 
-extra_path = os.path.abspath("/home/wubingdong/workspace/modelzoo-dev/samples/common/built-in/depth/Depth-Anything-v2/Depth-Anything-V2")
+extra_path = os.path.abspath("./Depth-Anything-V2")
 sys.path.append(extra_path)
 
 from depth_anything_v2.util.transform import Resize, NormalizeImage, PrepareForNet
@@ -57,8 +57,8 @@ def image2tensor(raw_image, image_path, shape_kv, input_size=518):
     return img, (h, w)
 
 def main():
-    input_path = '../data/DA-2K/images/'
-    output_path = os.path.realpath('../data')
+    input_path = './data/DA-2K/images/'
+    output_path = os.path.realpath('./data')
     if not os.path.isdir(output_path + '/img/'):
         os.makedirs(os.path.realpath(output_path+ '/img/'))
     input_class = os.listdir(input_path)
@@ -75,14 +75,18 @@ def main():
             img, (h, w) = image2tensor(raw_image, image_path, shapes_kv, 518)
             print("save_path: ", output_path + '/img/' + image_path.split(".")[0] + ".bin")
             img.tofile(output_path + '/img/' + image_path.split(".")[0] + ".bin")
-    with open("../data/shapes.json", "w") as f:
+    with open("./data/shapes.json", "w") as f:
         json.dump(shapes_kv, f, indent=4)
 
 if __name__ == "__main__":
-    main()
-    file_list = os.listdir('../data/img/')
-    sorted_files = sorted(file_list)
-    # 将文件列表保存到文本文件
-    with open(os.path.join('../data' , 'file_list.txt'), 'w', encoding='utf-8') as f:
-        for item in sorted_files:
-            f.write(f"img/{item}\n")
+    print("file_path: 123949917_fd08c80d60_b.jpg")
+    output_path = os.path.realpath('./data')
+    if not os.path.isdir(output_path + '/img/'):
+        os.makedirs(os.path.realpath(output_path+ '/img/'))
+    image_path = "123949917_fd08c80d60_b.jpg"
+    raw_image = cv2.imread("./data/DA-2K/images/object/123949917_fd08c80d60_b.jpg")
+    shapes_kv = {}
+    img, (h, w) = image2tensor(raw_image, image_path, shapes_kv, 518)
+    print("save_path: ", output_path + '/img/' + image_path.split(".")[0] + ".bin")
+    img.tofile(output_path + '/img/' + image_path.split(".")[0] + ".bin")
+    #main()
