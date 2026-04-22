@@ -17,14 +17,15 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cstdio>
 #include <iostream>
 #include <string>
 #include "acl/svp_acl.h"
 #include "acl/svp_acl_mdl.h"
 
-#define INFO_LOG(fmt, ...) fprintf(stdout, "[INFO]  " fmt "\n", ##__VA_ARGS__)
-#define WARN_LOG(fmt, ...) fprintf(stdout, "[WARN]  " fmt "\n", ##__VA_ARGS__)
-#define ERROR_LOG(fmt, ...) fprintf(stdout, "[ERROR] " fmt "\n", ##__VA_ARGS__)
+#define INFO_LOG(fmt, ...) fprintf(stderr, "[INFO]  " fmt "\n", ##__VA_ARGS__)
+#define WARN_LOG(fmt, ...) fprintf(stderr, "[WARN]  " fmt "\n", ##__VA_ARGS__)
+#define ERROR_LOG(fmt, ...) fprintf(stderr, "[ERROR] " fmt "\n", ##__VA_ARGS__)
 
 #ifdef _WIN32
 #define S_ISREG(m) (((m) & 0170000) == (0100000))
