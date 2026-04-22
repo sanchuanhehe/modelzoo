@@ -17,6 +17,7 @@
 #ifndef MODEL_PROCESS_H
 #define MODEL_PROCESS_H
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include "utils.h"
@@ -166,6 +167,12 @@ public:
     size_t GetInputNum() const;
 
     /**
+    * Function: Get the total number of model output nodes
+    * Return: Count of output nodes
+    */
+    size_t GetOutputNum() const;
+
+    /**
     * Function: Get stride parameters of specified input index
     * Input: index - target index of the input buffer (starting from 0)
     * Output: buf_size - byte size of the input buffer (output parameter)
@@ -191,6 +198,20 @@ public:
     */
     Result CreateInputFromData(const std::vector<const void*>& input_datas, 
                                const std::vector<size_t>& input_sizes);
+
+    /**
+    * Function: Extract a compact output tensor without stride padding
+    * Input: index - output index
+    * Output: packed - compact output bytes
+    * Output: dims - logical dimensions reported by the model
+    * Output: elem_type - worker element type used by the binary protocol
+    * Return: Result status code (success/failure of extraction)
+    */
+    Result GetPackedOutputData(
+        size_t index,
+        std::vector<uint8_t>& packed,
+        std::vector<int64_t>& dims,
+        uint32_t& elem_type) const;
     
     /**
     * Function: Release all model-related resources

@@ -297,7 +297,7 @@ pip3 install -r requirements.txt
 
     在板端会输出显示，Hi3403V100 SVP_NNN平台上性能结果如下：
     ```
-     execution time: 50.32ms, frame rate: 19.87fps
+     execution time: 29.03ms, frame rate: 34.44fps
     ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
@@ -306,4 +306,4 @@ pip3 install -r requirements.txt
 
 | 芯片型号    | Batch Size | 数据集   | AP（IoU=0.50） | AP（IoU=0.50:0.95） | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ | ------------------ |
-| Hi3403V100 SVP_NNN | 1          | coco2017  | 62.8%       | 45.4%         | 19.87fps |
+| Hi3403V100 SVP_NNN | 1          | coco2017  | 62.8%       | 45.4%         | 34.44fps |

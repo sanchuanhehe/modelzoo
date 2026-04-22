@@ -36,8 +36,7 @@ static constexpr int FP32_BIT_NUM = 32;
 static constexpr int STATE_FILELIST_IDX = 1;
 
 using json = nlohmann::json;
-struct NormalizeParam
-{
+struct NormalizeParam {
     std::vector<float> kMean;
     std::vector<float> kStd;
 };
@@ -52,7 +51,9 @@ static std::vector<std::vector<float>> GetModelOutput(TensorBuf &outBufs, Tensor
     int64_t loopTimes = 1;
     if (outDescs.dimCount != 0) {
         width = outDescs.dims[outDescs.dimCount - 1]; // 最后一维是width
-        loopTimes = outDescs.defaultSize / dataSize / width;
+        if (width != 0) {
+            loopTimes = outDescs.defaultSize / dataSize / width;
+        }
     }
     LOG(INFO) << "LoadModelOutput: outDescs.defaultSize " << outDescs.defaultSize;
 
@@ -106,16 +107,15 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
         auto& kMean = config["mean"];
         auto& kStd = config["std"];
         if (!kMean.is_array()) {
-            file.close();
             throw std::runtime_error("'mean' must be array");
-
+            file.close();
         }
         for (const auto& val : kMean) {
             param.kMean.emplace_back(float(val));
         }
         if (!kStd.is_array()) {
-            file.close();
             throw std::runtime_error("'std' must be array");
+            file.close();
         }
         for (const auto& val : kStd) {
             param.kStd.emplace_back(float(val));
@@ -125,11 +125,11 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
         file.close();
         return false;
     } catch (const json::type_error& e) {
-        LOG(ERROR) << "Data type error: " << e.what();
+        LOG(ERROR) << "data type error: " << e.what();
         file.close();
         return false;
     } catch (const std::exception& e) {
-        LOG(ERROR) << "Running error: " << e.what();
+        LOG(ERROR) << "running exception: " << e.what();
         file.close();
         return false;
     }
@@ -140,7 +140,10 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
 static Result Unnormalize(const std::string& actionStatsPath, std::vector<std::vector<float>> &modelOut, int actionLen)
 {
     NormalizeParam param;
-    ParseActionStatsJsonFile(actionStatsPath, param);
+    if (!ParseActionStatsJsonFile(actionStatsPath, param)) {
+        LOG(ERROR) << "Parse action stats json file failed";
+        return FAILED;
+    }
     if (param.kMean.size() != actionLen || param.kStd.size() != actionLen) {
         LOG(ERROR) << "The number of kMean: "<< param.kMean.size() << " or kStd: "<< param.kStd.size() <<
         " is wrong, please check";

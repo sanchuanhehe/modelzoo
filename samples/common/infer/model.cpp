@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include "image_process.h"
+#include "vit_preprocess.h"
 #include "post_process.h"
 #include "yolo4_preprocess.h"
 #include "yolo4_postprocess.h"
@@ -57,14 +58,24 @@
 #include "fastspeech2_postprocess.h"
 #include "pi0_preprocess.h"
 #include "pi0_postprocess.h"
+#include "clip_txt_preprocess.h"
+#include "clip_preprocess.h"
+#include "clip_postprocess.h"
+#include "vit_preprocess.h"
+#include "depthanythingv2_preprocess.h"
+#include "depthanythingv2_postprocess.h"
 
 namespace Infer {
 constexpr float MS2S = 1000.0f;
+constexpr int US2S = 1000000;
+constexpr int S2MIN = 60;
+constexpr float PERCENT100 = 100.00f;
 
 using json = nlohmann::json;
 struct ExecuteParam
 {
     size_t loop = 0;
+    size_t processLoop = 0;
     std::vector<std::vector<std::string>> fileLists;
 };
 
@@ -78,8 +89,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
                             ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
     { ModelType::SwinT, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                             ImageprocessOptions(256, 224, true, PillowResize::INTERPOLATION_BICUBIC)), PrintTop5AndDumpResult} },
-    { ModelType::VitB16, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                            ImageprocessOptions(248, 224, true, PillowResize::INTERPOLATION_BICUBIC)), PrintTop5AndDumpResult} },
+    { ModelType::VitB16, {std::bind(VitPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                            VitPrerocessOptions(248, 224, true, PillowResize::INTERPOLATION_BICUBIC)), PrintTop5AndDumpResult} },
     { ModelType::VGG16, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                         ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
     { ModelType::FaceNet, {FaceNetNS::FaceNetPreprocess, FaceNetNS::FaceNetPostprocess} },
@@ -91,13 +102,31 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::LRStereo, {XStereoPreprocess, XStereoPostprocess}},
     { ModelType::LRStereoDis, {XStereoDisPreprocess, XStereoPostprocess}},
     { ModelType::PaddleOCR_Det, {OcrDetPreprocess, OcrDetPostprocess} },
-    { ModelType::PaddleOCR_Rec, {OcrRecPreprocess, OcrRecPostprocess} },
+    { ModelType::PaddleOCR_Rec, { std::bind(OcrRecPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), 
+                    std::bind(OcrRecPostprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true)} },
     { ModelType::PFLD, {PFLDNS::PFLDPreprocess, PFLDNS::PFLDPostprocess} },
     { ModelType::CrowdCount, {CrowdCountNS::CrowdCountPreprocess, CrowdCountNS::CrowdCountPostprocess} },
     { ModelType::CRNN, {CRNNPreprocess, CRNNPostProcess} },
     { ModelType::VDSR, {VDSRPreprocess, VDSRPostProcess} },
     { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
-    { ModelType::TinySam, {nullptr, nullptr} }
+    { ModelType::TinySam, {nullptr, nullptr} },
+    { ModelType::MiniCPM, {nullptr, nullptr} },
+    { ModelType::ClipImg, {ClipImgPreprocess, Clip::ClipImgPostprocess} },
+    { ModelType::ClipTxt, {std::bind(ClipTxtPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), Clip::ClipTxtPostprocess} },
+    { ModelType::SuperPoint, {SuperPointPreprocess, SuperPointPostprocess}},
+    { ModelType::SqueezeNet1_1, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::DenseNet121, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::ShuffleNetV2, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::MobileNetV2, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::ResNet18, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::ResNet101, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, true)), PrintTop5AndDumpResult} },
+    { ModelType::DepthAnythingV2, { std::bind(DepthAnythingV2Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), DepthAnythingV2Postprocess } },
 };
 #else
 const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::modelTypeToProcessMap_ = {
@@ -126,8 +155,25 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::CrowdCount, {CrowdCountNS::CrowdCountPreprocess, CrowdCountNS::CrowdCountPostprocess} },
     { ModelType::HRNet, {HRNetPreprocess, HrnetPostprocess} },
     { ModelType::PaddleOCR_Det, {OcrDetPreprocess, OcrDetPostprocess} },
+    { ModelType::PaddleOCR_Rec, { std::bind(OcrRecPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), 
+                    std::bind(OcrRecPostprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false)} },
     { ModelType::GraspNet, {Grasp::GraspNetPreprocess, Grasp::GraspNetPostprocess} },
-    { ModelType::Pi0, {Pi0Preprocess, Pi0Postprocess} }
+    { ModelType::Pi0, {Pi0Preprocess, Pi0Postprocess} },
+    { ModelType::SqueezeNet1_1, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                    ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::DenseNet121, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                    ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::ShuffleNetV2, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::MobileNetV2, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::ResNet18, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::ResNet101, {std::bind(ImageProcess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                        ImageprocessOptions(256, 224, false)), PrintTop5AndDumpResult} },
+    { ModelType::DepthAnythingV2, { std::bind(DepthAnythingV2Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), DepthAnythingV2Postprocess } },
+    { ModelType::ClipImg, {ClipImgPreprocess, Clip::ClipImgPostprocess} },
+    { ModelType::ClipTxt, {std::bind(ClipTxtPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), Clip::ClipTxtPostprocess} },
 };
 #endif
 
@@ -157,6 +203,9 @@ static bool ParseInputJsonFile(const std::string& filePath, ExecuteParam& param)
         }
         if (config.contains("loop")) {
             param.loop = config["loop"].get<size_t>();
+        }
+        if (config.contains("processLoop")) {
+            param.processLoop = config["processLoop"].get<size_t>();
         }
     } catch (const json::parse_error& e) {
         LOG(ERROR) << "JSON 解析错误: " << e.what();
@@ -249,22 +298,51 @@ std::vector<std::vector<Tensor>> Model::Infer(const std::string& filePath, FileT
         inBuf.emplace_back(4, 0);
     }
     size_t loop = param.loop > 0 ? param.loop : 1;
+    int processLoop = param.processLoop > 0 ? param.processLoop : 1;
     std::chrono::microseconds dur(0);
+    auto start = std::chrono::high_resolution_clock::now();
+    auto preprocessStart = std::chrono::high_resolution_clock::now();
+    auto postprocessStart = std::chrono::high_resolution_clock::now();
+    float preprocessCostTime = 0;
+    float postprocessCostTime = 0;
     for (size_t i = 0; i < param.fileLists.size(); ++i) {
-        if (preprocessFunc_ == nullptr || !preprocessFunc_(param.fileLists[i], inBuf, mdlInputDescs_)) {
-            LOG(ERROR) << "failed to preprocess model input";
-            return {};
+        preprocessStart = std::chrono::high_resolution_clock::now();
+        for (size_t j = 0; j < processLoop; j++) {
+            if (preprocessFunc_ == nullptr || !preprocessFunc_(param.fileLists[i], inBuf, mdlInputDescs_)) {
+                LOG(ERROR) << "failed to preprocess model input";
+                return {};
+            }
         }
+        preprocessCostTime += static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now() - preprocessStart)
+                .count());
         for (size_t j = 0; j < loop; j++) {
             if (mdl_->Execute(inBuf, outBuf) != 0) {
                 LOG(ERROR) << "failed to execute model";
                 return {};
             }
         }
-        if (postprocessFunc_ == nullptr || !postprocessFunc_(param.fileLists[i], outBuf, mdlOutputDescs_)) {
-            LOG(ERROR) << "failed to postprocess model output";
-            return {};
+        postprocessStart = std::chrono::high_resolution_clock::now();
+        for (size_t j = 0; j < processLoop; j++) {
+            if (postprocessFunc_ == nullptr || !postprocessFunc_(param.fileLists[i], outBuf, mdlOutputDescs_)) {
+                LOG(ERROR) << "failed to postprocess model output";
+                return {};
+            }
         }
+        postprocessCostTime += static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::high_resolution_clock::now() - postprocessStart)
+                .count());
+        auto costTime = static_cast<float>(
+            std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::high_resolution_clock::now() - start)
+                .count());
+        costTime = costTime / US2S;
+        auto finishedPercent = (i + 1) * PERCENT100 / param.fileLists.size();
+        LOG(INFO) << std::fixed << std::setprecision(2) << "already infer " << i + 1
+                  << " image, cost " << costTime << " s, " << PERCENT100 - finishedPercent
+                  << "% remains, "
+                  << costTime * (param.fileLists.size() - i - 1) * 1.00f / (i * S2MIN + S2MIN)
+                  << "min remains.";
     }
     std::vector<Tensor> output;
     for (size_t k = 0; k < mdlOutputDescs_.size(); ++k) {
@@ -275,6 +353,12 @@ std::vector<std::vector<Tensor>> Model::Infer(const std::string& filePath, FileT
     if (param.loop > 0 && param.fileLists.size() > 0) {
         float msDur = *(static_cast<float*>(inBuf[inBuf.size() - 1].GetRawPtr())) / (param.loop * param.fileLists.size() * MS2S);
         LOG(INFO) << std::fixed << std::setprecision(2) << "execution time: " << msDur << "ms, frame rate: " << (MS2S / msDur) << "fps";
+    }
+    if (param.processLoop > 0 && param.fileLists.size() > 0) {
+        float preprocessMsDur = preprocessCostTime / MS2S;
+        LOG(INFO) << std::fixed << std::setprecision(2) << "preprocess time: " << preprocessMsDur /  (processLoop * param.fileLists.size()) << " ms";
+        float postprocessMsDur = postprocessCostTime / MS2S;
+        LOG(INFO) << std::fixed << std::setprecision(2) << "postprocess time: " << postprocessMsDur /  (processLoop * param.fileLists.size()) << " ms";
     }
     return outputs;
 }
@@ -297,6 +381,15 @@ std::vector<TensorBuf> Model::Infer(std::vector<TensorBuf>& tensorBufs)
         return {};
     }
     return outBuf;
+}
+
+int Model::Infer(std::vector<TensorBuf>& inBufs, std::vector<TensorBuf>& outBufs)
+{
+    if (mdl_->Execute(inBufs, outBufs) != 0) {
+        LOG(ERROR) << "failed to execute model";
+        return 0;
+    }
+    return 0;
 }
 
 std::pair<std::vector<TensorDesc>, std::vector<TensorDesc>> Model::GetModelInfo()
@@ -342,7 +435,7 @@ std::vector<Tensor> Model::Infer(std::vector<Tensor>& tensors, std::string fileP
             LOG(ERROR) << "failed to postprocess model output";
             return {};
         }
-    
+
     return outputs;
 }
 }

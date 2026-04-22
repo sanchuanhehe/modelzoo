@@ -253,6 +253,7 @@ GraspNet是一种基于点云输入的多阶段抓取姿态预测模型，由抓
     pip3 install te-0.4.0-py3-none-any.whl
     pip3 install opc_tool-0.1.0-py3-none-any.whl
     pip3 install op_compile_tool-0.1.0-py3-none-any.whl
+    ```
 
 ## 模型推理<a name="section741711594518"></a>
 

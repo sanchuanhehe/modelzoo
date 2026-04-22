@@ -45,6 +45,6 @@ link_directories(
 
 add_executable(main main.cpp)
 
-target_link_libraries(main infer_utils_static m)
+target_link_libraries(main infer_common)
 
 install(TARGETS main DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

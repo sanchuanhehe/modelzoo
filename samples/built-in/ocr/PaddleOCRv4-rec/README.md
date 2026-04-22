@@ -82,8 +82,9 @@ PP-OCRv4识别模型在PP-OCRv3的基础上进一步升级。整体的框架保�
 
 | 芯片型号  | 算力引擎   | soc_version | 环境准备指导  | CANN包版本 | 编译工具链 | 板端OS  | SDK  |
 | --------- | ------- | -----------| ------------ | ---------- | ---------- | --- | ---- |
-| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
-| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz)  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 |
+| Hi3403V100 | SVP_NNN | SS928V100   | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | 6.10.t01spc030b700  |  [clang 15.0.4](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md#241%E5%AE%89%E8%A3%85clang%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91%E5%99%A8)  | [OpenHarmony](https://gitee.com/HiSpark/pegasus/blob/Beta-v0.9.1/docs/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/Hi3403V100%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97.md)   | [ss928v100_clang](https://gitee.com/HiSpark/ss928v100_clang/tree/Beta-v0.9.1/) |
+| Hi3403V100 | SVP_NNN    | SS928V100        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  6.10.t01spc030b700  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 |
+| Hi3403V100 | NNN     | OPTG        | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) |  5.30.t14.7.b140  |  aarch64-mix210-linux-gcc |  Linux | SS928 V100R001C02SPC022 |     
 
 # 模型推理<a name="ZH-CN_TOPIC_0000001126281700"></a>
 
@@ -144,7 +145,7 @@ mkdir -p model
 4. 切换到可执行文件main所在的目录，运行可执行文件。测试图片上模型推理命令参考：
     
     ```
-    ./main --acl ../src/acl.json --model ../model/rec.om --input ../data/file_list_1.json
+    ./main --model ../model/rec.om --input ../data/file_list_1.json
     ```
     备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
 
@@ -175,7 +176,7 @@ pip3 install -r requirements.txt
 2. 数据预处理，将原始数据集转换为模型的输入数据。
     1. 针对Hi3403V100 SVP_NNN平台上的om模型的预处理转换命令
         ```
-        python ./script/xfund_process.py
+        python3 ./script/xfund_process.py
         python3 ../../../../utils/generate_file_list.py datasets/paddleocr_rec_input/img/
         ```
     2. 生成量化数据
@@ -224,7 +225,7 @@ pip3 install -r requirements.txt
          
          python ./converter/ch_ppocr_v4_rec_converter.py --yaml_path ./configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml --src_model_path ckpt/ch_PP-OCRv4_rec_train/
          
-         python ./tools/infer/predict_system.py --image_dir ./doc/imgs/11.jpg --det_model_path ./ch_ptocr_v4_det_infer.pth --det_yaml_path ./configs/det/ch_PP-OCRv4/ch_PP-OCRv4_det_student.yml --rec_model_path 3,48,320 --rec_model_path ./ch_ptocr_v4_rec_infer.pth --rec_yaml_path ./configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml
+         python ./tools/infer/predict_system.py --image_dir ./doc/imgs/11.jpg --det_model_path ./ch_ptocr_v4_det_infer.pth --det_yaml_path ./configs/det/ch_PP-OCRv4/ch_PP-OCRv4_det_student.yml --rec_image_shape "3,48,320" --rec_model_path ./ch_ptocr_v4_rec_infer.pth --rec_yaml_path ./configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml
          
          python ./onnx_model_sim.py
          ```
@@ -236,28 +237,33 @@ pip3 install -r requirements.txt
     执行ATC命令。
     1. Hi3403V100 SVP_NNN上的om模型转换命令
         ```
-        atc --model="./model/ch_ptocr_v4_rec_simplified.onnx" --online_model_type="0" --framework=5 --input_format="NCHW" --save_original_model="false" --output=./model/rec --input_type="input.1:FP32" --compile_mode=5 --soc_version=SS928V100 --image_list="./data/quant/data_rec.txt" --input_shape="input.1:1,3,48,320" --matmul_per_channel_enable=1 --quant_mode=1
+        atc --model="./model/ch_ptocr_v4_rec_simplified.onnx" --online_model_type="0" --framework=5 --input_format="NCHW" --save_original_model="false" --output=./model/rec --input_type="input.1:FP32" --compile_mode=5 --soc_version=SS928V100 --image_list="./data/quant/data_rec.txt" --input_shape="input.1:1,3,48,320"
         ```
-       
+
+    2. Hi3403V100 NNN上的om模型转换命令
+        ```
+        atc --framework=5 --model="./model/ch_ptocr_v4_rec_simplified.onnx" --input_format="NCHW" --input_shape="input.1:1,3,48,320" -output="./model/rec" --enable_single_stream=true --soc_version=OPTG
+        ```
         运行成功后生成rec.om模型文件。
 
         参数说明：
-      
-        - --framework：5代表ONNX模型。
-        - --model：为ONNX模型文件。
+        - --framework：原始框架类型，5代表ONNX模型。
+        - --model：ONNX模型文件路径。
         - --input_shape：输入数据的shape。
-        - --insert_op_conf：aipp算子配置，用于输入数据处理。
-        - --output：输出的OM模型。
-        - --image_list: 量化校准数据。数据获取参考[准备数据集](#section183221994411)章节。
-        - --enable_single_stream:推理时使用一条stream。
+        - --insert_op_conf：插入图像预处理的配置
+        - --output：输出的OM模型路径。
+        - --image_list：转换模型生成量化参数时用的校准数据。数据获取参考[准备数据集](#section183221994411)章节。
+        - --enable_single_stream：推理时使用一条stream。
         - --soc_version：处理器型号。
+        - --compile_mode：编译模式
+
 
 ## 精度&性能评估<a name="section741711594518"></a>
 
 1. 登录到板端运行环境，切换到可执行文件main所在的目录，运行可执行文件。本例中，模型执行后，基于推理结果，输出的选框会保存再./out/result/txt/目录下
 
     ```
-    ./main --acl ../src/acl.json --model ../model/rec.om --input ../data/file_list.json
+    ./main --model ../model/rec.om --input ../data/file_list.json
     ```
 
 2. 精度验证。
@@ -265,7 +271,7 @@ pip3 install -r requirements.txt
     调用脚本可以获得精度数据。
 
     ```
-    python ./script/rec_accuray.py --label_path "./datasets/paddleocr_rec_input/zh_val_labels.txt" --pre_file "./out/result/txt/"
+    python3 ./script/rec_accuray.py --label_path "./datasets/paddleocr_rec_input/zh_val_labels.txt" --pre_file "./out/result/txt/"
     ```
 
     参数说明：
@@ -278,12 +284,17 @@ pip3 install -r requirements.txt
     
     Hi3403V100 SVP_NNN平台上精度结果：
     ```
-    精度结果:  0.5725190839694656 
+    精度结果:  0.6213833011848994 
+    ```
+
+    Hi3403V100 NNN平台上精度结果：
+    ```
+    精度结果:  0.65693028382474
     ```
 3. 验证om模型的性能，参考命令如下：
 
     ```
-    执行./main --acl ../src/acl.json --model ../model/rec.om --input ../data/file_list_1.json
+    执行./main --model ../model/rec.om --input ../data/file_list_1.json
     ```
 
     参数说明：(此模式下，file_list_1.json只放一张图片)
@@ -294,7 +305,12 @@ pip3 install -r requirements.txt
 
     在板端会输出显示，Hi3403V100 SVP_NNN平台上性能结果如下：
     ```
-    fps: 0.459
+    execution time: 11.0448ms, frame rate: 90.54fps
+    ```
+
+    在板端会输出显示，Hi3403V100 NNN平台上性能结果如下：
+    ```
+    execution time: 22.16ms, frame rate: 45.12fps
     ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>
@@ -303,4 +319,5 @@ pip3 install -r requirements.txt
 
 | 芯片型号    | Batch Size | 数据集   | acc | 性能（fps） |
 | ----------- | ---------- | -------- | ------------------ | ------------------ |
-| Hi3403V100 SVP_NNN | 1          | XFUND | 61.3%    | 0.459 |
+| Hi3403V100 SVP_NNN | 1          | XFUND | 62.14%    | 90.54 |
+| Hi3403V100 NNN | 1          | XFUND | 65.69%    | 45.12 |

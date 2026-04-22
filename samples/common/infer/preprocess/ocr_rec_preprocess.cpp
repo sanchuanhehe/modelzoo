@@ -28,9 +28,10 @@
 
 using json = nlohmann::json;
 constexpr int BYTE_BIT_NUM = 8;
+static bool isDpicoGlobal = true;
 namespace Infer
 {
-    static Result ReadImgFileToBuf(cv::Mat &chwImg, TensorDesc &desc, TensorBuf &inBuf)
+    static Result ReadImgFileToBufDpico(cv::Mat &chwImg, TensorDesc &desc, TensorBuf &inBuf)
     {
         LOG(INFO) << "ReadImgFileToBuf: desc.dimCount " << desc.dimCount;
         int64_t loopTimes = 1;
@@ -61,6 +62,14 @@ namespace Infer
             // 拷贝数据
             memcpy(destPtr, srcPtr, width * dataSize);
         }
+        return SUCCESS;
+    }
+
+    static Result ReadImgFileToBufDlite(const cv::Mat& mat, const TensorDesc& desc,
+    TensorBuf& inBuf)
+    {
+        size_t matTotalBytes = mat.total() * mat.elemSize();
+        memcpy(inBuf.GetRawPtr(), mat.data, matTotalBytes);
         return SUCCESS;
     }
 
@@ -133,8 +142,9 @@ namespace Infer
         return file.good();
     }
 
-    bool OcrRecPreprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &inBufs, std::vector<TensorDesc> &inDescs)
+    bool OcrRecPreprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &inBufs, std::vector<TensorDesc> &inDescs, bool isDpico)
     {
+        isDpicoGlobal = isDpico;
         // 进度显示（简化版）
         LOG(INFO) <<  "PreProcessing ";
         for (size_t i = 0; i < fileList.size(); ++i) {
@@ -142,7 +152,11 @@ namespace Infer
             LOG(INFO) << "imgPath: " << imgPath;
             cv::Mat im0 = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
             cv::Mat processed = ResizeNormlImgOptimized(im0);
-            ReadImgFileToBuf(processed, inDescs[i], inBufs[i]);
+            if (isDpicoGlobal) {
+                ReadImgFileToBufDpico(processed, inDescs[i], inBufs[i]);
+            } else {
+                ReadImgFileToBufDlite(processed, inDescs[i], inBufs[i]);
+            }
             LOG(INFO) << "read end: " << imgPath;
         }
         return true;

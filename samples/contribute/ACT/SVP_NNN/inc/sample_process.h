@@ -18,10 +18,12 @@
 #ifndef SAMPLE_PROCESS_H
 #define SAMPLE_PROCESS_H
 
+#include <cstdint>
 #include <vector> 
 #include "utils.h"
 #include "acl/svp_acl.h"
 #include "model_process.h"
+#include "worker_types.h"
 
 /**
 * Class: SampleProcess
@@ -54,6 +56,10 @@ public:
     * Return: Result status code (success/failure of the entire inference process)
     */
     Result Process();
+    InferenceResponse ProcessOnce(
+        const std::vector<const void*>& input_datas,
+        const std::vector<size_t>& input_sizes,
+        uint32_t request_id);
     // void DestroyResource();
 
     /**

@@ -43,6 +43,7 @@ def read_file_to_dict_basic(file_path):
                 num+=1
             else:
                 print(f"警告：第{line_num}行格式错误，无法分割为key-value：{line}")
+    print("gt num: " , num)
     return result_dict
 
 def get_pre(file_path):
@@ -58,6 +59,7 @@ def get_pre(file_path):
                 line_stripped = line.strip()
                 key = pre.split(".")[0]
                 result_dict[key] = line_stripped
+    print("num: " , num)
     return result_dict
 
 def process(gt, pred_label):

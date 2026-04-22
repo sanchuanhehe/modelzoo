@@ -4,8 +4,8 @@
   "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/MobileNetV2",
   "modelParameter": {
     "input": "3x224x224",
-    "参数量": "3.488M",
-    "计算量": "0.640GFLOPs"
+    "参数量": "3.488 M",
+    "计算量": "0.640 GFLOPs"
   },
   "isBeta": false,
   "betaDesc": "",
@@ -19,7 +19,7 @@
     }
   ],
   "modelFrame": [
-    "Pytorch"
+    "PyTorch"
   ],
   "modelDatasets": {
     "desc": "数据集ImageNet",
@@ -66,17 +66,17 @@
       ],
       "performance": [
         {
-          "quantMode": "a8w8",
+          "quantMode": "A8W8",
           "detail": [
             {
               "performance": 78.209,
               "performanceUnit": "耗时（ms）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 1278.63,
               "performanceUnit": "性能（fps）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 4.11,
@@ -116,7 +116,7 @@
       ],
       "performance": [
         {
-          "quantMode": "fp16",
+          "quantMode": "FP16",
           "detail": [
             {
               "performance": 3.207,

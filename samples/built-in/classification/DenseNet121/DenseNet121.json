@@ -4,8 +4,8 @@
   "modelRepository": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/built-in/classification/DenseNet121",
   "modelParameter": {
     "输入": "224x224",
-    "参数量": "8.04M",
-    "计算量": "6.369GFLOPS"
+    "参数量": "8.04 M",
+    "计算量": "6.369 GFLOPS"
   },
   "isBeta": false,
   "betaDesc": "",
@@ -19,7 +19,7 @@
     }
   ],
   "modelFrame": [
-    "Pytorch"
+    "PyTorch"
   ],
   "modelDatasets": {
     "desc": "数据集ImageNet",
@@ -66,17 +66,17 @@
       ],
       "performance": [
         {
-          "quantMode": "a16w8",
+          "quantMode": "A16W8",
           "detail": [
             {
               "performance": 5.935,
               "performanceUnit": "耗时（ms）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 168.49,
               "performanceUnit": "性能（fps）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 47.986,
@@ -116,17 +116,17 @@
       ],
       "performance": [
         {
-          "quantMode": "fp16",
+          "quantMode": "FP16",
           "detail": [
             {
               "performance": 9.26,
               "performanceUnit": "耗时（ms）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 108.01,
               "performanceUnit": "性能（fps）",
-              "performanceDesc": "性能工具。"
+              "performanceDesc": ""
             },
             {
               "performance": 147.608,

@@ -66,31 +66,77 @@
 			],
 			"performance": [
 				{
-					"quantMode": "a8w8",
+					"quantMode": "A8W8",
 					"detail": [
 						{
-							"performance": 2178.649,
+							"performance": 11.045,
 							"performanceUnit": "耗时（ms）",
 							"performanceDesc": ""
 						},
 						{
-							"performance": 0.459,
+							"performance": 90.54,
 							"performanceUnit": "性能（fps）",
 							"performanceDesc": ""
 						},
 						{
-							"performance": 917.897,
+							"performance": 78.95,
 							"performanceUnit": "单帧内存带宽（MB）",
 							"performanceDesc": ""
 						},
 						{
-							"performance": 13.301,
+							"performance": 12.344,
 							"performanceUnit": "内存（MB）",
 							"performanceDesc": ""
 						}
 					]
 				}
 			]
+		},
+		{
+		  "chipset": "Hi3403V100 NNN",
+		  "os": [
+			"Linux"
+		  ],
+		  "performance": [
+			{
+			  "quantMode": "FP16",
+			  "detail": [
+				{
+				  "performance": 18.280,
+				  "performanceUnit": "耗时（ms）"
+				},
+				{
+				  "performance": 45.12,
+				  "performanceUnit": "性能（fps）"
+				},
+				{
+				  "performance": 219.498,
+				  "performanceUnit": "单帧内存带宽（MB）"
+				},
+				{
+				  "performance": 238.387,
+				  "performanceUnit": "内存（MB）"
+				}
+			  ]
+			}
+		  ],
+		  "tools": [
+			{
+			  "name": "CANN工具",
+			  "link": "",
+			  "desc": "5.30.t14.7.b140 (请联系FAE获取)"
+			},
+			{
+			  "name": "编译工具链",
+			  "link": "",
+			  "desc": "aarch64-mix210-linux-gcc (请联系FAE获取)"
+			},
+			{
+			  "name": "SDK",
+			  "link": "",
+			  "desc": "SS928 V100R001C02SPC022 (请联系FAE获取)"
+			}
+		  ]
 		}
 	]
 }

@@ -1,8 +1,8 @@
 {
     "fileList": [
         [
-            "../datasets/hpatches/i_ajuntament/1.ppm"
+            "../../../../../datasets/testdata/1.jpg"
         ]
     ],
-    "loop":10
+    "loop": 1
 }

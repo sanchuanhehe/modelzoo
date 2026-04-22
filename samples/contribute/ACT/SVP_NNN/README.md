@@ -141,7 +141,7 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
    ```
    成功后生成`act_ros2_simplified.om`文件，通过以下命令，将模型进行重命名，供main文件加载。
    ```
-   mv ./model/act_ros2_simplified.onnx ./model/act_distill_fp32_for_mindcmd_simp_release.om
+   mv ./model/act_ros2_simplified.om ./model/act_distill_fp32_for_mindcmd_simp_release.om
    ```
    **ATC命令核心参数说明**：
    | 参数 | 说明 |
