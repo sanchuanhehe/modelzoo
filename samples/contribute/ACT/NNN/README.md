@@ -1,5 +1,4 @@
 # 基于ACT网络实现模仿学习
-
 ## 概述
 ACT（Action Chunking with Transformers）是面向机器人学习场景的高性能端到端动作控制模型。相比传统模块化机器人控制模型，ACT采用轻量化Transformer架构作为核心骨干进行动作表征学习，结合多模态感知融合模块和时序动作优化网络，在控制精度和实时响应速度上均有显著提升。
 
@@ -23,27 +22,27 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
 ## 原理介绍
 本样例涉及的关键功能点如下：
 - **初始化**
-  - 调用`svp_acl_init`接口初始化ACL配置；
-  - 调用`svp_acl_finalize`接口实现ACL去初始化。
+  - 调用`aclInit`接口初始化ACL配置；
+  - 调用`aclFinalize`接口实现ACL去初始化。
 - **Device管理**
-  - 调用`svp_acl_rt_set_device`接口指定运算Device；
-  - 调用`svp_acl_rt_get_run_mode`接口获取运行模式，按模式差异化处理流程；
-  - 调用`svp_acl_rt_reset_device`接口复位Device，回收资源。
+  - 调用`aclrtSetDevice`接口指定运算Device；
+  - 调用`aclrtGetRunMode`接口获取运行模式，按模式差异化处理流程；
+  - 调用`aclrtResetDevice`接口复位Device，回收资源。
 - **Context管理**
-  - 调用`svp_acl_rt_create_context`接口创建Context；
-  - 调用`svp_acl_rt_destroy_context`接口销毁Context。
+  - 调用`aclrtCreateContext`接口创建Context；
+  - 调用`aclrtDestroyContext`接口销毁Context。
 - **Stream管理**
-  - 调用`svp_acl_rt_create_stream`接口创建Stream；
-  - 调用`svp_acl_rt_destroy_stream`接口销毁Stream。
+  - 调用`aclrtCreateStream`接口创建Stream；
+  - 调用`aclrtDestroyStream`接口销毁Stream。
 - **内存管理**
-  - 调用`svp_acl_rt_malloc`接口申请Device内存；
-  - 调用`svp_acl_rt_free`接口释放Device内存。
+  - 调用`aclrtMalloc`接口申请Device内存；
+  - 调用`aclrtFree`接口释放Device内存。
 - **数据传输**
-  - 调用`svp_acl_rt_memcpy`接口通过内存复制实现数据传输。
+  - 调用`aclrtMemcpy`接口通过内存复制实现数据传输。
 - **模型推理**
-  - 调用`svp_acl_mdl_load_from_mem`接口从`*.om`文件加载模型；
-  - 调用`svp_acl_mdl_execute`接口执行同步模型推理；
-  - 调用`svp_acl_mdl_unload`接口卸载模型。
+  - 调用`aclmdlLoadFromMem`接口从`*.om`文件加载模型；
+  - 调用`aclmdlExecute`接口执行同步模型推理；
+  - 调用`aclmdlUnload`接口卸载模型。
 
 ## 目录结构
 样例代码结构如下：
@@ -90,7 +89,7 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
 2. 环境版本配套要求：
    | 芯片型号 | 算力引擎 | soc_version | 环境准备指导 | CANN包版本 | 编译工具链 | 板端OS | SDK |
    | -------- | ------- | ----------- | ------------ | ---------- | ---------- | --- | ---- |
-   | Hi3403V100 | SVP_NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [SVP_NNN_PC_V1.0.6.0](https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6.0.tgz) | aarch64-openeuler-linux-gnu-g++ | [openEuler](https://pages.openeuler.openatom.cn/embedded/docs/build/html/master/bsp/arm64/hisilicon/hieulerpi/update.html) | SS928 V100R001C02SPC022 |
+   | Hi3403V100 | NNN | SS928V100 | [推理环境准备](https://gitee.com/HiSpark/modelzoo/blob/master/docs/Hi3403V100%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md) | [5.20.t6.2.b060] | aarch64-openeuler-linux-gnu-g++ | [openEuler](https://pages.openeuler.openatom.cn/embedded/docs/build/html/master/bsp/arm64/hisilicon/hieulerpi/update.html) | SS928 V100R001C02SPC022 |
 
    系统驱动安装，参考：https://gitee.com/HiSpark/ss928v100_gcc/tree/Beta-v0.9.2
    
@@ -132,12 +131,13 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
 3. ATC工具转OM模型（Hi3403V100 SVP_NNN平台）：
    ```bash
    # 若无数值校准bin文件，需先通过preprocess.py生成；多文件用;分隔
-   atc/bin/atc --model="./model/act_ros2_simplified.onnx" --online_model_type="4" \
-   --framework="5" --input_format="NCHW" --save_original_model="true" \
-   --output="./model/act_ros2_simplified" --batch_num="1" \
-   --image_list="observation.state:./data/observation.state.bin;observation.images.top_view:./data/observation.images.top.bin;observation.images.wrist_view:./data/observation.images.wrist.bin" \
-   --log_level="0" --weight_quant_per_channel="1" --matmul_per_channel_enable="1" \
-   --quant_mode="1" --compile_mode="6" --soc_version=SS928V100
+   atc --model="./act_ros2_simplified.onnx" \
+   --framework="5" \
+   --input_format="NCHW" \
+   --save_original_model="true" \
+   --output="./act_ros2_simplified" \
+   --soc_version=OPTG \
+   --release=0
    ```
    成功后生成`act_ros2_simplified.om`文件，通过以下命令，将模型进行重命名，供main文件加载。
    ```
@@ -151,9 +151,7 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
    | --output | 必选，输出OM模型的路径（无需后缀） |
    | --image_list | 必选，量化校准数据路径，格式为“输入名:文件路径;输入名:文件路径” |
    | --soc_version | 必选，处理器型号（如SS928V100） |
-   | --compile_mode | 必选，编译模式（6=16bit数据量化+8bit权重量化） |
-   | --log_level | 可选，日志级别（0=DEBUG，1=INFO，2=WARNING，3=ERROR） |
-   
+|
    注意：若找不到atc命令，参考“推理环境准备”配置环境。
 
 ### 模型推理
@@ -165,21 +163,26 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
    ```
 2. 生成编译文件（交叉编译示例：X86→ARM）：
    ```bash
-   cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-openeuler-linux-gnu-g++
+   cmake ../src -Dtarget=board -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=aarch64-mix210-linux-g++ -DCMAKE_C_COMPILER=/usr/bin/cc -DCMAKE_SKIP_RPATH=TRUE -DCMAKE_CXX_FLAGS="-I/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/include" -DCMAKE_CXX_LINK_FLAGS="-L/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/devlib -lascendcl -lpthread -ldl" -DCMAKE_CXX_COMPILER_WORKS=1
    ```
-   **cmake参数说明**：
    | 参数 | 说明 |
-   |------|------|
-   | -Dtarget=board | 必选，指定编译目标为板端运行 |
-   | -DCMAKE_BUILD_TYPE=Release | 可选，编译模式（Release=生产模式，Debug=调试模式） |
-   | -DCMAKE_CXX_COMPILER | 必选，指定交叉编译工具链（如aarch64-openeuler-linux-gnu-g++） |
+   |------|------|				
+   |-Dtarget=board |必选,指定编译目标为板端运行				
+   |-DCMAKE_BUILD_TYPE=Release |可选，编译模式（Release = 生产模式，Debug = 调试模式）				
+   |-DCMAKE_CXX_COMPILER=aarch64-mix210-linux-gnu-g++ | 必选，指定 C++ 交叉编译工具链为 aarch64-mix210-linux-gnu-g++				
+   |-DCMAKE_C_COMPILER=/usr/bin/cc | 必选,指定 C 语言编译器路径为系统默认的 /usr/bin/cc				
+   |-DCMAKE_SKIP_RPATH=TRUE |可选,禁用运行时库路径（RPATH）的生成，避免编译产物依赖特定库路径				
+   |-DCMAKE_CXX_FLAGS="-I/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/include" |必选,C++ 编译选项：添加 Ascend（昇腾）工具链的头文件搜索路径
+   |-DCMAKE_CXX_LINK_FLAGS="-L/home/Ascend/ascend-toolkit/5.20.t6.2.b060/arm64-lmixlinux200/aarch64-linux/devlib -lascendcl -lpthread -ldl" | 必选,C++ 链接	
+   |-DCMAKE_CXX_COMPILER_WORKS=1 |必选,强制指定 C++ 编译器可用
+
 3. 编译生成可执行文件：
    ```bash
    make  # 生成的main在./out目录
    ```
 
 #### 步骤2：运行推理应用
-`model_test.py`通过Python子进程调用C++可执行文件，完成数据预处理、推理、结果解析：
+在运行环境（板端）通过`model_test.py`调用C++可执行文件，完成数据预处理、推理、结果解析：
 1. 部署文件：将样例目录上传至运行环境（Host），如`$HOME/ACT`；
 2. 授权可执行文件：
    ```bash
@@ -239,7 +242,7 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
    | --target_path | str | 是 | 目标动作文件（target.json）路径，用于精度对比 |
    | --policy_path_act | str | 是 | ACT预训练模型权重文件夹路径 |
    
-   SVP_NNN平台精度结果：（根据实际测试补充）
+   NNN平台精度结果：（根据实际测试补充）
 
     1. 测试对象
        - 模型类型：ACT动作预测模型，推理输出维度为`1×100×6`的动作矩阵（对应100个动作步，每个步为6维动作向量）；
@@ -251,34 +254,31 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
         $$L1_{loss} = \sum_{i=1}^6 |a_{OM,i} - a_{PyTorch,i}|$$
         其中，$a_{OM,i}$ 为OM模型输出的1×6向量第$i$维值，$a_{PyTorch,i}$ 为PyTorch原生模型输出的1×6向量第$i$维值。
 
-
-    
-
     3. 测试结果
        - 单样本L1 Loss明细
   
        | 样本序号 | L1 Loss值       | 样本序号 | L1 Loss值       |
        |----------|-----------------|----------|-----------------|
-       | 0        | 0.0507653839886 | 10       | 0.0212973225862 |
-       | 1        | 0.0486927777529 | 11       | 0.0383972041309 |
-       | 2        | 0.0623931325972 | 12       | 0.0998520478606 |
-       | 3        | 0.0688950493932 | 13       | 0.0535418391228 |
-       | 4        | 0.0514137148857 | 14       | 0.0368093699217 |
-       | 5        | 0.0496760308743 | 15       | 0.0349327921867 |
-       | 6        | 0.0541442632675 | 16       | 0.139418199658  |
-       | 7        | 0.0522738248110 | 17       | 0.0313971675932 |
-       | 8        | 0.0510323792696 | 18       | 0.0179848540574 |
-       | 9        | 0.0167912710458 | 19       | 0.0484944172204 |
+       | 0        | 0.000008265178 | 10       | 0.000013351440 |
+       | 1        | 0.000010410945 | 11       | 0.000003337860 |
+       | 2        | 0.000002702077 | 12       | 0.000007390976 |
+       | 3        | 0.000007867813 | 13       | 0.000007947286 |
+       | 4        | 0.000006357829 | 14       | 0.000004688899 |
+       | 5        | 0.000006675720 | 15       | 0.000004847845 |
+       | 6        | 0.000008344650 | 16       | 0.000008821487 |
+       | 7        | 0.000011364619 | 17       | 0.000007947286 |
+       | 8        | 0.000008583069 | 18       | 0.000002940496 |
+       | 9        | 0.000006198883 | 19       | 0.000000715256 |
 
        - 统计指标
         
        | 统计项       | 数值            |
        |--------------|-----------------|
-       | 平均L1 Loss  | 0.0514101521112 |
-       | 最小L1 Loss  | 0.0167912710458（样本9） |
-       | 最大L1 Loss  | 0.139418199658（样本16） |
-       | 中位数L1 Loss| 0.0509 |
-       | 标准差       | 0.0287（计算值）|
+       | 平均L1 Loss  | 0.000006937981 |
+       | 最小L1 Loss  | 0.000000715256（样本 19）|
+       | 最大L1 Loss  | 0.000013351440（样本 10）|
+       | 中位数L1 Loss| 0.000007029395 |
+       | 标准差       | 0.0000028943|
 
 2. 性能验证
     ```bash
@@ -298,5 +298,5 @@ ACT（Action Chunking with Transformers）是面向机器人学习场景的高�
         - 输入1：形状`(1, 3, 240, 320)`（3通道240×320图像），float32类型，元素数230400，字节数921600；
         - 输入2：形状`(1, 3, 240, 320)`（3通道240×320图像），float32类型，元素数230400，字节数921600；
     1. **推理耗时指标**：
-    - 模型核心推理时间：单次推理约**37毫秒**（仅模型前向计算耗时，不含数据传输/解析）；
-    - 端到端推理时间：单次推理约**1.2秒**（含数据打包、C++进程通信、输出解析、张量转换全流程耗时），可通过流水线设计增加推理吞吐；
+    - 模型核心推理时间：单次推理约**2.69秒**（仅模型前向计算耗时，不含数据传输/解析）；
+    - 端到端推理时间：单次推理约**8秒**（含数据打包、C++进程通信、输出解析、张量转换全流程耗时），可通过流水线设计增加推理吞吐；
