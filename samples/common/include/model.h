@@ -39,6 +39,7 @@ enum FileType {
 
 enum ModelType {
     Unknown,
+    Custom,
     Resnet50,
     VGG16,
     Yolov5,
