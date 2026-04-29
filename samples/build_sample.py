@@ -11,7 +11,7 @@ from typing import List, Dict, Union, Set, Optional
 
 # 编译配置
 BUILD_INFO_FILENAME = 'build_config.json'
-DEFAULT_BUILD_TIMEOUT = 60 * 5
+DEFAULT_BUILD_TIMEOUT = 60 * 15
 
 def get_local_branches() -> List[str]:
     """获取所有本地分支列表"""
@@ -25,7 +25,13 @@ def get_local_branches() -> List[str]:
 def check_changes_and_get_folders(changed_files: List[str]) -> Optional[Set[str]]:
     # 定义要剔除的文件和目录
     files_to_remove = ['samples/build_sample.py','samples/build_gate.sh','samples/build_script.sh']
-    directories_to_remove = ['common','samples/opensource']
+    directories_to_remove = [
+        'samples/common',
+        'samples/samples_GPL/common',
+        'samples/acl_utils/include/common',
+        'samples/samples_GPL/acl_utils/include/common',
+        'samples/opensource'
+    ]
     # 剔除匹配的文件和目录
     changed_files = [f for f in changed_files if not (f in files_to_remove or any(f.startswith(d) for d in directories_to_remove))]
 
