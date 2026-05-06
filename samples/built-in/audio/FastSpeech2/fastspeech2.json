@@ -79,12 +79,12 @@
               "performanceDesc": ""
             },
             {
-              "performance": 488.799,
+              "performance": 484.476,
               "performanceUnit": "单帧内存带宽（MB）",
               "performanceDesc": ""
             },
             {
-              "performance": 1.418,
+              "performance": 108.629,
               "performanceUnit": "内存（MB）",
               "performanceDesc": ""
             }

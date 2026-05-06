@@ -116,6 +116,17 @@ mkdir -p model
 ```
 备注：若需要体验om模型转化过程，请参考[安装依赖](#section183221994410)和[模型转化](#section741711594517)章节。
 
+
+### 获取字典文件
+
+   ```bash
+   git clone https://github.com/ming024/FastSpeech2.git
+   cd FastSpeech2
+   git reset --hard d4e79eb52e8b01d24703b2dfc0385544092958f3
+   patch -p1 < ../fastspeech2.patch
+   cd ..
+   ```
+
 ### 编译代码和运行应用
 
 #### 编译代码
@@ -142,7 +153,6 @@ mkdir -p model
     ```
 
 3. 执行**make**命令，生成的可执行文件main在“./out“目录下。
-
 
 #### 运行应用
 

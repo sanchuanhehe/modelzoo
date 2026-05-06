@@ -47,7 +47,7 @@ LRStereo-B是一个轻量且鲁棒的双目立体匹配模型。它在开源模�
 │   ├── ...            //测试数据
 
 ├── script
-│   ├── pth2onnx.py     //python执行脚本
+│   ├── evaluate.py    //python执行脚本
 
 ├── src
 │   ├── acl.json         //系统初始化的配置文件
@@ -218,7 +218,7 @@ pip install -r requirements.txt
     ```
     执行./main --acl ../src/acl.json --model ../model/LRStereo-B_384x1248_release.om --input ../data/file_list_1.json
     ```
-
+    注意：需要将cfg.txt中的type设置为0，测试性能的时候不需要视差转距离
     参数说明：(此模式下，输入路径为一张图片)
     
     - --acl:  ACL 配置文件路径

@@ -18,5 +18,6 @@
 #include "model.h"
 
 namespace Infer {
-bool XStereoPostprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& outBufs, std::vector<TensorDesc>& outDescs);
+bool XStereoPostprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& outBufs,
+    std::vector<TensorDesc>& outDescs);
 }

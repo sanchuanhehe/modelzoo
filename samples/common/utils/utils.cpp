@@ -242,6 +242,10 @@ std::string BuildInputString(std::vector<std::string>& fileListPaths)
 std::vector<std::string> GetInputList(std::string inputString)
 {
     std::vector<std::string> result;
+    if (inputString.find(";") == std::string::npos && inputString.find(":") == std::string::npos) {
+        result.push_back(inputString);
+        return result;
+    }
     std::stringstream ss(inputString);
     std::string segment;
     
