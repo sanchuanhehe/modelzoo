@@ -57,7 +57,8 @@ namespace Infer
         size_t strideElemNum = inBuf.stride / dataSize;
         size_t lineSize = width;
         const float *srcData = chwImg.ptr<float>();
-        LOG(INFO) << "ReadImgFileToBuf: loopTimes " << loopTimes << " linesize: " << lineSize << " sizeof(float): " << sizeof(float);
+        LOG(INFO) << "ReadImgFileToBuf: loopTimes " << loopTimes << " linesize: " << lineSize << " sizeof(float): "
+            << sizeof(float);
         for (int64_t loop = 0; loop < loopTimes; loop++) {
             float *destPtr = static_cast<float *>(inBuf.GetRawPtr()) + loop * strideElemNum;
             const float *srcPtr = srcData + loop * width;
@@ -70,9 +71,9 @@ namespace Infer
         return SUCCESS;
     }
 
-    bool XStereoDisPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& inBufs, std::vector<TensorDesc>& inDescs)
+    bool XStereoDisPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& inBufs,
+        std::vector<TensorDesc>& inDescs)
     {
-        // 进度显示（简化版）
         LOG(INFO) << " xstereo dis Processing ";
         auto cfg = ReadCfgFile("../data/cfg.txt");
         int imgHeight = std::stoi(cfg["img_height"]);

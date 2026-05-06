@@ -178,7 +178,7 @@ cd ..
 
 1. 获取原始数据集。（解压命令参考tar –xvf *.tar与 unzip *.zip）
 
-   本模型使用[CIFAR100](https://www.cs.toronto.edu/~kriz/cifar.html)验证集进行推理测试 ，用户自行获取数据集后，将文件解压并上传数据集当前路径下。数据集目录结构如下所示：
+   本模型使用[CIFAR100](https://www.cs.toronto.edu/~kriz/cifar.html)验证集进行推理测试 ，用户自行获取数据集后，将文件解压并上传数据集当前data路径下。数据集目录结构如下所示：
 
  data/
    |-- datasets
@@ -201,8 +201,8 @@ cd ..
     执行 ../../../utils/generate_file_list.py 脚本，完成数据预处理，生成的file_list.json在data目录下。
 
     ```
+    cp data/datasets/cifar-100/label_cn.txt data/
     python3 ../../../../utils/generate_file_list.py ${dataset_path}
-    复制label_cn.txt到当前目录的data目录下
     ```
     例如:
     ```
@@ -212,8 +212,20 @@ cd ..
    参数说明：
    - --dataset_path：原数据集所在路径。
 
-​   注意：   执行 script/target.py 脚本，生成真值文件
-
+3. 执行 script/target.py 脚本，生成真值文件
+    ```
+    python3 ./script/target.py
+    
+    ```
+4. 数据预处理，生成量化校准文件
+   
+    执行 ./script/zeroshot.sh 脚本，完成数据预处理。
+    
+    ```
+    bash ./script/zeroshot.sh ./script/preprocess.py data cifar-100 ViT-B-16 RoBERTa-wwm-ext-base-chinese ../models/clip_cn_vit-b-16.pt
+    ```
+    执行后会在data目录下生成txt和img文件夹，img下放置img模型转化需要的量化校准文件
+    备注：如果报错，将zeroshot.sh文件的行尾序列修改为LF
 ## 模型转化<a name="section741711594517"></a>
 
 使用PyTorch将模型权重文件.pth转换为.onnx文件，再使用ATC工具将.onnx文件转为离线推理模型文件.om文件。

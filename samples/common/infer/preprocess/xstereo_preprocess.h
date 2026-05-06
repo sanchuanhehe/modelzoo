@@ -18,5 +18,6 @@
 #include "model.h"
 
 namespace Infer {
-bool XStereoPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& inBufs, std::vector<TensorDesc>& inDescs);
+bool XStereoPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& inBufs,
+    std::vector<TensorDesc>& inDescs);
 }

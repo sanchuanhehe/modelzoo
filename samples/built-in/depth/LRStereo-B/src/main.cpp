@@ -45,24 +45,27 @@ int main(int argc, char *argv[])
         LOG(ERROR) << "fail to load Dis model";
         return 0;
     }
-    std::vector<std::vector<std::string>> fileLists = ParseFileList(inferParam.imglistPath);
     std::vector<std::vector<Tensor>> ret;
     std::vector<Tensor> result;
-    for (size_t i = 0; i < fileLists.size(); ++i)
+    if (type)
     {
-        std::string inputString = BuildInputString(fileLists[i]);
-        ret = modelStereo->Infer(inputString, FileType::SingelImageFile);
-        if (ret.size() == 0)
+        std::vector<std::vector<std::string>> fileLists = ParseFileList(inferParam.imglistPath);
+        for (size_t i = 0; i < fileLists.size(); ++i)
         {
-            LOG(ERROR) << "fail to infer model";
-            modelStereo->Unload();
-            EnvDeinit();
-            return 0;
-        }
-        if (type)
-        {
+            std::string inputString = BuildInputString(fileLists[i]);
+            ret = modelStereo->Infer(inputString, FileType::SingelImageFile);
+            if (ret.size() == 0)
+            {
+                LOG(ERROR) << "fail to infer model";
+                modelStereo->Unload();
+                EnvDeinit();
+                return 0;
+            }
+            
             result = modelDis->Infer(ret[0], inputString);
         }
+    } else {
+        ret = modelStereo->Infer(inferParam.imglistPath, FileType::JsonFile);
     }
     ret.clear();
     ret.shrink_to_fit();

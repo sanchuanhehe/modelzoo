@@ -41,9 +41,11 @@ def get_txt_pre(classnames, templates, context_length):
             one_text = np.array(tokenize_texts[j].to(torch.float32).unsqueeze(0))
             one_text.tofile(os.path.join("./data/text/", str(i) +"_"+ str(j) + ".bin"))
             j = j + 1
-        i = i+1
+        i = i + 1
+        if i == 1:
+            return
 
-def get_image_pre(dataloader):
+def get_image_pre(dataloader, index):
     total_targets = []
     i = 0
     for images, target in tqdm(dataloader):
@@ -55,6 +57,8 @@ def get_image_pre(dataloader):
         tar.tofile(os.path.join("./data/target/", str(i) + ".bin"))
         total_targets.append(target)
         i = i + 1
+        if i == 1:
+            return
 
 if __name__ == "__main__":
     args = parse_args()
@@ -71,17 +75,5 @@ if __name__ == "__main__":
         args, image_transform(224)
     )
     get_txt_pre(classnames, cifar100_templates, 512)
-    get_image_pre(data[args.dataset].dataloader)
-    file_list = os.listdir("./data/" + '/img/')
-    sorted_files = sorted(file_list)
-    # 将文件列表保存到文本文件
-    with open(os.path.join("./data/" , 'img_list.txt'), 'w', encoding='utf-8') as f:
-        for item in sorted_files:
-            f.write(f"img/{item}\n")
-        file_list = os.listdir("./data/" + '/text/')
-    sorted_files = sorted(file_list)
-    # 将文件列表保存到文本文件
-    with open(os.path.join("./data/" , 'txt_list.txt'), 'w', encoding='utf-8') as f:
-        for item in sorted_files:
-            f.write(f"text/{item}\n")
+    get_image_pre(data[args.dataset].dataloader, 1)
     

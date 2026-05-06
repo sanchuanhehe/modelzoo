@@ -43,9 +43,10 @@ namespace Infer
     constexpr float MAX_VAL = 128.0f;
     constexpr int BYTE_BIT_NUM = 8;
 
-    static Result GetOutputWithBin(Infer::TensorBuf &outBuf, Infer::TensorDesc &outDesc, std::string outputBinFileName, std::vector<float> &noStrideBuf)
+    static Result GetOutputWithBin(Infer::TensorBuf &outBuf, Infer::TensorDesc &outDesc, std::string outputBinFileName,
+        std::vector<float> &noStrideBuf)
     {
-        LOG(INFO) << "GetOutputWithBin %s", outputBinFileName;
+        LOG(INFO) << "GetOutputWithBin: " << outputBinFileName;
         int64_t lastDim = outDesc.dims[outDesc.dimCount - 1];
         size_t dataSize = outDesc.typeSize / BYTE_BIT_NUM;
         size_t lastDimSize = dataSize * lastDim;
@@ -85,8 +86,10 @@ namespace Infer
         return SUCCESS;
     }
 
-    static void SaveResultBin(Infer::TensorBuf &outBufs, Infer::TensorDesc &outDescs, const std::string &filePath, std::vector<float> &temp)
+    static void SaveResultBin(Infer::TensorBuf &outBufs, Infer::TensorDesc &outDescs, const std::string &filePath,
+        std::vector<float> &temp)
     {
+        LOG(INFO) << "save bin to ==========" << filePath;
         // 获取保存文件路径和文件名
         size_t start = filePath.find_last_of("/");
         size_t end = filePath.find_last_of(".");
@@ -176,7 +179,7 @@ namespace Infer
             // 遍历所有像素，无效区域设为黑色（B=0, G=0, R=0）
             for (int y = 0; y < H; ++y) {
                 for (int x = 0; x < W; ++x) {
-                    if (mask_8u.at<uchar>(y, x) != 0) {                                                       // 无效像素（mask为真）
+                    if (mask_8u.at<uchar>(y, x) != 0) { // 无效像素（mask为真）
                         visColor.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0); // 置黑
                     }
                 }
@@ -205,32 +208,38 @@ namespace Infer
         return img;
     }
 
-    bool XStereoPostprocess(std::vector<std::string>& inputFileList, std::vector<TensorBuf>& outBufs, std::vector<TensorDesc>& outDescs)
+    bool XStereoPostprocess(std::vector<std::string>& inputFileList, std::vector<TensorBuf>& outBufs,
+        std::vector<TensorDesc>& outDescs)
     {
-        LOG(INFO) << "save jpg to " ;
+        LOG(INFO) << "XStereoPostprocess" ;
         std::vector<std::vector<cv::Point>> bbox;
          // 读取配置文件
         auto cfg = ReadCfgFile("../data/cfg.txt");
         int imgHeight = std::stoi(cfg["img_height"]);
         int imgWidth = std::stoi(cfg["img_width"]);
-        LOG(INFO) << "save jpg to ==========" ;
-        std::string saveBin = cfg["save_preprocess_bin"];
-        std::string saveTxt = cfg["save_preprocess_txt"];
-        for (size_t i = 0; i < inputFileList.size(); i++)
-        {
+        LOG(INFO) << "save jpg to ==========" << inputFileList[0];
+        bool type = std::stoi(cfg["type"]) == 1;
+
+        LOG(INFO) << "Processing " << inputFileList.size() << " images...";
+        std::vector<std::string> imgPaths;
+        if (type) {
+            imgPaths = GetInputList(inputFileList[0]);
+        } else {
+            imgPaths = inputFileList;
+        }
+        for (size_t i = 0; i < outBufs.size(); i++) {
             TensorDesc desc = outDescs[i];
             TensorBuf buf = outBufs[i];
-            if (desc.defaultStride == 0)
-            {
+            if (desc.defaultStride == 0) {
                 desc.defaultStride = desc.dims[desc.dimCount - 1] * desc.typeSize / BYTE_BIT_NUM;
                 buf.stride = desc.defaultStride;
             }
             std::vector<float> temp;
-            SaveResultBin(buf, desc, inputFileList[0], temp);
+            
+            SaveResultBin(buf, desc, imgPaths[0], temp);
             cv::Mat inferenceResult(imgHeight, imgWidth, CV_32FC1, temp.data()); 
             
-            std::vector<std::string> imgPaths= GetInputList(inputFileList[0]);
-            cv::Mat depthColored = Postprocess(inferenceResult, inputFileList[0]);
+            cv::Mat depthColored = Postprocess(inferenceResult, imgPaths[0]);
             cv::Mat img = SafeImread(imgPaths[0]);
             int h = img.rows, w = img.cols;
 
@@ -246,13 +255,12 @@ namespace Infer
             size_t end = imgPaths[0].find_last_of(".");
             std::string fileName = imgPaths[0].substr(start + 1, end - start - 1);
             std::string jpgName = "../out/result/jpg/" + fileName + ".jpg";
-            if (!jpgName.empty())
-            {
+            if (!jpgName.empty()) {
                 cv::imwrite(jpgName, imgCropped);
                 LOG(INFO) << "save jpg to " << jpgName;
             }
             LOG(INFO) << "dump final data success " << inputFileList[0];
-            return true;
         }
+        return true;
     }
 }
