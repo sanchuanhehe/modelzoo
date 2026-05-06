@@ -113,6 +113,16 @@ mkdir -p model
 ```
 备注：若需要体验om模型转化过程，请参考[安装依赖](#section183221994410)和[模型转化](#section741711594517)章节。
 
+### 准备案例图片
+
+将案例图片迁移至VDSR模型目录。
+```
+mkdir -p datasets/Demo/X4/LR
+mkdir -p datasets/Demo/X4/GT
+cp ../../../../datasets/testdata/8.png datasets/Demo/X4/LR/demo.png
+cp ../../../../datasets/testdata/17.png datasets/Demo/X4/GT/demo.png
+```
+
 ### 编译代码和运行应用
 
 #### 编译代码
@@ -230,6 +240,8 @@ pip3 install -r requirements.txt
       然后使用onnxsim命令去除冗余节点和计算，提升模型推理效率。
 
       ```bash
+      # 请确认model.py已经拷贝到script目录
+      # cp VDSR-PyTorch/model.py script/model.py
       cd script
       python3 pth2onnx.py
       cd ../
