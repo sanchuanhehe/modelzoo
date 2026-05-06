@@ -85,6 +85,7 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::Yolov6s, { Yolo6s::Yolov6sPreprocess, Yolo6s::Yolov6sPostprocess } },
     { ModelType::Yolov8sSeg, { Yolov8sSegNS::Yolov8sSegPreprocess, Yolov8sSegNS::Yolov8sSegPostprocess } },
     { ModelType::Yolov11sSeg, { Yolo11sSegNS::Yolov11sSegPreprocess, Yolo11sSegNS::Yolov11sSegPostprocess } },
+    { ModelType::Yolov8sObb, { Yolo8sObb::Yolov8sObbPreprocess, Yolo8sObb::Yolov8sObbPostprocess } },
     { ModelType::Yolov11sPose, { Yolo11sPoseNS::Yolov11sPosePreprocess, Yolo11sPoseNS::Yolov11sPosePostprocess } },
     { ModelType::Unet, { std::bind(UnetPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, ImageprocessOptions(572, -1, true)), UnetPostprocess } },
     { ModelType::Yolov3, { std::bind(Yolo3Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYolo3Box } },
