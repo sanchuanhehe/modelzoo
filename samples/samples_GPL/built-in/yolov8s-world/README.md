@@ -35,7 +35,7 @@ Yolov8s-World 是 Ultralytics 推出的一种基于 YOLO-World 架构的轻量�
   | 输入数据 | 数据类型 | 大小             | 数据排布格式 |
   | -------- | -------- | ---------------- | ------------ |
   | images  | RGB_FP32 | 1 x 3 x 640 x 640 | NCHW         |
-  | text_feature(仅SVP_NNN芯片下)  | RGB_FP32 | 1 x 80 x 512 | NCHW         |
+  | text_feature(仅SVP_NNN算力引擎下存在)  | RGB_FP32 | 1 x 80 x 512 | NCHW         |
 
 
 - 输出数据
@@ -114,6 +114,7 @@ Yolov8s-World 是 Ultralytics 推出的一种基于 YOLO-World 架构的轻量�
 ### 获取om模型文件
 
 网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+如果在 SVP_NNN 算力引擎上推理还要在[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)的Yolov8s-World主页`源模型下载`处下载`text_feature.zip`文件，并将解压得到的`text_feature.bin`拷贝到`data`目录下。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```
@@ -144,7 +145,6 @@ mkdir -p model
     比如
     ```
     cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_linux.cmake -DSOC_VERSION=SS928V100
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../../../../common/cmake/toolchain_aarch64_linux.cmake -DSOC_VERSION=OPTG
     ```
 
 3. 执行**make**命令，生成的可执行文件main在“./out“目录下。
@@ -172,8 +172,9 @@ mkdir -p model
 ```
 # 建议安装两套环境 
 # Python 3.8.20(Hi3403V100 NNN芯片时转ONNX以及两种芯片的精度评估用) 
-pip install -r requirements.txt
+pip install -r requirements38.txt
 # Python 3.7.5(Hi3403V100 SVP_NNN芯片转ONNX时用)
+pip install -r requirements375.txt
 ```
 
 ## 准备数据集<a name="section183221994411"></a>
