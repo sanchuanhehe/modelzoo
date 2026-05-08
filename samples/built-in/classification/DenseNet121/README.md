@@ -62,7 +62,7 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 
 ├── script
 │   ├── pth2onnx.py     //pth转onnx脚本
-│   ├── accurary.py     //精度验证脚本
+│   ├── accuracy.py     //精度验证脚本
 
 ├── src
 │   ├── acl.json         //系统初始化的配置文件
@@ -115,7 +115,7 @@ DenseNet 针对 ResNet 的冗余结构提出了改进：让网络中的每一层
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=j3mmucroso00)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```

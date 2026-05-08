@@ -18,5 +18,6 @@
 #include "model.h"
 
 namespace Infer {
-bool ClipImgPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& inBufs, std::vector<TensorDesc>& inDescs);
+bool ClipImgPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& inBufs,
+    std::vector<TensorDesc>& inDescs);
 }

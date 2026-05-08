@@ -106,7 +106,7 @@ YOLOv8s-OBB 是 Ultralytics 推出的基于 YOLOv8 的旋转目标检测（Orien
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=i9t0hkf56k00)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```

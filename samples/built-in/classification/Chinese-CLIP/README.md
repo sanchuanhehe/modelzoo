@@ -56,7 +56,7 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 
 ├── script
 │   ├── zeroshot.sh     //shell脚本，调用前后处理python文件
-│   ├── postprocess.py     //精度验证脚本
+│   ├── accuracy.py     //精度验证脚本
     ├── pretprocess.py     //前处理脚本
 
 ├── src
@@ -103,7 +103,7 @@ Chinese-CLIP 是 CLIP 模型的中文版本。CLIP 通过对比学习方式，�
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=j8hn2954tk00)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```
@@ -270,26 +270,26 @@ cd ..
     1. Hi3403V100 SVP_NNN上的om模型转换命令
 
     ```
-    atc --framework=5  --model="./dpico/vit-b-16_img_sim.onnx" --input_shape="image:1,3,224,224" --output="./dpico/clip_img" --image_list="./data/img/0.bin" --compile_mode=6 --matmul_per_channel_enable=1 --softmax_optimize_enable=1 --fusion_switch_file=TransformerFusion:on --soc_version=SS928V100
+    atc --framework=5  --model="./model/vit-b-16_img_sim_SVP_NNN.onnx" --input_shape="image:1,3,224,224" --output="./model/clip_img" --image_list="./data/img/0.bin" --compile_mode=6 --matmul_per_channel_enable=1 --softmax_optimize_enable=1 --fusion_switch_file=TransformerFusion:on --soc_version=SS928V100
     ```
 
     2. Hi3403V100 NNN上的om模型转换命令
 
     ```
-    atc --framework=5 --model="./model/vit-b-16_img_sim.onnx" --input_shape="image:1,3,224,224" --output="./model/clip_img" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
+    atc --framework=5 --model="./model/vit-b-16_img_sim_NNN.onnx" --input_shape="image:1,3,224,224" --output="./model/clip_img" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
     ```
 
     2、文本
     1. Hi3403V100 SVP_NNN上的om模型转换命令
 
     ```
-    atc --framework=5  --model="./dpico/vit-b-16_txt_sim.onnx" --input_type=text:FP32 --output="./dpico/clip_text" --image_list="./data/quant_text.txt" --compile_mode=6 --matmul_per_channel_enable=1 --fusion_switch_file=TransformerFusion:on --force_to_cpu=/bert/embeddings/word_embeddings/Gather --gfpq_param_file=./data/calibration_param.txt --soc_version=SS928V100
+    atc --framework=5  --model="./model/vit-b-16_txt_sim_SVP_NNN.onnx" --input_type=text:FP32 --output="./model/clip_text" --image_list="./data/quant_text.txt" --compile_mode=6 --matmul_per_channel_enable=1 --fusion_switch_file=TransformerFusion:on --force_to_cpu=/bert/embeddings/word_embeddings/Gather --gfpq_param_file=./data/calibration_param.txt --soc_version=SS928V100
     ```
 
     2. Hi3403V100 NNN上的om模型转换命令
 
     ```
-    atc --framework=5  --model="./model/vit-b-16_txt_sim.onnx" --output="./model/clip_text" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
+    atc --framework=5  --model="./model/vit-b-16_txt_sim_NNN.onnx" --output="./model/clip_text" --enable_small_channel=1 --enable_single_stream=true --soc_version=OPTG
     ```
 
     运行成功后生成clip_img.om和clip_text.om模型文件。
@@ -338,7 +338,7 @@ cd ..
     
     SVP_NNN平台上精度结果：
     ```
-    {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "9999"}, {"key": "Number of classes", "value": "100"}, {"key": "Top1 accuracy", "value": "63.68%"}, {"key": "Top2 accuracy", "value": "76.65%"}, {"key": "Top3 accuracy", "value": "82.44%"}, {"key": "Top4 accuracy", "value": "85.76%"}, {"key": "Top5 accuracy", "value": "87.79%"}]}
+    {"title": "Overall statistical evaluation", "value": [{"key": "Number of images", "value": "9999"}, {"key": "Number of classes", "value": "100"}, {"key": "Top1 accuracy", "value": "63.0%"}, {"key": "Top2 accuracy", "value": "76.52%"}, {"key": "Top3 accuracy", "value": "82.47%"}, {"key": "Top4 accuracy", "value": "85.78%"}, {"key": "Top5 accuracy", "value": "87.89%"}]}
     ```
 
     NNN平台上精度结果：
@@ -379,6 +379,6 @@ cd ..
 
 | 芯片型号    | Batch Size | 数据集   |  Zero-shot Image Classification |       性能(FPS)|
 | ----------- | ---------- | -------- |  ------------------ |-----------------|
-| Hi3403V100 SVP_NNN | 1          | CIFAR100 |  0.6341            | 11.142   |
+| Hi3403V100 SVP_NNN | 1          | CIFAR100 |  0.63            | 11.142   |
 | Hi3403V100 NNN | 1          | CIFAR100 |  0.618            | 0.95   |
 

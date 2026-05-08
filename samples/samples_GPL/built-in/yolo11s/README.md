@@ -112,7 +112,7 @@ YOLO系列网络模型是最为经典的one-stage算法，也是目前工业领�
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=i9q7jrn16k00)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```
@@ -173,6 +173,7 @@ mkdir -p model
    ```
    git clone https://github.com/ultralytics/ultralytics
    cd ultralytics
+   git checkout 94fac3903612fb03cab007734a8d1ce86de5376e
    pip3 install -e .
    cd  ..
    ```
@@ -345,7 +346,7 @@ mkdir -p model
 4. 可视化推理结果，SVP_NNN可用
    调用脚本，可以对推理结果进行可视化画框操作。
    ```
-   python drawRectangle.py --image ../data/coco/val2017/000000006818.jpg --annotation ../data/coco/result/txt/00000006818_result.txt
+   python drawRectangle.py --image ../data/coco/val2017/000000006818.jpg --annotation ../data/coco/result/txt/00000006818_result.txt --output ~/save_path.jpg
    ```
 
    参数说明：
@@ -353,6 +354,8 @@ mkdir -p model
    - --image:原始图片路径
 
    - --annotation：图片对应的推理结果文件路径
+
+   - --output：画框后图片保存路径
 
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>

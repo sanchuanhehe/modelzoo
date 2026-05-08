@@ -1,7 +1,3 @@
-
-
-
-
 # 基于VGG16网络实现图片分类
 
 - [概述](#ZH-CN_TOPIC_0000001172161501)
@@ -62,7 +58,7 @@ VGG16包含了16个隐藏层（13个卷积层和3个全连接层）
 
 ├── script
 │   ├── pth2onnx.py     //pth转onnx脚本
-│   ├── accurary.py     //精度验证脚本
+│   ├── accuracy.py     //精度验证脚本
 
 ├── src
 │   ├── CMakeLists.txt         //编译脚本
@@ -113,7 +109,7 @@ VGG16包含了16个隐藏层（13个卷积层和3个全连接层）
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=ht96f9b50o00)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```

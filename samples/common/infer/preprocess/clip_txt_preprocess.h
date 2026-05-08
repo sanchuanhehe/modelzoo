@@ -18,5 +18,6 @@
 #include "model.h"
 
 namespace Infer {
-bool ClipTxtPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& inBufs, std::vector<TensorDesc>& inDescs, bool isDpico);
+bool ClipTxtPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& inBufs,
+    std::vector<TensorDesc>& inDescs, bool isDpico);
 }

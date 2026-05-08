@@ -89,10 +89,6 @@ namespace Infer
         return resultArray;
     }
 
-    inline static float Sigmod(float a) {
-        return 1.0f / (1.0f + exp(-a));
-    }
-
     // 计算多边形面积
     static double PolygonArea(const std::vector<cv::Point> &contour)
     {
@@ -352,8 +348,9 @@ namespace Infer
         int num_contours = std::min(static_cast<int>(contours.size()), MAX_CANDIDATES);
        
         for (int index = 0; index < num_contours; ++index) {
-            auto [points, sside] = GetMiniBoxes(contours[index]);
-          
+            auto boxResult = GetMiniBoxes(contours[index]);
+            auto points = std::get<0>(boxResult);
+            auto sside = std::get<1>(boxResult);
             if (sside < MIN_SIZE) {
                 continue;
             }
@@ -369,7 +366,9 @@ namespace Infer
             if (expanded_boxes.empty()) {
                 continue;
             }
-            auto [box, newSside] = GetMiniBoxes(expanded_boxes[0]);
+            auto expandedResult = GetMiniBoxes(expanded_boxes[0]);
+            auto box = std::get<0>(expandedResult);
+            auto newSside = std::get<1>(expandedResult);
             if (newSside < MIN_SIZE + 2) {
                 continue;
             }
@@ -381,8 +380,10 @@ namespace Infer
             int destHeight = shapeList[1];
            
             for (auto &point : box) {
-                point.x = std::max(0, std::min(destWidth, static_cast<int>(std::round(point.x / (bitmapWidth - shapeList[2]) * destWidth))));
-                point.y = std::max(0, std::min(destHeight, static_cast<int>(std::round(point.y / (bitmapHeight - shapeList[3]) * destHeight))));
+                point.x = std::max(0, std::min(destWidth, static_cast<int>(std::round(point.x /
+                    (bitmapWidth - shapeList[2]) * destWidth))));
+                point.y = std::max(0, std::min(destHeight, static_cast<int>(std::round(point.y /
+                    (bitmapHeight - shapeList[3]) * destHeight))));
             }
             result.boxes.push_back(box);
             result.scores.push_back(score);
@@ -390,7 +391,8 @@ namespace Infer
         return result;
     }
 
-    static void SaveResult(std::vector<std::vector<cv::Point>> bboxs, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs, const string &filePath)
+    static void SaveResult(std::vector<std::vector<cv::Point>> bboxs, std::vector<TensorBuf> &tensorBufs,
+        std::vector<TensorDesc> &tensorDescs, const string &filePath)
     {
         size_t start = filePath.find_last_of("/");
         size_t end = filePath.find_last_of(".");
@@ -432,8 +434,6 @@ namespace Infer
     // 缩放边界框
     static void GetShapeInfo(vector<int> &shapeList, const string &filePath)
     {
-        int h1 = IMG_SIZE;
-        int w1 = IMG_SIZE;
         LOG(INFO) << "filePath: " << filePath;
         cv::Mat im0 = cv::imread(filePath);
 
@@ -596,7 +596,8 @@ namespace Infer
         return dtBoxesNew;
     }
 
-    bool OcrDetPostprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs)
+    bool OcrDetPostprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs,
+        std::vector<TensorDesc> &tensorDescs)
     {
         for (size_t i = 0; i < tensorBufs.size(); i++) {
             std::vector<std::vector<cv::Point>> bbox;
@@ -624,7 +625,7 @@ namespace Infer
 
             SaveResult(bbox, tensorBufs, tensorDescs, fileList[0]);
             LOG(INFO) << "dump final data success " << fileList[0];
-            return true;
         }
+        return true;
     }
 }

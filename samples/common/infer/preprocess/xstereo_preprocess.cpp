@@ -47,7 +47,6 @@ namespace Infer
         int64_t width = desc.dims[desc.dimCount - 1]; /* dims last dim is width */
         size_t dataSize = desc.typeSize / BYTE_BIT_NUM;
         size_t strideElemNum = inBuf.stride / dataSize;
-        size_t lineSize = width;
 
         // 获取数据指针
         char *srcData = chwImg.ptr<char>();
