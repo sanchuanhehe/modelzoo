@@ -105,7 +105,7 @@ YOLOv3是一种端到端的one-stage目标检测模型。相比YOLOv2，YOLOv3�
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=j8pkk8lctk00)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```

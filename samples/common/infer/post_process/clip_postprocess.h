@@ -41,8 +41,7 @@ MatmulWithScale(const std::vector<float> &image_feats,
                 const std::vector<std::vector<float>> &classifier,
                 int batchSize, int featDim, int numClasses);
 
-std::vector<float> Softmax(const std::vector<float> &logits, int batchSize,
-                           int numClasses);
+std::vector<float> Softmax(const std::vector<float> &logits, int batchSize, int numClasses);
 
 } // namespace Clip
 } // namespace Infer
