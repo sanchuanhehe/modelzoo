@@ -80,7 +80,6 @@ static Result SaveResultWithTxt(const std::string& filePath, double mse, double 
 cv::Mat ParseToCVMat(Infer::TensorBuf& outBuf, Infer::TensorDesc& outDesc, int batchIndex = DEFAULT_BATCH_INDEX)
 {
     auto dims = outDesc.dims;
-    int batchSize = dims[0];
     int channels = dims[1];
     int height = dims[2];
     int width = dims[3];
