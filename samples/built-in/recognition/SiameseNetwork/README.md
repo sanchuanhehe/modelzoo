@@ -104,7 +104,7 @@ Siamese Network（孪生神经网络）是一种通过共享权重的两个相�
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=i9kei1td6k00)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```
@@ -153,7 +153,7 @@ mkdir -p model
 4. 切换到可执行文件main所在的目录，运行可执行文件。测试图片上模型推理命令参考：
     
     ```
-    ./main --acl ../src/acl.json --model ../model/siamese_network.om --input ../data/file_list.json
+    ./main --model ../model/siamese_network.om --input ../data/file_list_1.json
     ```
     备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
 

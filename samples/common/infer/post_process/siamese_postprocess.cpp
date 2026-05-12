@@ -28,9 +28,10 @@ constexpr size_t BYTE_BIT_NUM = 8; // 1 byte = 8 bit
 constexpr size_t TOP_NUM = 5;
 constexpr float DISSIMILARITY_THRESHOLD = 0.9;
 
-static Result GetAndSaveOutputWithBin(Infer::TensorBuf& outBuf, Infer::TensorDesc& outDesc, std::string outputBinFileName, std::vector<float>& noStrideBuf)
+static Result GetAndSaveOutputWithBin(Infer::TensorBuf& outBuf, Infer::TensorDesc& outDesc,
+    std::string outputBinFileName, std::vector<float>& noStrideBuf)
 {
-    int64_t lastDim = outDesc.dims[outDesc.dimCount - 1];
+    size_t lastDim = outDesc.dims[outDesc.dimCount - 1];
     size_t dataSize = outDesc.typeSize / BYTE_BIT_NUM; // 一般为4
     size_t lastDimSize = dataSize * lastDim;
     size_t loopNum = outBuf.size / outBuf.stride;
@@ -68,12 +69,13 @@ static Result SaveResultWithTxt(const std::string& filePath, std::vector<float>&
 {
     std::vector<std::pair<unsigned int, float>> vec;
     std::string line;
-    unsigned int topkIndex = 0;
-    for (int i = 0; i < temp.size(); i++) {
-        vec.push_back({ i, temp[i] });
+
+    for (size_t i = 0; i < temp.size(); i++) {
+        vec.push_back({ static_cast<unsigned int>(i), temp[i] });
     }
 
-    std::sort(vec.begin(), vec.end(), [](const std::pair<unsigned int, float>& a, const std::pair<unsigned int, float>& b) {
+    std::sort(vec.begin(), vec.end(), [](const std::pair<unsigned int, float>& a,
+    const std::pair<unsigned int, float>& b) {
         return a.second > b.second;
     });
 
@@ -198,13 +200,16 @@ static void PostProcess(std::vector<Infer::TensorBuf>& outBufs, std::vector<Infe
     SaveResultWithTxt(txtFile, res2, fileName2);
 
     auto dis = CalculateEuclideanDistance(res1, res2);
-    SaveResultWithTxt(txtFile, temp, "[Result line]------------------Dismillary: " + to_string(dis) + " , label: " + to_string(label) + "----------------------");
+    SaveResultWithTxt(txtFile, temp, "[Result line]------------------Dismillary: " + to_string(dis) + " , label: " +
+        to_string(label) + "----------------------");
     LOG(INFO) << "dismillary: " << dis << " , label: " << label;
-    perdictCorrectCount += ((label == 1 && dis >= DISSIMILARITY_THRESHOLD) || (label == 0 && dis < DISSIMILARITY_THRESHOLD) ? 1 : 0);
+    perdictCorrectCount += ((label == 1 && dis >= DISSIMILARITY_THRESHOLD) ||
+        (label == 0 && dis < DISSIMILARITY_THRESHOLD) ? 1 : 0);
     umask(oldUmask);
 }
 
-bool SiamesePostProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs)
+bool SiamesePostProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs,
+    std::vector<TensorDesc>& tensorDescs)
 {
     int perdictCorrectCount;
     PostProcess(tensorBufs, tensorDescs, fileList, perdictCorrectCount);

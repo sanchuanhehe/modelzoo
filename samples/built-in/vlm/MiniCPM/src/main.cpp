@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     if (param.loop == ZERO)
         param.loop++;
     string result;
-    for (int i = 0; i < param.loop; ++i) {
+    for (size_t i = 0; i < param.loop; ++i) {
         for (const auto& prompt : param.fileLists) {
             if (prompt.size() != QUESTION_PAIR_ITEM_NUM) {
                 LOG(ERROR) << "Invalid file_list.json format: questions must be defined in image-question pairs";
