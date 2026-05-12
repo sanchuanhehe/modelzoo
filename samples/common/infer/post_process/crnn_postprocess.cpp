@@ -61,7 +61,7 @@ static Result GetAndSaveOutputWithBin(Infer::TensorBuf& outBuf, Infer::TensorDes
         std::vector<float> tempBuf(outData, outData + outSize);
         for (size_t i = 0; i < loopNum; ++i) {
             size_t offset = i * strideElemNum;
-            for (size_t index = 0; index < lastDim; index++) {
+            for (size_t index = 0; index < static_cast<size_t>(lastDim); index++) {
                 noStrideBuf.push_back(tempBuf[offset + index]);
             }
         }
@@ -125,7 +125,7 @@ void CalResult(const std::vector<float>& output, const std::string& fileName)
     }
     std::vector<int> charList;
     string cxt;
-    for (int i = 0; i < charIndeces.size(); ++i) {
+    for (size_t i = 0; i < charIndeces.size(); ++i) {
         if (charIndeces[i] != 0 && !(i > 0 && charIndeces[i - 1] == charIndeces[i])) {
             cxt += to_string(charIndeces[i]) + " ";
             charList.emplace_back(charIndeces[i]);
