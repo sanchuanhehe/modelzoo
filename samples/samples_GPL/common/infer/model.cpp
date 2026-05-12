@@ -47,6 +47,8 @@
 #include "yolov9s_preprocess.h"
 #include "yolov8s_world_postprocess.h"
 #include "yolov8s_world_preprocess.h"
+#include "fire_detection_preprocess.h"
+#include "fire_detection_postprocess.h"
 
 namespace Infer {
 struct ExecuteParam {
@@ -75,7 +77,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::Yolov8s, { std::bind(Yolov8sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYoloV8sBox } },
     { ModelType::Yolov5, { std::bind(Yolov7Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), std::bind(GetYoloV7Box, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true) } },
     { ModelType::Yolov9s, { std::bind(Yolov9sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYoloV9sBox } },
-    { ModelType::Yolov8sWorld, { std::bind(Yolov8sWorldPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYoloV8sWorldBox } }
+    { ModelType::Yolov8sWorld, { std::bind(Yolov8sWorldPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, true), GetYoloV8sWorldBox } },
+    { ModelType::FireDetection, { FireDetectionPreprocess, GetFireDetectionBox } }
 };
 #else
 const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::modelTypeToProcessMap_ = {
@@ -92,7 +95,8 @@ const std::unordered_map<ModelType, std::pair<ProcessFunc, ProcessFunc>> Model::
     { ModelType::Yolov8s, { std::bind(Yolov8sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYoloV8sBox } },
     { ModelType::Yolov5, { std::bind(Yolov7Preprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), std::bind(GetYoloV7Box, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false) } },
     { ModelType::Yolov9s, { std::bind(Yolov9sPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYoloV9sBox } },
-    { ModelType::Yolov8sWorld, { std::bind(Yolov8sWorldPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYoloV8sWorldBox } }
+    { ModelType::Yolov8sWorld, { std::bind(Yolov8sWorldPreprocess, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, false), GetYoloV8sWorldBox } },
+    { ModelType::FireDetection, { FireDetectionPreprocess, GetFireDetectionBox } }
 };
 #endif
 
