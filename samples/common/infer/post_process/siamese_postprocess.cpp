@@ -208,8 +208,7 @@ static void PostProcess(std::vector<Infer::TensorBuf>& outBufs, std::vector<Infe
     umask(oldUmask);
 }
 
-bool SiamesePostProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs,
-    std::vector<TensorDesc>& tensorDescs)
+bool SiamesePostProcess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs)
 {
     int perdictCorrectCount;
     PostProcess(tensorBufs, tensorDescs, fileList, perdictCorrectCount);
