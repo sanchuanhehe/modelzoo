@@ -153,7 +153,7 @@ mkdir -p model
 4. 切换到可执行文件main所在的目录，运行可执行文件。测试图片上模型推理命令参考：
     
     ```
-    ./main --model ../model/siamese_network.om --input ../data/file_list_1.json
+    ./main --acl ../src/acl.json --model ../model/siamese_network.om --input ../data/file_list.json
     ```
     备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
 
