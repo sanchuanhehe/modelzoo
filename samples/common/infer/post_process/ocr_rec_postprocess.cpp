@@ -38,15 +38,10 @@ using json = nlohmann::json;
 namespace Infer
 {
     using namespace std;
-    constexpr float CONF_THRES = 0.3f;
-    constexpr float BOX_THRES = 0.6f;
     constexpr int BYTE_BIT_NUM = 8;
-    constexpr int MAX_CANDIDATES = 100;
-    constexpr float UNCLIP_RATIO = 1.5;
-    constexpr int IMG_SIZE = 960;
-    constexpr int MIN_SIZE = 3;
 
-    static Result GetAndSaveOutputWithBin(TensorDesc &outDesc, TensorBuf &outBuf, std::string outputBinFileName, std::vector<float> &noStrideBuf)
+    static Result GetAndSaveOutputWithBin(TensorDesc &outDesc, TensorBuf &outBuf, std::string outputBinFileName,
+        std::vector<float> &noStrideBuf)
     {
         int64_t lastDim = outDesc.dims[outDesc.dimCount - 1];
         size_t dataSize = outDesc.typeSize / BYTE_BIT_NUM; // 一般为4
@@ -156,12 +151,8 @@ namespace Infer
     {
         int ignoredTokens = 0;
         std::string text;
-        float total_conf = 0.0f;
-        int valid_count = 0;
-        int count = 0;
         for (int i = 0; i < textIndex.size(); i++) {
             int token = textIndex[i];
-            float prob = (textProb.empty() || i >= textProb.size()) ? 0.0f : textProb[i];
             // 检查是否是忽略的token
             if (token == ignoredTokens) {
                 continue;
@@ -176,9 +167,6 @@ namespace Infer
             }
             if (token >= 0 && token < characters.size()) {
                 text += characters[token];
-                if (!textProb.empty() && i < textProb.size() && textProb[i] > 0.0f) {
-                    total_conf += textProb[i];
-                }
             }
         }
 
@@ -224,12 +212,12 @@ namespace Infer
         SaveTxt(inputFile, result);
     }
 
-    bool OcrRecPostprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs, std::vector<TensorDesc> &tensorDescs, bool isDpico)
+    bool OcrRecPostprocess(std::vector<std::string> &fileList, std::vector<TensorBuf> &tensorBufs,
+        std::vector<TensorDesc> &tensorDescs, bool isDpico)
     {
         std::vector<std::vector<cv::Point>> bbox;
 
-        for (size_t i = 0; i < tensorBufs.size(); i++)
-        {
+        for (size_t i = 0; i < tensorBufs.size(); i++) {
             TensorDesc desc = tensorDescs[i];
             TensorBuf buf = tensorBufs[i];
             if (desc.defaultStride == 0)
@@ -239,7 +227,7 @@ namespace Infer
             }
             Predictions(desc, buf, fileList[0]);
             LOG(INFO) << "dump final data success " << fileList[0];
-            return true;
         }
+        return true;
     }
 }

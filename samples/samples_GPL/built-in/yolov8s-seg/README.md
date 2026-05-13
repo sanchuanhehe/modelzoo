@@ -115,7 +115,7 @@ YOLOv8s-seg 是一种轻量高效的 one-stage 实例分割模型。相比前代
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=i9iei09pec00)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```

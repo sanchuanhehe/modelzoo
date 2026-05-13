@@ -35,16 +35,12 @@ constexpr int DEFAULT_BATCH = 1;
 // 文本预处理函数：转小写 + 替换中文引号为英文引号
 std::string PreprocessTextClip(const std::string &text)
 {
-    std::string processedText;
-    for (char c : text) {
-        // 转换为小写（中文不受影响，仅处理可能的英文字符）
-        char lower = std::tolower(static_cast<unsigned char>(c));
-
-        // 替换中文引号为英文引号
-        if (lower == '“' || lower == '”') {
-            processedText += '"';
-        } else {
-            processedText += lower;
+    std::string processedText = text;
+    for (auto& pattern : {"“", "”"}) {
+        size_t pos = 0;
+        while ((pos = processedText.find(pattern, pos)) != std::string::npos) {
+            processedText.replace(pos, strlen(pattern), "\"");
+            pos += 1;
         }
     }
     return processedText;

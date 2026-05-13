@@ -99,7 +99,7 @@ YOLOv9s 是 Ultralytics 推出的目标检测模型，采用了 GELAN 架构和 
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=j9brj6ooi000)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```

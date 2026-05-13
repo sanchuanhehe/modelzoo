@@ -108,7 +108,7 @@ FastSpeech2 是一种高效的端到端语音合成模型。相比 FastSpeech，
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=ie2sc9g1qk00)上进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```

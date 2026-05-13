@@ -147,7 +147,7 @@ MiniCPM-4v-0.5B: 小参数, 大智慧——端侧多模态模型
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从 Hispark ModelZoo 主页进行下载。
+[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=indvkfmcp400)上提供转化成功的om模型文件，可以从 Hispark ModelZoo 主页进行下载。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
 ```
