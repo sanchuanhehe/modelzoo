@@ -113,7 +113,7 @@ Yolov8s-World 是 Ultralytics 推出的一种基于 YOLO-World 架构的轻量�
 
 ### 获取om模型文件
 
-网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)上进行下载。
+网站上提供转化成功的om模型文件，可以从[网站](https://modelzoo.hispark.hisilicon.com/#/ModelDetail?id=j93dspootk00)上进行下载。
 如果在 SVP_NNN 算力引擎上推理还要在[网站](https://modelzoo.hispark.hisilicon.com/#/ModelZoo)的Yolov8s-World主页`源模型下载`处下载`text_feature.zip`文件，并将解压得到的`text_feature.bin`拷贝到`data`目录下。
 
 创建`model`文件夹，并将om模型文件移动到`./model`目录下。
