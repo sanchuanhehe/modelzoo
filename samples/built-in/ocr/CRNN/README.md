@@ -154,7 +154,7 @@ mkdir -p model
     ```
     ./main --acl ../src/acl.json --model ../model/crnn.om --input ../data/file_list_1.json
     ```
-    备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节。
+    备注：若需要在数据集上进行精度评估，需要参考[安装依赖](#section183221994410)、[准备数据集](#section183221994411)和[精度&性能评估](#section741711594518)章节；若想可视化推理结果可按照[精度&性能评估](#section741711594518)章节中`4. 可视化推理结果`执行。
 
 ## 安装依赖<a name="section183221994410"></a>
 
@@ -201,13 +201,8 @@ pip3 install -r requirements.txt
 
 1. 获取开源源码
     ```
-    git clone https://github.com/Sierkinhane/CRNN_Chinese_Characters_Rec
-    cd CRNN_Chinese_Characters_Rec
-    git checkout a565687c4076b729d4059593b7570dd388055af4
-    cd ../
-    cp CRNN_Chinese_Characters_Rec/lib/config/alphabets.py script/
-    cp CRNN_Chinese_Characters_Rec/lib/dataset/txt/test.txt data
-    cp CRNN_Chinese_Characters_Rec/lib/dataset/txt/char_std_5990.txt data
+    chmod +x get_calibration_file.sh
+    ./get_calibration_file.sh
     ```
 
 2. 获取权重文件。
@@ -298,6 +293,13 @@ pip3 install -r requirements.txt
     NNN平台上性能结果如下：
     ```
     execution time: 100.60ms, frame rate: 9.94fps
+    ```
+
+4. 可视化推理结果
+    将模型推理结果可视化为文本，保存到`out/result/decoded_txt`对应文件。
+    ```
+    # 确保 ./get_calibration_file.sh 已经成功执行
+    python script/decode_result_txt.py
     ```
 
 # 模型推理性能&精度<a name="ZH-CN_TOPIC_0000001172201573"></a>

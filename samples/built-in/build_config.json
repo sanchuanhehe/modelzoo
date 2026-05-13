@@ -337,22 +337,6 @@
   },
   {
     "buildTarget": "modelzoo-app",
-    "relativePath": "ocr/CRNN",
-    "chip": "SS928V100",
-    "buildDef": "SS928V100",
-    "needSmoke": "false",
-    "description": "分类网"
-  },
-  {
-    "buildTarget": "modelzoo-app",
-    "relativePath": "ocr/CRNN",
-    "chip": "SS928V100",
-    "buildDef": "OPTG",
-    "needSmoke": "false",
-    "description": "分类网"
-  },
-  {
-    "buildTarget": "modelzoo-app",
     "relativePath": "classification/ResNet101",
     "chip": "SS928V100",
     "buildDef": "OPTG",
@@ -478,5 +462,21 @@
     "buildDef": "OPTG",
     "needSmoke": "false",
     "description": "文字识别"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "ocr/CRNN",
+    "chip": "SS928V100",
+    "buildDef": "SS928V100",
+    "needSmoke": "false",
+    "description": "分类网"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "ocr/CRNN",
+    "chip": "SS928V100",
+    "buildDef": "OPTG",
+    "needSmoke": "false",
+    "description": "分类网"
   }
 ]
