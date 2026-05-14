@@ -52,7 +52,8 @@ constexpr int32_t MID_TEMPLATE_LEN = 3; // 中间模板长度
 constexpr int32_t POST_TEMPLATE_LEN = 6; // 后置模板长度
 }
 
-static vector<float> ReshapeByPatch(const vector<float>& input, int32_t channelNum, int32_t height, int32_t width, int32_t patchSize)
+static vector<float> ReshapeByPatch(const vector<float>& input, int32_t channelNum, int32_t height, int32_t width,
+    int32_t patchSize)
 {
     int32_t patchNumW = width / patchSize;
     int32_t patchNumH = height / patchSize;
@@ -67,7 +68,8 @@ static vector<float> ReshapeByPatch(const vector<float>& input, int32_t channelN
                 for (int32_t i = 0; i < patchNumH; ++i) {
                     for (int32_t j = 0; j < patchNumW; ++j) {
                         int32_t inputIndex = c * height * width + (i * patchSize + ph) * width + (j * patchSize + pw);
-                        int32_t outputIndex = (c * patchSize * outWidth) + ph * outWidth + (i * patchNumW + j) * patchSize + pw;
+                        int32_t outputIndex = (c * patchSize * outWidth) + ph * outWidth +
+                            (i * patchNumW + j) * patchSize + pw;
                         output[outputIndex] = input[inputIndex];
                     }
                 }
@@ -135,7 +137,9 @@ void LoadVocab(const string& filePath)
     file >> jsonFile;
     auto model = jsonFile["model"];
     vocabData.vocab_ = model["vocab"].get<unordered_map<string, int>>();
-    for (auto& [token, id] : vocabData.vocab_) {
+    for (auto& item : vocabData.vocab_) {
+        const string& token = item.first;
+        int id = item.second;
         vocabData.idToToken_[id] = token;
     }
     if (model.contains("unk_token") && !model["unk_token"].is_null()) {
@@ -144,12 +148,14 @@ void LoadVocab(const string& filePath)
     if (vocabData.vocab_.find(vocabData.unkToken_) != vocabData.vocab_.end()) {
         vocabData.unkTokenId_ = vocabData.vocab_[vocabData.unkToken_];
     }
-    for (auto& [token, id] : vocabData.vocab_) {
+    for (auto& item : vocabData.vocab_) {
+        const string& token = item.first;
         if (token.length() > vocabData.maxTokenLen_) {
             vocabData.maxTokenLen_ = token.length();
         }
     }
-    LOG(INFO) << "Vocabulary loaded successfully. Total tokens: " << vocabData.vocab_.size() << ", Max token length: " << vocabData.maxTokenLen_;
+    LOG(INFO) << "Vocabulary loaded successfully. Total tokens: " << vocabData.vocab_.size() << ", Max token length: "
+        << vocabData.maxTokenLen_;
 }
 
 void LoadVocabEmbeddingTable(const std::string& binFileName, uint32_t dimSize, int32_t maxVocabIndex)
@@ -262,7 +268,8 @@ static void SetInputEmbedding(float* inData, const TensorBuf& resampleBuf, const
     m_prefillLen += preTemplateLen;
 
     if (resampleBuf.size / sizeof(float) != VISION_TOKEN_LEN * EMB_DATA_OFFSET) {
-        LOG(ERROR) << "Vision input size is not valid, resampleBuf size: " << resampleBuf.size << "VISION_TOKEN_LEN * EMB_DATA_OFFSET: " << VISION_TOKEN_LEN * EMB_DATA_OFFSET;
+        LOG(ERROR) << "Vision input size is not valid, resampleBuf size: " << resampleBuf.size
+            << "VISION_TOKEN_LEN * EMB_DATA_OFFSET: " << VISION_TOKEN_LEN * EMB_DATA_OFFSET;
     }
     memcpy(inData, resampleBuf.GetRawPtr(), resampleBuf.size);
     inData += resampleBuf.size / sizeof(float);
@@ -309,7 +316,8 @@ static void SetAttentionMask(float* inAttentionMask, const TensorDesc& prefillDe
     size_t fixLen = prefillDesc.dims[prefillDesc.dimCount - 1];
 
     if (inDataSize != fixLen * fixLen) {
-        LOG(ERROR) << "inAttentionMask size is not valid, should be " << fixLen << "*" << fixLen << ", while it is " << inDataSize;
+        LOG(ERROR) << "inAttentionMask size is not valid, should be " << fixLen << "*" << fixLen
+            << ", while it is " << inDataSize;
         return;
     }
 
@@ -442,16 +450,22 @@ int DecodePreprocess(std::vector<Infer::TensorBuf>& decodeInputBufs, const std::
 {
     int loopId = fromParams.first;
     int outputNum = fromParams.second;
-    auto& [lastDecodeOutBufs, prefillOutBufs] = fromBufs;
-    auto& [decodeInputDescs, prefillOutDescs] = fromDescs;
+    const std::vector<Infer::TensorBuf>& lastDecodeOutBufs = fromBufs.first;
+    const std::vector<Infer::TensorBuf>& prefillOutBufs = fromBufs.second;
+    const std::vector<Infer::TensorDesc>& decodeInputDescs = fromDescs.first;
+    const std::vector<Infer::TensorDesc>& prefillOutDescs = fromDescs.second;
 
-    LookUpTable(static_cast<float*>(decodeInputBufs[EMBEDDING_INPUT_ID].GetRawPtr()), *embeddingData.vocabEmbeddingTable_, tokenIdVec.back(), embeddingData.vocabEmbeddingDimSize_, embeddingData.vocabEmbeddingMaxIndex_);
+    LookUpTable(static_cast<float*>(decodeInputBufs[EMBEDDING_INPUT_ID].GetRawPtr()),
+        *embeddingData.vocabEmbeddingTable_, tokenIdVec.back(), embeddingData.vocabEmbeddingDimSize_,
+        embeddingData.vocabEmbeddingMaxIndex_);
     auto* inData = static_cast<float*>(decodeInputBufs[LOOP_IDX_INPUT_ID].GetRawPtr());
     inData[0] = loopId;
 
-    LookUpTable(static_cast<float*>(decodeInputBufs[ROTARY_POSITION_0_INPUT_ID].GetRawPtr()), *embeddingData.rotaryPositionEmbeddingTable0_, loopId, embeddingData.rotaryPositionEmbeddingDimSize_,
+    LookUpTable(static_cast<float*>(decodeInputBufs[ROTARY_POSITION_0_INPUT_ID].GetRawPtr()),
+        *embeddingData.rotaryPositionEmbeddingTable0_, loopId, embeddingData.rotaryPositionEmbeddingDimSize_,
         embeddingData.rotaryPositionEmbeddingMaxIndex_);
-    LookUpTable(static_cast<float*>(decodeInputBufs[ROTARY_POSITION_1_INPUT_ID].GetRawPtr()), *embeddingData.rotaryPositionEmbeddingTable1_, loopId, embeddingData.rotaryPositionEmbeddingDimSize_,
+    LookUpTable(static_cast<float*>(decodeInputBufs[ROTARY_POSITION_1_INPUT_ID].GetRawPtr()),
+        *embeddingData.rotaryPositionEmbeddingTable1_, loopId, embeddingData.rotaryPositionEmbeddingDimSize_,
         embeddingData.rotaryPositionEmbeddingMaxIndex_);
 
     if (tokenIdVec.size() == 1) {
@@ -466,32 +480,39 @@ int DecodePreprocess(std::vector<Infer::TensorBuf>& decodeInputBufs, const std::
             return 0;
 
         if (prefillOutBufs[0].size / sizeof(float) / layers / prefillDecodeFixSeq != keyValueSize / decodeFixSeq) {
-            LOG(ERROR) << "PrefillOutBufs[0] size / sizeof(float) / layers / prefillDecodeFixSeq [%d] != keyValueSize / decodeFixSeq [%d]" << prefillOutBufs[0].size / sizeof(float) / layers / prefillDecodeFixSeq << keyValueSize / decodeFixSeq;
+            LOG(ERROR) << "PrefillOutBufs[0] size / sizeof(float) / layers / prefillDecodeFixSeq [%d] != \
+                keyValueSize / decodeFixSeq [%d]"
+                << prefillOutBufs[0].size / sizeof(float) / layers / prefillDecodeFixSeq << keyValueSize / decodeFixSeq;
         }
 
-        if (layers != static_cast<int64_t>(outputNum / 2)) {
+        if (layers != static_cast<size_t>(outputNum / 2)) {
             LOG(ERROR) << "layers [%d] != outputNum / 2 [%d]" << layers << outputNum / 2;
         }
 
         auto prefillKeyValueSize = keyValueSize / decodeFixSeq * loopId;
         auto fixPrefillKeyValueSize = keyValueSize / decodeFixSeq * prefillDecodeFixSeq;
-        for (int64_t i = 0; i < layers; i++) {
-            memcpy(static_cast<float*>(decodeInputBufs[KV_START_INPUT_ID + i * 2].GetRawPtr()), static_cast<float*>(prefillOutBufs[0].GetRawPtr()) + i * fixPrefillKeyValueSize, prefillKeyValueSize * sizeof(float));
-            memcpy(static_cast<float*>(decodeInputBufs[KV_START_INPUT_ID + i * 2 + 1].GetRawPtr()), static_cast<float*>(prefillOutBufs[1].GetRawPtr()) + i * fixPrefillKeyValueSize, prefillKeyValueSize * sizeof(float));
+        for (size_t i = 0; i < layers; i++) {
+            memcpy(static_cast<float*>(decodeInputBufs[KV_START_INPUT_ID + i * 2].GetRawPtr()),
+                static_cast<float*>(prefillOutBufs[0].GetRawPtr()) + i * fixPrefillKeyValueSize,
+                prefillKeyValueSize * sizeof(float));
+            memcpy(static_cast<float*>(decodeInputBufs[KV_START_INPUT_ID + i * 2 + 1].GetRawPtr()),
+                static_cast<float*>(prefillOutBufs[1].GetRawPtr()) + i * fixPrefillKeyValueSize,
+                prefillKeyValueSize * sizeof(float));
         }
 
         auto* inAttentionMask = static_cast<float*>(decodeInputBufs[ATTENTION_MASK_INPUT_ID].GetRawPtr());
-        for (size_t i = 0; i <= loopId; i++) {
+        size_t loopIdSize = static_cast<size_t>(loopId);
+        for (size_t i = 0; i <= loopIdSize; i++) {
             inAttentionMask[i] = 0;
         }
-        for (size_t i = loopId + 1; i < decodeInputBufs[ATTENTION_MASK_INPUT_ID].size / sizeof(float); i++) {
+        for (size_t i = loopIdSize + 1; i < decodeInputBufs[ATTENTION_MASK_INPUT_ID].size / sizeof(float); i++) {
             inAttentionMask[i] = MASK_MIN_VALUE;
         }
     } else {
         auto* inAttentionMask = static_cast<float*>(decodeInputBufs[ATTENTION_MASK_INPUT_ID].GetRawPtr());
         inAttentionMask[loopId] = 0;
         // 非初次自回归KV矩阵更新
-        for (int i = 0; i < lastDecodeOutBufs.size() - 1; ++i) {
+        for (size_t i = 0; i + 1 < lastDecodeOutBufs.size(); ++i) {
             decodeInputBufs[i + KV_START_INPUT_ID] = lastDecodeOutBufs[i];
         }
     }

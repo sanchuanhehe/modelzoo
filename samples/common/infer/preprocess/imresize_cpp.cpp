@@ -294,7 +294,10 @@ Image Imresize(const Image& image, double scaleFactor, bool antialiasing = true)
     int symLenWe = weightsIndicesW.symLenE;
 
     // 验证权重和索引的尺寸
-    if (weightsH.size() != outH || indicesH.size() != outH || weightsW.size() != outW || indicesW.size() != outW) {
+    const size_t outHSize = static_cast<size_t>(outH);
+    const size_t outWSize = static_cast<size_t>(outW);
+    if (weightsH.size() != outHSize || indicesH.size() != outHSize ||
+        weightsW.size() != outWSize || indicesW.size() != outWSize) {
         throw std::runtime_error("Weights and indices size mismatch");
     }
 
@@ -350,7 +353,7 @@ Image Imresize(const Image& image, double scaleFactor, bool antialiasing = true)
 
     for (int c = 0; c < inC; ++c) {
         for (int i = 0; i < outH; ++i) {
-            if (i >= indicesH.size())
+            if (static_cast<size_t>(i) >= indicesH.size())
                 continue;
 
             int idx = SafeGet(indicesH[i], 0, 0);
@@ -425,7 +428,7 @@ Image Imresize(const Image& image, double scaleFactor, bool antialiasing = true)
 
     for (int c = 0; c < inC; ++c) {
         for (int i = 0; i < outW; ++i) {
-            if (i >= indicesW.size())
+            if (static_cast<size_t>(i) >= indicesW.size())
                 continue;
 
             int idx = SafeGet(indicesW[i], 0, 0);
