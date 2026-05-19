@@ -197,10 +197,10 @@ std::vector<cv::Mat> MatchByTag(const cv::Mat& tagK, const cv::Mat& locK, const 
             std::vector<float> groupedKeys;
             for (auto& pair : jointDict) {
                 groupedKeys.push_back(pair.first);
-                if (groupedKeys.size() >= params.MaxNumPeople) break;
+                if (groupedKeys.size() >= static_cast<size_t>(params.MaxNumPeople)) break;
             }
 
-            if (params.IgnoreTooMuch && groupedKeys.size() == params.MaxNumPeople) continue;
+            if (params.IgnoreTooMuch && groupedKeys.size() == static_cast<size_t>(params.MaxNumPeople)) continue;
 
             // 计算已分组人物的平均Tag
             std::vector<cv::Mat> groupedTags;
@@ -380,8 +380,8 @@ private:
 
             // 取Top-K
             for (int k = 0; k < topK; ++k) {
-                int idx = k < valIdx.size() ? valIdx[k].second : 0;
-                float val = k < valIdx.size() ? valIdx[k].first : 0.0f;
+                int idx = static_cast<size_t>(k) < valIdx.size() ? valIdx[k].second : 0;
+                float val = static_cast<size_t>(k) < valIdx.size() ? valIdx[k].first : 0.0f;
                 valK.at<float>(j * topK + k, 0) = val;
                 indMat.at<int>(j * topK + k, 0) = idx;
             }
@@ -696,7 +696,7 @@ std::pair<Mat, Mat> GetMultiStageOutputs(const std::vector<Mat>& outputs, const 
     for (int i = 0; i < offsetFeat; i++) {
         heatmapChannels1.push_back(outputChannels[i]);
     }
-    for (int i = offsetFeat; i < outputChannels.size(); i++) {
+    for (size_t i = offsetFeat; i < outputChannels.size(); i++) {
         tagChannels.push_back(outputChannels[i]);
     }
 
@@ -790,7 +790,10 @@ bool HrnetPostprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>
         return false;
     }
     // 计算缩放尺寸、中心、缩放因子
-    auto [outputSize, center, scalePair] = GetScaleSize(image);
+    Size outputSize;
+    Point2f center;
+    std::pair<float, float> scalePair;
+    std::tie(outputSize, center, scalePair) = GetScaleSize(image);
     float scaleW = scalePair.first;
     float scaleH = scalePair.second;
 
@@ -813,7 +816,9 @@ bool HrnetPostprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>
     Mat invTrans;
     cv::invertAffineTransform(trans, invTrans);
     // 多阶段输出处理
-    auto [heatmaps, tags] = GetMultiStageOutputs(outputs, outputSize);
+    Mat heatmaps;
+    Mat tags;
+    std::tie(heatmaps, tags) = GetMultiStageOutputs(outputs, outputSize);
 
     cv::Mat reshapedMat = heatmaps.reshape(1, 17 * outputSize.height); 
     if (!reshapedMat.isContinuous()) {
