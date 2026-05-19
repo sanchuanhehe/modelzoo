@@ -176,7 +176,7 @@
 
 ## 安装依赖<a name="section183221994410"></a>
     ```
-    # 建议使用python3.8
+    # 建议使用python3.10
     pip3 install -r requirements.txt
     ```
 
