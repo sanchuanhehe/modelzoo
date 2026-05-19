@@ -256,9 +256,10 @@ static void SamplePoints(const std::vector<Vector3d>& cloudMasked,
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    if (cloudMasked.size() >= numPoints) {
+    int cloudMaskedSize = cloudMasked.size();
+    if (cloudMaskedSize >= numPoints) {
         // 随机选择不重复的点
-        std::vector<size_t> indices(cloudMasked.size());
+        std::vector<size_t> indices(cloudMaskedSize);
         for (size_t i = 0; i < indices.size(); ++i) {
             indices[i] = i;
         }
@@ -278,8 +279,8 @@ static void SamplePoints(const std::vector<Vector3d>& cloudMasked,
         cloudSampled = cloudMasked;
         colorSampled = colorMasked;
 
-        int remaining = numPoints - cloudMasked.size();
-        std::uniform_int_distribution<size_t> dis(0, cloudMasked.size() - 1);
+        int remaining = numPoints - cloudMaskedSize;
+        std::uniform_int_distribution<size_t> dis(0, cloudMaskedSize - 1);
 
         for (int i = 0; i < remaining; ++i) {
             size_t idx = dis(gen);

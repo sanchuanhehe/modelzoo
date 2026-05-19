@@ -757,8 +757,6 @@ ModelFreeCollisionDetector::DetectionResult ModelFreeCollisionDetector::Detect(
         sceneZ[p] = scenePoints_[p][2];
     }
 
-    // 并行处理每个抓取姿态（OpenMP加速，数量>10时并行）
-    #pragma omp parallel for if(numGrasps > 10)
     for (int g = 0; g < numGrasps; ++g) {
         // 抓取姿态参数
         const Matrix3d& rot = R[g];

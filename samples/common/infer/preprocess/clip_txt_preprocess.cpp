@@ -631,7 +631,7 @@ bool ClipTxtPreprocess(std::vector<std::string> &fileList,
         // 2. 分词并转换为ID，截断到context_length-2（预留CLS和SEP）
         auto text_tokens = tokenizer.tokenize(fileList[0]);
         auto text_ids = tokenizer.ConvertTokensToIds(text_tokens);
-        int max_content_len = CONTEXT_LENGTH - 2;
+        size_t max_content_len = CONTEXT_LENGTH - 2;
         if (text_ids.size() > max_content_len) {
             text_ids.resize(max_content_len);
         }
