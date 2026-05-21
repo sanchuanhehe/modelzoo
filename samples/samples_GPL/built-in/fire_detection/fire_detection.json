@@ -1,0 +1,95 @@
+{
+    "modelName": "fire_detection",
+    "modelDesc": "火焰检测网络模型是基于 YOLO11n 网络开发的适配端侧芯片的检测网络，在继承了原有 YOLO 网络模型优点的基础上，增加部分 attention 机制帮助火焰特征提取。使用剪枝以及量化的小型化操作，在保持精度情况下，大大降低网络的资源消耗与单帧推理延时。",
+    "modelRepository": "https://gitee.com/Hispark/modelzoo/tree/master/samples/samples_GPL/built-in/fire_detection",
+    "modelParameter": {
+        "输入": "384x640",
+        "参数量": "0.817M",
+        "计算量": "3.3GFLOPs"
+    },
+    "isBeta": false,
+    "betaDesc": "",
+    "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+    "modelUsageScenes": [
+        {
+            "task": "Vision",
+            "tags": [
+                "检测"
+            ]
+        }
+    ],
+    "modelFrame": [
+        "PyTorch"
+    ],
+    "modelDatasets": {
+        "desc": "fasdd数据集",
+        "link": "https://www.scidb.cn/en/detail?dataSetId=ce9c9400b44148e1b0a749f5c3eb0bda"
+    },
+    "srcModelLicense": [
+        {
+            "desc": "源模型",
+            "link": "https://github.com/ultralytics/ultralytics/blob/master/LICENSE"
+        }
+    ],
+    "modelLicense": [
+        {
+            "desc": "部署模型",
+            "link": "https://gitee.com/HiSpark/modelzoo/blob/master/samples/samples_GPL/built-in/fire_detection/LICENSE"
+        }
+    ],
+    "quickStart": {
+        "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/samples_GPL/built-in/fire_detection/doc/快速开始.md"
+    },
+    "modelChipset": [
+        {
+            "chipset": "Hi3516CV610",
+            "tools": [
+                {
+                    "name": "CANN工具",
+                    "link": "",
+                    "desc": "SVP_NN_PC_V5.0.2.3 (请联系FAE获取)"
+                },
+                {
+                    "name": "编译工具链",
+                    "link": "",
+                    "desc": "gcc-20250305-arm-v01c02-linux-musleabi (请联系FAE获取)"
+                },
+                {
+                    "name": "SDK",
+                    "link": "",
+                    "desc": "Hi3516CV610R001C01SP020 (请联系FAE获取)"
+                }
+            ],
+            "os": [
+                "Linux"
+            ],
+            "performance": [
+                {
+                    "quantMode": "a8w8",
+                    "detail": [
+                        {
+                            "performance": 20.38,
+                            "performanceUnit": "耗时（ms）",
+                            "performanceDesc": ""
+                        },
+                        {
+                            "performance": 49.06,
+                            "performanceUnit": "性能（fps）",
+                            "performanceDesc": ""
+                        },
+                        {
+                            "performance": 20.79,
+                            "performanceUnit": "单帧内存带宽（MB）",
+                            "performanceDesc": ""
+                        },
+                        {
+                            "performance": 6.30,
+                            "performanceUnit": "内存（MB）",
+                            "performanceDesc": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

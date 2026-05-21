@@ -1,0 +1,166 @@
+diff --git a/ultralytics/nn/modules/__init__.py b/ultralytics/nn/modules/__init__.py
+index d0e1340e1..180a1b605 100644
+--- a/ultralytics/nn/modules/__init__.py
++++ b/ultralytics/nn/modules/__init__.py
+@@ -43,6 +43,7 @@ from .block import (
+     C2fPSA,
+     C3Ghost,
+     C3k2,
++    C3k2_v2,
+     C3x,
+     CBFuse,
+     CBLinear,
+@@ -137,6 +138,7 @@ __all__ = (
+     "C2fPSA",
+     "C3Ghost",
+     "C3k2",
++    "C3k2_v2",
+     "C3x",
+     "CBFuse",
+     "CBLinear",
+diff --git a/ultralytics/nn/modules/block.py b/ultralytics/nn/modules/block.py
+index 20d1734e6..6433c6880 100644
+--- a/ultralytics/nn/modules/block.py
++++ b/ultralytics/nn/modules/block.py
+@@ -37,6 +37,7 @@ __all__ = (
+     "C2fPSA",
+     "C3Ghost",
+     "C3k2",
++    "C3k2_v2",
+     "C3x",
+     "CBFuse",
+     "CBLinear",
+@@ -318,6 +319,33 @@ class C2f(nn.Module):
+         y.extend(m(y[-1]) for m in self.m)
+         return self.cv2(torch.cat(y, 1))
+ 
++class C2f_v2(nn.Module):
++    """Faster Implementation of CSP Bottleneck with 2 convolutions."""
++
++    def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = False, g: int = 1, e: float = 0.5):
++        """Initialize a CSP bottleneck with 2 convolutions.
++
++        Args:
++            c1 (int): Input channels.
++            c2 (int): Output channels.
++            n (int): Number of Bottleneck blocks.
++            shortcut (bool): Whether to use shortcut connections.
++            g (int): Groups for convolutions.
++            e (float): Expansion ratio.
++        """
++        super().__init__()
++        self.c = int(c2 * e)  # hidden channels
++        self.cv0 = Conv(c1, self.c, 1, 1)
++        self.cv1 = Conv(c1, self.c, 1, 1)
++        self.cv2 = Conv((2 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
++        self.m = nn.ModuleList(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
++
++    def forward(self, x: torch.Tensor) -> torch.Tensor:
++        """Forward pass through C2f layer."""
++        y = [self.cv0(x), self.cv1(x)]
++        y.extend(m(y[-1]) for m in self.m)
++        return self.cv2(torch.cat(y, 1))
++
+ 
+ class C3(nn.Module):
+     """CSP Bottleneck with 3 convolutions."""
+@@ -1105,6 +1133,45 @@ class C3k2(C2f):
+             for _ in range(n)
+         )
+ 
++class C3k2_v2(C2f_v2):
++    """Faster Implementation of CSP Bottleneck with 2 convolutions."""
++
++    def __init__(
++        self,
++        c1: int,
++        c2: int,
++        n: int = 1,
++        c3k: bool = False,
++        e: float = 0.5,
++        attn: bool = False,
++        g: int = 1,
++        shortcut: bool = True,
++    ):
++        """Initialize C3k2_v2 module.
++
++        Args:
++            c1 (int): Input channels.
++            c2 (int): Output channels.
++            n (int): Number of blocks.
++            c3k (bool): Whether to use C3k blocks.
++            e (float): Expansion ratio.
++            attn (bool): Whether to use attention blocks.
++            g (int): Groups for convolutions.
++            shortcut (bool): Whether to use shortcut connections.
++        """
++        super().__init__(c1, c2, n, shortcut, g, e)
++        self.m = nn.ModuleList(
++            nn.Sequential(
++                Bottleneck(self.c, self.c, shortcut, g),
++                PSABlock(self.c, attn_ratio=0.5, num_heads=max(self.c // 64, 1)),
++            )
++            if attn
++            else C3k(self.c, self.c, 2, shortcut, g)
++            if c3k
++            else Bottleneck(self.c, self.c, shortcut, g)
++            for _ in range(n)
++        )
++
+ 
+ class C3k(C3):
+     """C3k is a CSP bottleneck module with customizable kernel sizes for feature extraction in neural networks."""
+diff --git a/ultralytics/nn/tasks.py b/ultralytics/nn/tasks.py
+index b9561a2fa..cf8b6c663 100644
+--- a/ultralytics/nn/tasks.py
++++ b/ultralytics/nn/tasks.py
+@@ -36,6 +36,7 @@ from ultralytics.nn.modules import (
+     C2fPSA,
+     C3Ghost,
+     C3k2,
++    C3k2_v2,
+     C3x,
+     CBFuse,
+     CBLinear,
+@@ -72,6 +73,7 @@ from ultralytics.nn.modules import (
+     YOLOESegment,
+     YOLOESegment26,
+     v10Detect,
++    ChannelAttention,
+ )
+ from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, WINDOWS, YAML, colorstr, emojis
+ from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
+@@ -1591,6 +1593,7 @@ def parse_model(d, ch, verbose=True):
+             C2,
+             C2f,
+             C3k2,
++            C3k2_v2,
+             RepNCSPELAN4,
+             ELAN1,
+             ADown,
+@@ -1617,6 +1620,7 @@ def parse_model(d, ch, verbose=True):
+             C2,
+             C2f,
+             C3k2,
++            C3k2_v2,
+             C2fAttn,
+             C3,
+             C3TR,
+@@ -1645,7 +1649,7 @@ def parse_model(d, ch, verbose=True):
+         if m in base_modules:
+             c1, c2 = ch[f], args[0]
+             if c2 != nc:  # if c2 != nc (e.g., Classify() output)
+-                c2 = make_divisible(min(c2, max_channels) * width, 8)
++                c2 = make_divisible(min(c2, max_channels) * width, 4)
+             if m is C2fAttn:  # set 1) embed channels and 2) num heads
+                 args[1] = make_divisible(min(args[1], max_channels // 2) * width, 8)
+                 args[2] = int(max(round(min(args[2], max_channels // 2 // 32)) * width, 1) if args[2] > 1 else args[2])
+@@ -1654,7 +1658,7 @@ def parse_model(d, ch, verbose=True):
+             if m in repeat_modules:
+                 args.insert(2, n)  # number of repeats
+                 n = 1
+-            if m is C3k2:  # for M/L/X sizes
++            if (m is C3k2) or (m is C3k2_v2):  # for M/L/X sizes
+                 legacy = False
+                 if scale in "mlx":
+                     args[3] = True
