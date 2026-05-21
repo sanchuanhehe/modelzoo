@@ -9,6 +9,6 @@ tqdm==4.62.3
 argparse==1.4.0
 h5py==2.10.0
 opencv-python==4.5.5.64
-tf2onnx==1.9.3  # 兼容 TensorFlow 1.15 和 Python 3.6
-onnx==1.10.2    # 稳定版本，兼容 opset=11
+tf2onnx==1.9.3
+onnx==1.10.2
 onnxruntime==1.10.0
