@@ -1,4 +1,4 @@
-#python推荐使用3.9.23
+# python recommended version: 3.9.23
 absl-py==2.3.1
 addict==2.4.0
 cachetools==5.5.2
