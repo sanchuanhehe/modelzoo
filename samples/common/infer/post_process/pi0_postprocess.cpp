@@ -137,7 +137,7 @@ static bool ParseActionStatsJsonFile(const std::string& filePath, NormalizeParam
     return true;
 }
 
-static Result Unnormalize(const std::string& actionStatsPath, std::vector<std::vector<float>> &modelOut, int actionLen)
+static Result Unnormalize(const std::string& actionStatsPath, std::vector<std::vector<float>> &modelOut, size_t actionLen)
 {
     NormalizeParam param;
     if (!ParseActionStatsJsonFile(actionStatsPath, param)) {
@@ -150,8 +150,8 @@ static Result Unnormalize(const std::string& actionStatsPath, std::vector<std::v
         return FAILED;
     }
 
-    for (int i = 0; i < modelOut.size() ; ++i) {
-        for (int j = 0; j < modelOut[i].size() ; ++j) {
+    for (size_t i = 0; i < modelOut.size() ; ++i) {
+        for (size_t j = 0; j < modelOut[i].size() ; ++j) {
             modelOut[i][j] = modelOut[i][j] * param.kStd[j] + param.kMean[j];
         }
     }
@@ -159,7 +159,7 @@ static Result Unnormalize(const std::string& actionStatsPath, std::vector<std::v
 }
 
 static Result SaveAction(std::vector<std::string>& fileList, const std::string& saveTxtDir,
-    const std::vector<std::vector<float>> &modelOut, int actionLen)
+    const std::vector<std::vector<float>> &modelOut, size_t actionLen)
 {
     if (fileList.size() < MIN_FILELIST_INPUT_NUM || fileList.size() > MAX_FILELIST_INPUT_NUM) {
         LOG(ERROR) << "The number of input is wrong, please check fileList_1.json " << fileList.size();
@@ -177,8 +177,8 @@ static Result SaveAction(std::vector<std::string>& fileList, const std::string& 
         return FAILED;;
     }
 
-    for (int i = 0; i < modelOut.size(); ++i) {
-        for (int j = 0; j < actionLen; ++j) {
+    for (size_t i = 0; i < modelOut.size(); ++i) {
+        for (size_t j = 0; j < actionLen; ++j) {
             file << modelOut[i][j];
             if (j < actionLen - 1) {
                 file << " ";

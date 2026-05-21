@@ -133,8 +133,6 @@ bool Save2DToBin(
         LOG(ERROR) << "feats is empty";
         return false;
     }
-    size_t rows = feats.size();     // 行数（如5）
-    size_t cols = feats[0].size();  // 列数（如1024）
     std::ofstream binFile(binPath, std::ios::out | std::ios::binary);
     if (!binFile.is_open()) {
         std::cerr << "错误：无法打开bin文件 " << binPath << std::endl;
@@ -354,7 +352,6 @@ bool ClipInfer::ExecuteParams(int argc, char *argv[])
 
     std::string aclConfigPath;
     std::string inputPath;
-    static int loop = 1;
     while ((opt = getopt_long(argc, argv, optstring, long_options, NULL)) != -1) {
         switch (opt) {
         case 'h':

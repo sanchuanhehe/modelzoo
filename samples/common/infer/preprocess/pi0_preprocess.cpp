@@ -85,13 +85,13 @@ static std::vector<int> EncodeLanguage(const std::string& text, const std::strin
     return tokenIds;
 }
 
-static Result BuildLangInputsToBuf(const std::vector<int>& tokenIds, int maxLen,
+static Result BuildLangInputsToBuf(const std::vector<int>& tokenIds, size_t maxLen,
     int64_t padTokenId, std::vector<TensorBuf>& inBufs, std::vector<TensorDesc>& inDescs)
 {
     // 1. 截断或者补齐 token 序列
     std::vector<int64_t> tokens;
     // 取前maxLen个 token
-    int tokenLen = std::min(static_cast<int>(tokenIds.size()), maxLen);
+    int tokenLen = std::min(static_cast<int>(tokenIds.size()), static_cast<int>(maxLen));
     tokens.assign(tokenIds.begin(), tokenIds.begin() + tokenLen);
     // 不足maxLen时用padTokenId填充
     if (tokens.size() < maxLen) {
@@ -131,7 +131,7 @@ static Result BuildLangInputsToBuf(const std::vector<int>& tokenIds, int maxLen,
 }
 
 static Result EncodeLanguageToBuf(const std::string& text, const std::string& modelPath,
-    int tokenLen, std::vector<TensorBuf>& inBufs, std::vector<TensorDesc>& inDescs)
+    size_t tokenLen, std::vector<TensorBuf>& inBufs, std::vector<TensorDesc>& inDescs)
 {
     std::vector<int> tokenIds;
     tokenIds = EncodeLanguage(text, modelPath);
@@ -168,7 +168,7 @@ static Result ReadStateToBuf(const std::string& path, std::vector<TensorBuf>& in
         return FAILED;
     }
 
-    for (int i = 0; i < state.size(); i++) {
+    for (size_t i = 0; i < state.size(); i++) {
         infile >> state[i];
     }
     infile.close();
