@@ -55,7 +55,9 @@ static std::string ReadConfig(const std::string& key)
     
     std::string line;
     while (std::getline(cfgFile, line)) {
-        if (line.empty() || line[0] == '#') continue;
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
         
         size_t pos = line.find('=');
         if (pos != std::string::npos) {
@@ -143,7 +145,9 @@ public:
         : vocabSize(vocabSize), keywordTokens(keywordTokens)
     {
         keywordsIdxSet.insert(0);
-        for (int id : keywordTokens) keywordsIdxSet.insert(id);
+        for (int id : keywordTokens) {
+            keywordsIdxSet.insert(id);
+        }
         
         Hyp initHyp;
         initHyp.pb = 1.0f;
@@ -158,7 +162,9 @@ public:
         Softmax(frameLogits, probs.data(), vocabSize);
         
         int topKCount = CollectTopKTokens();
-        if (topKCount == 0) return;
+        if (topKCount == 0) {
+            return;
+        }
 
         nextHyps.clear();
         prefixToIndex.clear();
@@ -173,7 +179,9 @@ public:
         }
 
         std::sort(nextHyps.begin(), nextHyps.end(), [](const Hyp& a, const Hyp& b) { return a.TotalScore() > b.TotalScore(); });
-        if (static_cast<int>(nextHyps.size()) > PATH_BEAM_SIZE) nextHyps.resize(PATH_BEAM_SIZE);
+        if (static_cast<int>(nextHyps.size()) > PATH_BEAM_SIZE) {
+            nextHyps.resize(PATH_BEAM_SIZE);
+        }
 
         curHyps.swap(nextHyps);
     }
@@ -188,7 +196,9 @@ private:
             if (probs[i] > PROB_THRESHOLD && keywordsIdxSet.count(i) > 0) {
                 topKTokens[count] = i;
                 count++;
-                if (count >= SCORE_BEAM_SIZE) break;
+                if (count >= SCORE_BEAM_SIZE) {
+                    break;
+                }
             }
         }
         return count;
@@ -332,8 +342,12 @@ private:
 
 static int IsSublist(const std::vector<int>& mainList, const std::vector<int>& checkList)
 {
-    if (mainList.size() < checkList.size()) return -1;
-    if (checkList.empty()) return 0;
+    if (mainList.size() < checkList.size()) {
+        return -1;
+    }
+    if (checkList.empty()) {
+        return 0;
+    }
     
     if (mainList.size() == checkList.size()) {
         return (mainList == checkList) ? 0 : -1;
@@ -347,7 +361,9 @@ static int IsSublist(const std::vector<int>& mainList, const std::vector<int>& c
                 break;
             }
         }
-        if (match) return static_cast<int>(i);
+        if (match) {
+            return static_cast<int>(i);
+        }
     }
     return -1;
 }

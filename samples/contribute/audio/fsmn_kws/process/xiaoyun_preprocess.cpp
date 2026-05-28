@@ -61,18 +61,20 @@ constexpr int DEFAULT_FRAME_SHIFT_MS = 10;
 constexpr float DEFAULT_PREEMPH_COEFF = 0.97f;
 constexpr int WAV_CHUNK_ID_SIZE = 4;
 
-static std::vector<float> cmvnShift;
-static std::vector<float> cmvnScale;
-static std::unique_ptr<knf::FbankComputer> fbankComputer;
-static knf::FeatureWindowFunction windowFunction;
-static knf::FbankOptions fbankOpts;
-static bool knfInitialized = false;
-static int knfNMels = DEFAULT_N_MELS;
+static std::vector<float> g_cmvnShift;
+static std::vector<float> g_cmvnScale;
+static std::unique_ptr<knf::FbankComputer> g_fbankComputer;
+static knf::FeatureWindowFunction g_windowFunction;
+static knf::FbankOptions g_fbankOpts;
+static bool g_knfInitialized = false;
+static int g_knfNMels = DEFAULT_N_MELS;
 
 
 static bool LoadCMVN(const std::string& cmvnFile)
 {
-    if (!cmvnShift.empty()) return true;
+    if (!g_cmvnShift.empty()) {
+        return true;
+    }
     
     std::ifstream txtFile(cmvnFile);
     if (txtFile.is_open()) {
@@ -85,7 +87,9 @@ static bool LoadCMVN(const std::string& cmvnFile)
                 if (start != std::string::npos && end != std::string::npos && end > start) {
                     std::istringstream iss(line.substr(start + 1, end - start - 1));
                     float v;
-                    while (iss >> v) cmvnShift.push_back(v);
+                    while (iss >> v) {
+                        g_cmvnShift.push_back(v);
+                    }
                 }
             } else if (line.find("<Rescale>") != std::string::npos || line.find("Rescale") != std::string::npos) {
                 std::getline(txtFile, line);
@@ -94,7 +98,9 @@ static bool LoadCMVN(const std::string& cmvnFile)
                 if (start != std::string::npos && end != std::string::npos && end > start) {
                     std::istringstream iss(line.substr(start + 1, end - start - 1));
                     float v;
-                    while (iss >> v) cmvnScale.push_back(v);
+                    while (iss >> v) {
+                        g_cmvnScale.push_back(v);
+                    }
                 }
             }
         }
@@ -107,10 +113,10 @@ static bool LoadCMVN(const std::string& cmvnFile)
         }
         int cmvnDim;
         binFile.read(reinterpret_cast<char*>(&cmvnDim), sizeof(int));
-        cmvnShift.resize(cmvnDim);
-        cmvnScale.resize(cmvnDim);
-        binFile.read(reinterpret_cast<char*>(cmvnShift.data()), cmvnDim * sizeof(float));
-        binFile.read(reinterpret_cast<char*>(cmvnScale.data()), cmvnDim * sizeof(float));
+        g_cmvnShift.resize(cmvnDim);
+        g_cmvnScale.resize(cmvnDim);
+        binFile.read(reinterpret_cast<char*>(g_cmvnShift.data()), cmvnDim * sizeof(float));
+        binFile.read(reinterpret_cast<char*>(g_cmvnScale.data()), cmvnDim * sizeof(float));
         binFile.close();
     }
     
@@ -120,26 +126,28 @@ static bool LoadCMVN(const std::string& cmvnFile)
 static void InitKNF(int nMels, int frameLengthMs, int frameShiftMs, 
                     float preemphCoeff, float dither, const std::string& windowType)
 {
-    if (knfInitialized) return;
+    if (g_knfInitialized) {
+        return;
+    }
     
-    fbankOpts.frame_opts.samp_freq = SAMPLE_RATE;
-    fbankOpts.frame_opts.frame_length_ms = frameLengthMs;
-    fbankOpts.frame_opts.frame_shift_ms = frameShiftMs;
-    fbankOpts.frame_opts.dither = dither;
-    fbankOpts.frame_opts.preemph_coeff = preemphCoeff;
-    fbankOpts.frame_opts.window_type = windowType;
-    fbankOpts.frame_opts.remove_dc_offset = true;
-    fbankOpts.frame_opts.snip_edges = true;
-    fbankOpts.mel_opts.num_bins = nMels;
-    fbankOpts.mel_opts.low_freq = LOW_FREQ;
-    fbankOpts.mel_opts.high_freq = 0.0f;
-    fbankOpts.use_log_fbank = true;
-    fbankOpts.use_power = true;
+    g_fbankOpts.frame_opts.samp_freq = SAMPLE_RATE;
+    g_fbankOpts.frame_opts.frame_length_ms = frameLengthMs;
+    g_fbankOpts.frame_opts.frame_shift_ms = frameShiftMs;
+    g_fbankOpts.frame_opts.dither = dither;
+    g_fbankOpts.frame_opts.preemph_coeff = preemphCoeff;
+    g_fbankOpts.frame_opts.window_type = windowType;
+    g_fbankOpts.frame_opts.remove_dc_offset = true;
+    g_fbankOpts.frame_opts.snip_edges = true;
+    g_fbankOpts.mel_opts.num_bins = nMels;
+    g_fbankOpts.mel_opts.low_freq = LOW_FREQ;
+    g_fbankOpts.mel_opts.high_freq = 0.0f;
+    g_fbankOpts.use_log_fbank = true;
+    g_fbankOpts.use_power = true;
     
-    fbankComputer = std::make_unique<knf::FbankComputer>(fbankOpts);
-    windowFunction = knf::FeatureWindowFunction(fbankOpts.frame_opts);
-    knfNMels = nMels;
-    knfInitialized = true;
+    g_fbankComputer = std::make_unique<knf::FbankComputer>(g_fbankOpts);
+    g_windowFunction = knf::FeatureWindowFunction(g_fbankOpts.frame_opts);
+    g_knfNMels = nMels;
+    g_knfInitialized = true;
 }
 
 static bool LoadWavToBuffer(const std::string& wavPath, float* buffer, size_t bufferSize, size_t& numSamples)
@@ -167,7 +175,9 @@ static bool LoadWavToBuffer(const std::string& wavPath, float* buffer, size_t bu
     while (!file.eof()) {
         char chunkId[WAV_CHUNK_ID_SIZE];
         uint32_t chunkSize;
-        if (!file.read(chunkId, WAV_CHUNK_ID_SIZE)) break;
+        if (!file.read(chunkId, WAV_CHUNK_ID_SIZE)) {
+            break;
+        }
         file.read(reinterpret_cast<char*>(&chunkSize), WAV_CHUNK_ID_SIZE);
 
         if (std::memcmp(chunkId, "fmt ", WAV_CHUNK_ID_SIZE) == 0) {
@@ -179,7 +189,9 @@ static bool LoadWavToBuffer(const std::string& wavPath, float* buffer, size_t bu
             file.read(reinterpret_cast<char*>(&byteRate), WAV_CHUNK_ID_SIZE);
             file.read(reinterpret_cast<char*>(&blockAlign), 2);
             file.read(reinterpret_cast<char*>(&bitsPerSample), 2);
-            if (chunkSize > 16) file.seekg(chunkSize - 16, std::ios::cur);
+            if (chunkSize > 16) {
+                file.seekg(chunkSize - 16, std::ios::cur);
+            }
         } else if (std::memcmp(chunkId, "data", WAV_CHUNK_ID_SIZE) == 0) {
             if (audioFormat != 1 || sampleRate != SAMPLE_RATE || bitsPerSample != BITS_PER_SAMPLE) {
                 LOG(ERROR) << "Unsupported WAV";
@@ -217,10 +229,9 @@ static bool LoadWavToBuffer(const std::string& wavPath, float* buffer, size_t bu
     return false;
 }
 
-static void ExtractWindowDirect(const float* waveform, size_t numSamples,
-                                 int frameIdx, const knf::FrameExtractionOptions& opts,
-                                 const knf::FeatureWindowFunction& windowFunction,
-                                 std::vector<float>* signalFrame)
+static void ExtractWindowDirect(const float* waveform, size_t numSamples, int frameIdx,
+    const knf::FrameExtractionOptions& opts, const knf::FeatureWindowFunction& g_windowFunction,
+    std::vector<float>* signalFrame)
 {
     int frameLength = opts.WindowSize();
     int paddedSize = opts.PaddedWindowSize();
@@ -252,14 +263,12 @@ static void ExtractWindowDirect(const float* waveform, size_t numSamples,
         (*signalFrame)[i] = 0.0f;
     }
     
-    knf::ProcessWindow(opts, windowFunction, signalFrame->data(), nullptr);
+    knf::ProcessWindow(opts, g_windowFunction, signalFrame->data(), nullptr);
 }
 
-static bool WavFrontendPipelineKNF(const WavFrontendInput& input, 
-                                     WavFrontendOutput& output, 
-                                     const LfrConfig& lfr)
+static bool WavFrontendPipelineKNF(const WavFrontendInput& input, WavFrontendOutput& output, const LfrConfig& lfr)
 {
-    int numFbankFrames = knf::NumFrames(static_cast<int64_t>(input.numSamples), fbankOpts.frame_opts, true);
+    int numFbankFrames = knf::NumFrames(static_cast<int64_t>(input.numSamples), g_fbankOpts.frame_opts, true);
     if (numFbankFrames <= 0) {
         LOG(ERROR) << "No fbank frames computed";
         return false;
@@ -270,21 +279,20 @@ static bool WavFrontendPipelineKNF(const WavFrontendInput& input,
     output.numFrames = std::min((size_t)TLfr, output.maxFrames);
     
     int ringSize = lfr.m + 2;
-    std::vector<float> fbankRingBuffer(ringSize * knfNMels);
-    std::vector<float> signalFrame(fbankOpts.frame_opts.PaddedWindowSize());
-    std::vector<float> feature(knfNMels);
+    std::vector<float> fbankRingBuffer(ringSize * g_knfNMels);
+    std::vector<float> signalFrame(g_fbankOpts.frame_opts.PaddedWindowSize());
+    std::vector<float> feature(g_knfNMels);
     
     size_t lfrOutputCount = 0;
     
     for (int frameIdx = 0; frameIdx < numFbankFrames; frameIdx++) {
-        ExtractWindowDirect(input.waveform, input.numSamples, frameIdx, fbankOpts.frame_opts, 
-                           windowFunction, &signalFrame);
+        ExtractWindowDirect(input.waveform, input.numSamples, frameIdx, g_fbankOpts.frame_opts, g_windowFunction, &signalFrame);
         
-        fbankComputer->Compute(0.0f, 1.0f, &signalFrame, feature.data());
+        g_fbankComputer->Compute(0.0f, 1.0f, &signalFrame, feature.data());
         
         int ringIdx = frameIdx % ringSize;
-        std::memcpy(fbankRingBuffer.data() + ringIdx * knfNMels, 
-                    feature.data(), knfNMels * sizeof(float));
+        std::memcpy(fbankRingBuffer.data() + ringIdx * g_knfNMels, feature.data(), 
+                    g_knfNMels * sizeof(float));
         
         if ((frameIdx + 1) % lfr.n == 0 && lfrOutputCount < output.numFrames) {
             int lfrI = frameIdx / lfr.n;
@@ -300,15 +308,14 @@ static bool WavFrontendPipelineKNF(const WavFrontendInput& input,
                     cacheIdx = std::min(cacheIdx, numFbankFrames - 1);
                 }
                 int ringCacheIdx = cacheIdx % ringSize;
-                std::memcpy(dest + j * knfNMels, 
-                            fbankRingBuffer.data() + ringCacheIdx * knfNMels, 
-                            knfNMels * sizeof(float));
+                std::memcpy(dest + j * g_knfNMels, fbankRingBuffer.data() + ringCacheIdx * g_knfNMels, 
+                    g_knfNMels * sizeof(float));
             }
             
-            if (!cmvnShift.empty() && !cmvnScale.empty()) {
-                int applyDim = std::min((int)output.featDim, (int)cmvnShift.size());
+            if (!g_cmvnShift.empty() && !g_cmvnScale.empty()) {
+                int applyDim = std::min((int)output.featDim, (int)g_cmvnShift.size());
                 for (int d = 0; d < applyDim; d++) {
-                    dest[d] = (dest[d] + cmvnShift[d]) * cmvnScale[d];
+                    dest[d] = (dest[d] + g_cmvnShift[d]) * g_cmvnScale[d];
                 }
             }
             
@@ -330,15 +337,14 @@ static bool WavFrontendPipelineKNF(const WavFrontendInput& input,
                 cacheIdx = std::min(cacheIdx, numFbankFrames - 1);
             }
             int ringCacheIdx = cacheIdx % ringSize;
-            std::memcpy(dest + j * knfNMels, 
-                        fbankRingBuffer.data() + ringCacheIdx * knfNMels, 
-                        knfNMels * sizeof(float));
+            std::memcpy(dest + j * g_knfNMels, fbankRingBuffer.data() + ringCacheIdx * g_knfNMels, 
+                g_knfNMels * sizeof(float));
         }
         
-        if (!cmvnShift.empty() && !cmvnScale.empty()) {
-            int applyDim = std::min((int)output.featDim, (int)cmvnShift.size());
+        if (!g_cmvnShift.empty() && !g_cmvnScale.empty()) {
+            int applyDim = std::min((int)output.featDim, (int)g_cmvnShift.size());
             for (int d = 0; d < applyDim; d++) {
-                dest[d] = (dest[d] + cmvnShift[d]) * cmvnScale[d];
+                dest[d] = (dest[d] + g_cmvnShift[d]) * g_cmvnScale[d];
             }
         }
     }
@@ -346,9 +352,7 @@ static bool WavFrontendPipelineKNF(const WavFrontendInput& input,
     return true;
 }
 
-bool XiaoYunPreprocess(std::vector<std::string>& fileList, 
-                        std::vector<TensorBuf>& inBufs, 
-                        std::vector<TensorDesc>& inDescs)
+bool XiaoYunPreprocess(std::vector<std::string>& fileList,  std::vector<TensorBuf>& inBufs,  std::vector<TensorDesc>& inDescs)
 {
     if (fileList.empty() || inBufs.empty() || inDescs.empty()) {
         LOG(ERROR) << "invalid input";
