@@ -1,0 +1,14 @@
+# CMVN文件路径 (相对于out/目录)
+cmvn_path=../data/am.mvn.dim80_l2r2
+
+# 预处理后的二进制文件，设置为空字符串则不保存，节约磁盘空间可以不保存
+save_preprocess_bin=
+
+# 预处理后二进制文件列表，为空则不保存
+save_preprocess_txt=
+
+# 模型推理结果
+save_result_txt=
+
+# 模型推理原始二进制结果，设置为空字符串则不保存，节约磁盘空间可以不保存
+save_result_bin=

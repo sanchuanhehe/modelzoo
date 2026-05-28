@@ -1,0 +1,95 @@
+{
+  "modelName": "fsmn_kws",
+  "modelDesc": "小云唤醒词检测模型基于CharCTC（Character-level Connectionist Temporal Classification）架构，用于检测语音中的特定唤醒词"小云小云"。模型提取音频的Fbank特征，通过LFR（Low Frame Rate）降采样和CMVN归一化后进行CTC解码，输出关键词检测结果。",
+  "modelRepository": "",
+  "modelParameter": {
+    "输入": "151 x 400",
+    "参数量": "0.758 M",
+    "计算量": "0.229 GFLOPs"
+  },
+  "isBeta": false,
+  "betaDesc": "",
+  "modelFeedback": "https://developers.hisilicon.com/forum/0155201230363076006",
+  "modelUsageScenes": [
+    {
+      "task": "语音",
+      "tags": [
+        "关键字检测"
+      ]
+    }
+  ],
+  "modelFrame": [
+    "PyTorch"
+  ],
+  "modelDatasets": {
+    "desc": "",
+    "link": ""
+  },
+  "srcModelLicense": [
+    {
+      "desc": "源模型",
+      "link": "https://www.modelscope.cn/models/iic/speech_charctc_kws_phone-xiaoyun"
+    }
+  ],
+  "modelLicense": [
+    {
+      "desc": "部署模型",
+      "link": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/contribute/audio/fsmn_kws/LICENSE"
+    }
+  ],
+  "quickStart": {
+    "md": "https://gitee.com/HiSpark/modelzoo/tree/master/samples/contribute/audio/fsmn_kws/doc/快速开始.md/"
+  },
+  "modelChipset": [
+    {
+      "chipset": "Hi3516CV610",
+      "tools": [
+        {
+          "name": "CANN工具",
+          "link": "",
+          "desc": "6.10.t06spc020b023\n(请联系FAE获取)"
+        },
+        {
+          "name": "编译工具链",
+          "link": "",
+          "desc": "gcc-20250305-arm-v01c02-linux-musleabi\n(请联系FAE获取)"
+        },
+        {
+          "name": "SDK",
+          "link": "",
+          "desc": "Hi3516CV610R001C01SPC020\n(请联系FAE获取)"
+        }
+      ],
+      "os": [
+        "Linux"
+      ],
+      "performance": [
+        {
+          "quantMode": "A8W8",
+          "detail": [
+            {
+              "performance": 5.87,
+              "performanceUnit": "耗时（ms）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 170.27,
+              "performanceUnit": "性能（fps）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 10.036,
+              "performanceUnit": "单帧内存带宽（MB）",
+              "performanceDesc": ""
+            },
+            {
+              "performance": 2.98,
+              "performanceUnit": "内存（MB）",
+              "performanceDesc": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

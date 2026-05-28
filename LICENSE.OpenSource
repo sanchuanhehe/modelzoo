@@ -6,6 +6,7 @@
 ./samples/opensource/sentencepiece
 ./samples/opensource/lerobot
 ./operators/ascend_npu/opensource/ascendsamples
+./samples/opensource/kaldi-native-fbank
 
 (2) The directories below are licensed under MIT License
 ./samples/opensource/json

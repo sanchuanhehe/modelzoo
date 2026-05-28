@@ -1,0 +1,141 @@
+diff --git a/funasr/models/fsmn_kws/model.py b/funasr/models/fsmn_kws/model.py
+old mode 100644
+new mode 100755
+index 066730f1..7a76d20c
+--- a/funasr/models/fsmn_kws/model.py
++++ b/funasr/models/fsmn_kws/model.py
+@@ -195,6 +195,7 @@ class FsmnKWS(torch.nn.Module):
+                 speech_lengths = speech_lengths.squeeze(-1)
+             else:
+                 speech_lengths = speech.shape[1]
++            print(" fbank ")
+         else:
+             # extract fbank feats
+             time1 = time.perf_counter()
+@@ -210,6 +211,11 @@ class FsmnKWS(torch.nn.Module):
+         speech_lengths = speech_lengths.to(device=kwargs["device"])
+ 
+         # Encoder
++        import numpy as np
++        import os
++        abs_path = os.getcwd()
++        print(abs_path)
++        np.save(abs_path + '/kws.npy', speech.detach().cpu().numpy())
+         encoder_out, encoder_out_lens = self.encode(speech, speech_lengths)
+         if isinstance(encoder_out, tuple):
+             encoder_out = encoder_out[0]
+diff --git a/funasr/models/fsmn_vad_streaming/encoder.py b/funasr/models/fsmn_vad_streaming/encoder.py
+index 14c2f5f1..d41573ca 100755
+--- a/funasr/models/fsmn_vad_streaming/encoder.py
++++ b/funasr/models/fsmn_vad_streaming/encoder.py
+@@ -94,20 +94,39 @@ class FSMNBlock(nn.Module):
+             y_left = torch.cat((cache, x_per), dim=2)
+             cache = y_left[:, :, -(self.lorder - 1) * self.lstride :, :]
+         else:
+-            y_left = F.pad(x_per, [0, 0, (self.lorder - 1) * self.lstride, 0])
++            pad_len = (self.lorder - 1) * self.lstride
++            zeros = torch.zeros(
++                x_per.data.size(0),
++                x_per.data.size(1),
++                pad_len,
++                x_per.data.size(3),
++                device=x_per.device,
++                dtype=x_per.dtype,
++            )
++            y_left = torch.cat([zeros, x_per], dim=2)
++            #y_left = F.pad(x_per, [0, 0, (self.lorder - 1) * self.lstride, 0])
+ 
+         y_left = self.conv_left(y_left)
+         out = x_per + y_left
+ 
+         if self.conv_right is not None:
+             # maybe need to check
+-            y_right = F.pad(x_per, [0, 0, 0, self.rorder * self.rstride])
++            #y_right = F.pad(x_per, [0, 0, 0, self.rorder * self.rstride])
++            pad_len = self.rorder * self.rstride
++            pad_shape = list(x_per.shape)
++            pad_shape[-2] = pad_len
++            zeros = x_per.new_zeros(pad_shape)
++            y_right = torch.cat([x_per, zeros], dim=-2)
++
++
+             y_right = y_right[:, :, self.rstride :, :]
+             y_right = self.conv_right(y_right)
+             out += y_right
+ 
+         out_per = out.permute(0, 3, 2, 1)
+-        output = out_per.squeeze(1)
++        #output = out_per.squeeze(1)
++        b, _, h, w = out_per.data.shape
++        output = out_per.reshape(b, h, w)
+ 
+         return output, cache
+ 
+diff --git a/funasr/models/sanm/attention.py b/funasr/models/sanm/attention.py
+index 47d60cb6..0eabf1ab 100644
+--- a/funasr/models/sanm/attention.py
++++ b/funasr/models/sanm/attention.py
+@@ -194,8 +194,11 @@ class MultiHeadedAttentionSANM(nn.Module):
+         attn = None
+         self.dropout = nn.Dropout(p=dropout_rate)
+ 
++        #self.fsmn_block = nn.Conv1d(
++        #    n_feat, n_feat, kernel_size, stride=1, padding=0, groups=n_feat, bias=False
++        #)
+         self.fsmn_block = nn.Conv1d(
+-            n_feat, n_feat, kernel_size, stride=1, padding=0, groups=n_feat, bias=False
++            n_feat, n_feat, (1, kernel_size), stride=(1,1), padding=(0,0) groups=n_feat, bias=False
+         )
+         # padding
+         left_padding = (kernel_size - 1) // 2
+@@ -214,7 +217,10 @@ class MultiHeadedAttentionSANM(nn.Module):
+ 
+         x = inputs.transpose(1, 2)
+         x = self.pad_fn(x)
+-        x = self.fsmn_block(x)
++        #x = self.fsmn_block(x)
++        x = self.fsmn_block(x.unsqueeze(2))
++        b,c,_,l=x.data.size()
++        x=x.reshape(b,c,l)
+         x = x.transpose(1, 2)
+         x += inputs
+         x = self.dropout(x)
+@@ -271,8 +277,11 @@ class MultiHeadedAttentionSANM(nn.Module):
+ 
+             mask = mask.unsqueeze(1).eq(0)  # (batch, 1, *, time2)
+ 
++            #min_value = -float(
++            #    "inf"
++            #)  # float(numpy.finfo(torch.tensor(0, dtype=scores.dtype).numpy().dtype).min)
+             min_value = -float(
+-                "inf"
++                1024
+             )  # float(numpy.finfo(torch.tensor(0, dtype=scores.dtype).numpy().dtype).min)
+             scores = scores.masked_fill(mask, min_value)
+             attn = torch.softmax(scores, dim=-1).masked_fill(
+@@ -677,8 +686,11 @@ class MultiHeadedAttentionCrossAtt(nn.Module):
+         n_batch = value.size(0)
+         if mask is not None:
+             mask = mask.unsqueeze(1).eq(0)  # (batch, 1, *, time2)
++            #min_value = -float(
++            #    "inf"
++            #)  # float(numpy.finfo(torch.tensor(0, dtype=scores.dtype).numpy().dtype).min)
+             min_value = -float(
+-                "inf"
++                1024
+             )  # float(numpy.finfo(torch.tensor(0, dtype=scores.dtype).numpy().dtype).min)
+             # logging.info(
+             #     "scores: {}, mask_size: {}".format(scores.size(), mask.size()))
+@@ -864,8 +876,11 @@ class MultiHeadSelfAttention(nn.Module):
+ 
+             mask = mask.unsqueeze(1).eq(0)  # (batch, 1, *, time2)
+ 
++            #min_value = -float(
++            #    "inf"
++            #)  # float(numpy.finfo(torch.tensor(0, dtype=scores.dtype).numpy().dtype).min)
+             min_value = -float(
+-                "inf"
++                1024
+             )  # float(numpy.finfo(torch.tensor(0, dtype=scores.dtype).numpy().dtype).min)
+             scores = scores.masked_fill(mask, min_value)
+             attn = torch.softmax(scores, dim=-1).masked_fill(
