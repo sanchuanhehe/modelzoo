@@ -199,7 +199,6 @@ void SvpAclMdl::DestroyDesc()
 
 int32_t SvpAclMdl::CreateDataset()
 {
-    int ret;
     svp_acl_data_buffer *dataBuf = nullptr;
 
     inputDataset_ = svp_acl_mdl_create_dataset();
@@ -215,39 +214,6 @@ int32_t SvpAclMdl::CreateDataset()
         inputDataset_ = nullptr;
         return -1;
     }
-
-    // add dataBuf to dataset
-    for (size_t i = 0; i < inputNum_; i++) {
-        dataBuf = svp_acl_create_data_buffer(workBuf_.data.get(), workBufSize_, workBufStride_);
-        if (dataBuf == nullptr) {
-            ERROR_LOG("get input data buffer failed");
-            DestroyDataset();
-            return -1;
-        }
-        ret = svp_acl_mdl_add_dataset_buffer(inputDataset_, dataBuf);
-        if (ret != 0) {
-            ERROR_LOG("add input data buffer failed");
-            DestroyDataset();
-            return -1;
-        }
-    }
-
-    for (size_t i = 0; i < outputNum_; i++) {
-        dataBuf = svp_acl_create_data_buffer(workBuf_.data.get(), workBufSize_, workBufStride_);
-
-        if (dataBuf == nullptr) {
-            ERROR_LOG("get output data buffer failed");
-            DestroyDataset();
-            return -1;
-        }
-        ret = svp_acl_mdl_add_dataset_buffer(outputDataset_, dataBuf);
-        if (ret != 0) {
-            ERROR_LOG("add output data buffer failed");
-            DestroyDataset();
-            return -1;
-        }
-    }
-
     return 0;
 }
 
@@ -293,28 +259,6 @@ int32_t SvpAclMdl::GetInOutputNum()
         return -1;
     }
     return 0;
-}
-
-int32_t SvpAclMdl::CreateWorkAndTaskBuf()
-{
-    int ret;
-    void *taskBuf, *workBuf;
-    if (modelDesc_ == nullptr) {
-        ERROR_LOG("no model desc, create workBuf and taskBuf failed");
-        return -1;
-    }
-    // create task buf
-    taskBufSize_ = svp_acl_mdl_get_input_size_by_index(modelDesc_, inputNum_ - workTaskBufNum);
-    taskBufStride_ = svp_acl_mdl_get_input_default_stride(modelDesc_, inputNum_ - workTaskBufNum);
-    taskBuf_ = TensorBuf(taskBufSize_, taskBufStride_);
-
-    // create work buf
-    workBufSize_ = svp_acl_mdl_get_input_size_by_index(modelDesc_, inputNum_ - 1);
-    workBufStride_ = svp_acl_mdl_get_input_default_stride(modelDesc_, inputNum_ - 1);
-    workBuf_ = TensorBuf(workBufSize_, workBufStride_);
-
-    return 0;
-
 }
 
 int32_t SvpAclMdl::ReadFile(const std::string& filePath, void *&ptr, uint32_t &size)
@@ -369,13 +313,6 @@ int32_t SvpAclMdl::LoadModelFromMem(const void* modelBuf, size_t modelSize)
     if (ret != 0) {
         DestroyDesc();
         ERROR_LOG("get input and output Num failed");
-        return -1;
-    }
-
-    ret = CreateWorkAndTaskBuf();
-    if (ret != 0) {
-        DestroyDesc();
-        ERROR_LOG("CreateWorkAndTaskBuf failed");
         return -1;
     }
 
@@ -456,7 +393,7 @@ size_t SvpAclMdl::GetInTensorNum()
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
         return -1;
     }
-    return static_cast<size_t>(inputNum_ - workTaskBufNum);
+    return static_cast<size_t>(inputNum_ );
 }
 
 size_t SvpAclMdl::GetOutTensorNum()
@@ -589,16 +526,31 @@ int32_t SvpAclMdl::SetInBuf(size_t index, TensorBuf& buf)
         ERROR_LOG("buf stride[%zu] is small than model %zuth input stride[%zu]", buf.stride, index, inputStride);
         return -1;
     }
-
-    dataBuf = svp_acl_mdl_get_dataset_buffer(inputDataset_, index);
-    if (dataBuf == nullptr) {
-        ERROR_LOG("get input dataset %zuth buffer failed", index);
-        return -1;
-    }
-    ret = svp_acl_update_data_buffer(dataBuf, buf.data.get(), buf.size, buf.stride);
-    if (ret != 0) {
-        ERROR_LOG("update input %zuth databuffer failed", index);
-        return -1;
+    size_t in_buf_num = svp_acl_mdl_get_dataset_num_buffers(inputDataset_);
+    if(in_buf_num != inputNum_) {
+        dataBuf = svp_acl_create_data_buffer(buf.data.get(), buf.size, buf.stride);
+        if (dataBuf == nullptr) {
+            ERROR_LOG("get input data buffer failed");
+            DestroyDataset();
+            return -1;
+        }
+        ret = svp_acl_mdl_add_dataset_buffer(inputDataset_, dataBuf);
+        if (ret != 0) {
+            ERROR_LOG("add input data buffer failed");
+            DestroyDataset();
+            return -1;
+        }
+    } else {
+        dataBuf = svp_acl_mdl_get_dataset_buffer(inputDataset_, index);
+	    if (dataBuf == nullptr) {
+	        ERROR_LOG("get input dataset %zuth buffer failed", index);
+	        return -1;
+	    }
+	    ret = svp_acl_update_data_buffer(dataBuf, buf.data.get(), buf.size, buf.stride);
+	    if (ret != 0) {
+	        ERROR_LOG("update input %zuth databuffer failed", index);
+	        return -1;
+	    }
     }
     DevFlush(buf.data.get(), buf.size);
     return 0;
@@ -622,17 +574,32 @@ int32_t SvpAclMdl::SetOutBuf(size_t index, TensorBuf& buf)
         return -1;
     }
 
-    dataBuf = svp_acl_mdl_get_dataset_buffer(outputDataset_, index);
-    if (dataBuf == nullptr) {
-        ERROR_LOG("get output dataset %zuth buffer failed", index);
-        return -1;
+    size_t out_buf_num = svp_acl_mdl_get_dataset_num_buffers(outputDataset_);
+    if(out_buf_num != outputNum_) {
+        dataBuf = svp_acl_create_data_buffer(buf.data.get(), buf.size, buf.stride);
+        if (dataBuf == nullptr) {
+            ERROR_LOG("get input data buffer failed");
+            DestroyDataset();
+            return -1;
+        }
+        ret = svp_acl_mdl_add_dataset_buffer(outputDataset_, dataBuf);
+        if (ret != 0) {
+            ERROR_LOG("add input data buffer failed");
+            DestroyDataset();
+            return -1;
+        } 
+    } else {
+        dataBuf = svp_acl_mdl_get_dataset_buffer(outputDataset_, index);
+        if (dataBuf == nullptr) {
+            ERROR_LOG("get output dataset %zuth buffer failed", index);
+            return -1;
+        }
+        ret = svp_acl_update_data_buffer(dataBuf, buf.data.get(), buf.size, buf.stride);
+        if (ret != 0) {
+            ERROR_LOG("update output %zuth databuffer failed", index);
+            return -1;
+        }
     }
-    ret = svp_acl_update_data_buffer(dataBuf, buf.data.get(), buf.size, buf.stride);
-    if (ret != 0) {
-        ERROR_LOG("update output %zuth databuffer failed", index);
-        return -1;
-    }
-
     DevFlush(buf.data.get(), buf.size);
     return 0;
 }
@@ -641,7 +608,6 @@ int32_t SvpAclMdl::Execute(std::vector<TensorBuf> &inBufs, std::vector<TensorBuf
     RunMode runMode)
 {
     int ret;
-    int taskBufIndex;
 
     if (!loadFlag_) {
         ERROR_LOG("model had been unloaded or is not loaded, please load model first");
@@ -649,11 +615,11 @@ int32_t SvpAclMdl::Execute(std::vector<TensorBuf> &inBufs, std::vector<TensorBuf
     }
 
     size_t inputBufSize = inBufs.size();
-    if (inputBufSize == (inputNum_  + 1 - workTaskBufNum)) {
+
+    if (inputBufSize == (inputNum_  + 1)) {
         inputBufSize--;
     }
-
-    if (inputBufSize != (inputNum_ - workTaskBufNum)) {
+    if (inputBufSize != (inputNum_ )) {
         ERROR_LOG("input Tensor Buf size[%zu] is not equal to model inputNum[%u]", inputBufSize, inputNum_);
         return -1;
     }
@@ -672,13 +638,7 @@ int32_t SvpAclMdl::Execute(std::vector<TensorBuf> &inBufs, std::vector<TensorBuf
             return -1;
         }
     }
-    // set task buf
-    ret = SetInBuf(inputNum_ - workTaskBufNum, taskBuf_);
-    if (ret != 0) {
-        ERROR_LOG("set taskbuf faile");
-        return -1;
-    }
-
+   
     for (size_t i = 0; i < outBufs.size(); i++) {
         ret = SetOutBuf(i, outBufs[i]);
         if (ret != 0) {
