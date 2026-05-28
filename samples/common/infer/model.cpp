@@ -15,6 +15,7 @@
 
 #include "model.h"
 #include "log.h"
+#include "utils.h"
 #include <fstream>
 #include <sstream>
 #include <vector>

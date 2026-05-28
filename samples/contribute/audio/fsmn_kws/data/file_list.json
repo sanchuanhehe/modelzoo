@@ -1,0 +1,42 @@
+{
+    "fileList": [
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/fd59df10517f4a92ab9b1d31cd94c0b9_362d4ab870bf4722962fa4d087d8062f.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/fd59df10517f4a92ab9b1d31cd94c0b9_ad1f518a7bdc4f57b355fb1aaddcd9c6.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_37.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_30.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_38.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_6.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_41.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/fd59df10517f4a92ab9b1d31cd94c0b9_0b448e3108604646a9828403fa722dc1.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_50.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/1330806238146100615.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/20200707_spk57db_storenoise52db_40cm_xiaoyun_sox_48.wav"
+        ],
+        [
+            "../iic/speech_charctc_kws_phone-xiaoyun/unittest/example_kws/wav/fd59df10517f4a92ab9b1d31cd94c0b9_e5c46479973a41a8b3ba04010a69d4c6.wav"
+        ]
+    ],
+    "loop": 1,
+    "processLoop": 1
+}

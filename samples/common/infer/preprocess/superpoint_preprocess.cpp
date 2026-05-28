@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) ModelZoo. 2025-2026. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "superpoint_preprocess.h"
 #include "log.h"
 #include <opencv2/opencv.hpp>
@@ -28,7 +43,6 @@ namespace Infer
         int64_t width = desc.dims[desc.dimCount - 1]; /* dims last dim is width */
         size_t dataSize = desc.typeSize / BYTE_BIT_NUM;
         size_t strideElemNum = inBuf.stride / dataSize;
-        size_t lineSize = width;
 
         // 获取数据指针
         const float *srcData = chwImg.ptr<float>();
@@ -74,7 +88,8 @@ namespace Infer
         return chw_format;
     }
 
-    bool SuperPointPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs, std::vector<TensorDesc>& tensorDescs)
+    bool SuperPointPreprocess(std::vector<std::string>& fileList, std::vector<TensorBuf>& tensorBufs,
+        std::vector<TensorDesc>& tensorDescs)
     {
         // 进度显示（简化版）
         LOG(INFO) << " SuperPointPreprocess ";
@@ -88,7 +103,8 @@ namespace Infer
                 throw std::runtime_error("Failed to load image: " + fileList[0]);
             }
             if (tensorDescs[i].defaultStride == 0) {
-                tensorDescs[i].defaultStride = tensorDescs[i].dims[tensorDescs[i].dimCount - 1] * tensorDescs[i].typeSize / BYTE_BIT_NUM;
+                tensorDescs[i].defaultStride = tensorDescs[i].dims[tensorDescs[i].dimCount - 1] *
+                    tensorDescs[i].typeSize / BYTE_BIT_NUM;
                 tensorBufs[i].stride = tensorDescs[i].defaultStride;
             }
             // 计算缩放比例
@@ -101,7 +117,6 @@ namespace Infer
             // 计算裁剪区域
             int cropHeight = static_cast<int>(targetH / scale);
             int cropWidth = static_cast<int>(targetW / scale);
-            cv::Size cropSize = cv::Size(cropWidth, cropHeight);
 
             cv::Mat processedImage = img.clone();
 

@@ -4,6 +4,7 @@
         "opencv=4.12.0==samples/opensource/opencv",
         "pillow-resize=0.0.0==samples/opensource/pillow-resize",
         "sentencepiece=0.1.96==samples/opensource/sentencepiece",
-        "lerobot=0.3.4==samples/opensource/lerobot"
+        "lerobot=0.3.4==samples/opensource/lerobot",
+        "kaldi-native-fbank=1.18.4==samples/opensource/kaldi-native-fbank"
     ]
 }

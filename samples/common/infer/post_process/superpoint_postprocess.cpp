@@ -1,5 +1,5 @@
 /*
- * Copyright (c) ModelZoo. 2025-2025. All rights reserved.
+ * Copyright (c) ModelZoo. 2025-2026. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -95,7 +95,8 @@ namespace Infer
         return SUCCESS;
     };
 
-    bool SuperPointPostprocess(std::vector<std::string>& inputFileList, std::vector<TensorBuf>& outBufs, std::vector<TensorDesc>& outDescs)
+    bool SuperPointPostprocess(std::vector<std::string>& inputFileList, std::vector<TensorBuf>& outBufs,
+        std::vector<TensorDesc>& outDescs)
     {
         std::vector<std::vector<cv::Point>> bbox;
         // 读取配置文件
@@ -136,13 +137,14 @@ namespace Infer
         LOG(INFO) <<  "解析完成，共检测到 " << keypoints.size() << " 个关键点";
 
         // 示例：输出前5个关键点信息
-        for (size_t i = 0; i < std::min(5ul, keypoints.size()); ++i)
+        for (size_t i = 0; i < std::min<size_t>(5, keypoints.size()); ++i)
         {
             const auto &kp = keypoints[i];
             LOG(INFO) <<  "关键点 " << i + 1 << ":";
             LOG(INFO) <<  "  位置: (" << kp.x << ", " << kp.y << ")";
             LOG(INFO) <<  "  置信度: " << kp.score;
-            LOG(INFO) <<  "  特征向量前3个值: " << kp.descriptor[0] << "," << kp.descriptor[1] << "," << kp.descriptor[2] << ",特征向量长度：" << kp.descriptor.size();
+            LOG(INFO) <<  "  特征向量前3个值: " << kp.descriptor[0] << "," << kp.descriptor[1] << "," <<
+                kp.descriptor[2] << ",特征向量长度：" << kp.descriptor.size();
         }
 
         std::string jpgPath = GetCurrentWorkingDir() + "/result/jpg/";
