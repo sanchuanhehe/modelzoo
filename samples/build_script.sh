@@ -25,7 +25,7 @@ function ss928v100_svp_nnn_build()
     elif [ -f "../../../common/cmake/toolchain_aarch64_linux.cmake" ]; then
         TOOLCHAIN_FILE="../../../common/cmake/toolchain_aarch64_linux.cmake"
     else
-        echo "ERROR: 未找到工具链文件！"
+        echo "ERROR: 未找到工具链文件?"
     fi
 
     # 第二步：执行cmake命令（变量加双引号，避免路径含特殊字符）
@@ -56,7 +56,7 @@ function ss928v100_nnn_build()
     elif [ -f "../../../common/cmake/toolchain_aarch64_linux.cmake" ]; then
         TOOLCHAIN_FILE="../../../common/cmake/toolchain_aarch64_linux.cmake"
     else
-        echo "ERROR: 未找到工具链文件！"
+        echo "ERROR: 未找到工具链文件?"
     fi
 
     # 第二步：执行cmake命令（变量加双引号，避免路径含特殊字符）
@@ -74,7 +74,7 @@ function hi3591p_build()
     mkdir build
     cd build
 
-    echo "Conda env: $CONDA_DEFAULT_ENV"
+echo "Conda env: $CONDA_DEFAULT_ENV"
     export DDK_PATH=/home/build/Ascend/ascend-toolkit/latest
     export NPU_HOST_LIB=$DDK_PATH/acllib/lib64/stub
 
@@ -86,16 +86,48 @@ function hi3591p_build()
     elif [ -f "../../../common/cmake/toolchain_aarch64_linux.cmake" ]; then
         TOOLCHAIN_FILE="../../../common/cmake/toolchain_aarch64_linux.cmake"
     else
-        echo "ERROR: 未找到工具链文件！"
+        echo "ERROR: 未找到工具链文件"
     fi
 
-    # 第二步：执行cmake命令（变量加双引号，避免路径含特殊字符）
     cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" -DSOC_VERSION=$DEF
     make
     make_exit_status=$?
 }
 
-#使用指南
+#hi3516cv610 demo编译
+
+#hi3516cv610 demo
+function hi3516cv610_build()
+{
+    cd ${DIR}
+    rm -rf build
+    rm -rf out
+    mkdir build
+    cd build
+
+    echo "Conda env: $CONDA_DEFAULT_ENV"
+    source /home/build/Ascend/ascend-toolkit/6.10_full/ascend-toolkit/svp_latest/x86_64-linux/script/setenv.sh
+    export PATH="/home/build/arm-v01c02-linux-musleabi-gcc/bin:${PATH}"
+    export DDK_PATH=/home/build/Ascend/ascend-toolkit/6.10_full/ascend-toolkit/svp_latest/x86_64-linux
+    export NPU_HOST_LIB=$DDK_PATH/acllib/lib32/stub
+
+    export NPU_INCLUDE_PATH=$DDK_PATH/acllib/include/acl
+    export NPU_LIB_PATH=$DDK_PATH/acllib/lib32/stub
+
+    if [ -f "../../../../common/cmake/toolchain_arm_v01c02_linux.cmake" ]; then
+        TOOLCHAIN_FILE="../../../../common/cmake/toolchain_arm_v01c02_linux.cmake"
+    elif [ -f "../../../common/cmake/toolchain_arm_v01c02_linux.cmake" ]; then
+        TOOLCHAIN_FILE="../../../common/cmake/toolchain_arm_v01c02_linux.cmake"
+    else
+        echo "ERROR: "
+    fi
+
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" -DSOC_VERSION=$DEF
+    make
+    make_exit_status=$?
+}
+
+#ʹָ
 function generate_usage()
 {
     echo "Usage:  $0 [-option]"
@@ -130,6 +162,18 @@ function parse_arg()
              case $DEF in
                 "Hi3591P")
                     hi3591p_build
+                    ;;
+            esac
+            ;;
+        *)
+            generate_usage;
+            ;;
+    esac
+    case $SOC in
+        "Hi3516CV610")
+             case $DEF in
+                "Hi3516CV610")
+                    hi3516cv610_build
                     ;;
             esac
             ;;
