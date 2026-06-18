@@ -20,11 +20,11 @@ function parse_arg()
         "SS928V100")
              case $DEF in
                 "SS928V100")
-                    /home/build/miniconda3/bin/conda run -n ${SOC}_SVP_NNN /home/build/modelzoo/samples/build_script.sh $SOC $DEF $DIR $TARGET
+                    /home/build/miniconda3/bin/conda run -n ${SOC}_SVP_NNN /home/build/modelzoo-dev/samples/build_script.sh $SOC $DEF $DIR $TARGET
                     exit_status=$?
                     ;;
                 "OPTG")
-                    /home/build/miniconda3/bin/conda run -n ${SOC}_NNN /home/build/modelzoo/samples/build_script.sh $SOC $DEF $DIR $TARGET
+                    /home/build/miniconda3/bin/conda run -n ${SOC}_NNN /home/build/modelzoo-dev/samples/build_script.sh $SOC $DEF $DIR $TARGET
                     exit_status=$?
                     ;;
             esac
@@ -35,9 +35,22 @@ function parse_arg()
     esac
     case $SOC in
         "Hi3591P")
-            case $DEF in
+             case $DEF in
                 "Hi3591P")
-                    /home/build/modelzoo/samples/build_script.sh $SOC $DEF $DIR $TARGET
+                    /home/build/modelzoo-dev/samples/build_script.sh $SOC $DEF $DIR $TARGET
+                    exit_status=$?
+                    ;;
+            esac
+            ;;
+        *)
+            generate_usage;
+            ;;
+    esac
+    case $SOC in
+        "Hi3516CV610")
+             case $DEF in
+                "Hi3516CV610")
+                    /home/build/modelzoo-dev/samples/build_script.sh $SOC $DEF $DIR $TARGET
                     exit_status=$?
                     ;;
             esac
