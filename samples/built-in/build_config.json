@@ -478,5 +478,13 @@
     "buildDef": "SS928V100",
     "needSmoke": "false",
     "description": "VLM"
+  },
+  {
+    "buildTarget": "modelzoo-app",
+    "relativePath": "classification/ResNet50",
+    "chip": "Hi3516CV610",
+    "buildDef": "Hi3516CV610",
+    "needSmoke": "false",
+    "description": "分类网"
   }
 ]
