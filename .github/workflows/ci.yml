@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master, agent/github-actions-ci]
+    branches: [master]
   pull_request:
     branches: [master]
   workflow_dispatch:
@@ -34,12 +34,15 @@ jobs:
           python ci/check_license_policy.py
           python -m jsonschema -i ci/sdk-lock.json ci/sdk-lock.schema.json
       - name: Compile and lint support code
+        env:
+          NPU_INCLUDE_PATH: /tmp/modelzoo-cmake-check/include
+          NPU_LIB_PATH: /tmp/modelzoo-cmake-check/lib
         run: |
           python ci/check_python_sources.py
           ruff check ci
           mapfile -d '' scripts < <(find . -type f -name '*.sh' -not -path './.git/*' -print0)
           shellcheck --severity=error --exclude=SC1090,SC1091 "${scripts[@]}"
-          cmake -S samples/built-in/classification/ResNet50 -B /tmp/modelzoo-cmake-check -DCMAKE_TOOLCHAIN_FILE="$PWD/samples/common/cmake/toolchain_aarch64_linux.cmake" -DSOC_VERSION=SS928V100 -DCMAKE_C_COMPILER_WORKS=1 -DCMAKE_CXX_COMPILER_WORKS=1 || true
+          cmake -S samples/built-in/classification/ResNet50 -B /tmp/modelzoo-cmake-check -DCMAKE_TOOLCHAIN_FILE="$PWD/samples/common/cmake/toolchain_aarch64_openeuler.cmake" -DCMAKE_C_COMPILER=/usr/bin/cc -DCMAKE_CXX_COMPILER=/usr/bin/c++ -DSOC_VERSION=SS928V100
 
   select-targets:
     name: Select affected targets
@@ -130,10 +133,11 @@ jobs:
 
   model-conversion:
     name: Model conversion / SVP_NNN
-    needs: repository-validation
+    needs: [repository-validation, select-targets]
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      needs.select-targets.outputs.count != '0' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -141,11 +145,16 @@ jobs:
         with: {persist-credentials: false}
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with: {python-version: "3.11"}
+      - name: Read SDK cache key
+        id: sdk
+        run: |
+          sha=$(python3 -c 'import json; d=json.load(open("ci/sdk-lock.json")); print(d["artifacts"]["svp-nnn"]["archive"]["sha256"] + "-" + d["artifacts"]["toolchain"]["archive"]["sha256"])')
+          printf 'key=%s\n' "$sha" >> "$GITHUB_OUTPUT"
       - name: Restore raw SDK downloads
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v6.1.0
         with:
           path: ~/.cache/modelzoo/downloads
-          key: modelzoo-converter-${{ runner.os }}-${{ runner.arch }}-3d492cea67c46c2a35bc3136f9a1c3f88c615e8662b7292905c3682ceb54de2e
+          key: modelzoo-sdk-${{ runner.os }}-${{ runner.arch }}-svp-nnn-${{ steps.sdk.outputs.key }}
       - name: Generate pinned ONNX input
         run: |
           python -m pip install --disable-pip-version-check "onnx==1.17.0"
@@ -160,6 +169,8 @@ jobs:
           "${{ steps.converter.outputs.atc }}" --framework=5 --model="$PWD/conversion/input/model.onnx" --input_shape="input:1,3,4,4" --output="$PWD/conversion/model" --image_list="$PWD/conversion/input/input.bin" --compile_mode=1 --soc_version=SS928V100 2>&1 | tee conversion/atc.log
           test -s conversion/model.om
       - name: Package traceable pre-HIL input
+        env:
+          ATC: ${{ steps.converter.outputs.atc }}
         run: |
           mkdir -p conversion/hil-input/input
           cp conversion/model.om conversion/hil-input/model.om
@@ -170,8 +181,10 @@ jobs:
           python3 - <<'PY'
           import hashlib,json,os,pathlib,subprocess
           root=pathlib.Path('conversion/hil-input')
+          lock=json.loads(pathlib.Path('ci/sdk-lock.json').read_text())
           files=[root/'model.om',root/'input/model.onnx',root/'input/input.bin',root/'atc.log',root/'expected.json']
-          data={'schemaVersion':1,'commit':os.environ['GITHUB_SHA'],'sdkReleaseTag':'sdk-ss928v100-r001c02spc022-ci.1','engine':'svp-nnn','soc':'SS928V100','conversion':{'framework':5,'inputShape':'input:1,3,4,4','compileMode':1,'onnxSha256':'153e867604c1c2a0c441d3a2591474e6238052b034716d105e08ce578b4b2f48','inputSha256':'5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5'},'outputs':[{'name':str(f.relative_to(root)),'size':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in files]}
+          atc_version=subprocess.run([os.environ['ATC'],'--version'],text=True,capture_output=True).stdout.strip()
+          data={'schemaVersion':1,'commit':os.environ['GITHUB_SHA'],'sdkReleaseTag':lock['releaseTag'],'sdkArtifacts':{'svp-nnn':lock['artifacts']['svp-nnn']['archive']['sha256']},'engine':'svp-nnn','soc':'SS928V100','converter':{'executable':os.environ['ATC'],'version':atc_version},'conversion':{'framework':5,'inputShape':'input:1,3,4,4','compileMode':1,'socVersion':'SS928V100','onnxSha256':'153e867604c1c2a0c441d3a2591474e6238052b034716d105e08ce578b4b2f48','inputSha256':'5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5'},'outputs':[{'name':str(f.relative_to(root)),'size':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in files]}
           (root/'conversion-manifest.json').write_text(json.dumps(data,indent=2)+'\n')
           PY
           (cd conversion/hil-input && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
@@ -181,3 +194,52 @@ jobs:
           path: conversion/hil-input/
           if-no-files-found: error
           retention-days: 14
+
+  hil-input-package:
+    name: Assemble pre-HIL input package
+    needs: [select-targets, cross-build, model-conversion]
+    if: >-
+      needs.select-targets.outputs.count != '0' &&
+      needs.cross-build.result == 'success' &&
+      needs.model-conversion.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: modelzoo-built-in-classification-resnet50-ss928v100-${{ github.sha }}
+          path: downloaded/build
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: modelzoo-conversion-hil-input-${{ github.sha }}
+          path: downloaded/conversion
+      - name: Assemble and verify boundary package
+        run: python3 ci/package_hil_input.py --build downloaded/build --conversion downloaded/conversion --output artifacts/hil-input
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: modelzoo-hil-input-resnet50-svp-nnn-${{ github.sha }}
+          path: artifacts/hil-input/
+          if-no-files-found: error
+          retention-days: 14
+
+  pre-hil-gate:
+    name: Pre-HIL artifact gate
+    if: always()
+    needs: [select-targets, model-conversion, hil-input-package]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Evaluate conversion and packaging
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == pull_request && "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+            printf 'External fork: SDK conversion and packaging intentionally not run.\n'
+          elif [[ "${{ needs.select-targets.outputs.count }}" == 0 ]]; then
+            printf 'No SDK-affected target: conversion and packaging intentionally not run.\n'
+          elif [[ "${{ needs.model-conversion.result }}" != success || "${{ needs.hil-input-package.result }}" != success ]]; then
+            printf 'Pre-HIL conversion or packaging failed.\n' >&2
+            exit 1
+          else
+            printf 'Pre-HIL artifact gate passed.\n'
+          fi

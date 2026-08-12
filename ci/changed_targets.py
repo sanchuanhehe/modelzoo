@@ -35,6 +35,12 @@ def main() -> int:
             selected = [x for x in all_entries if (x["sample"], x["buildDef"]) in REPRESENTATIVE]
         else:
             selected = [x for x in all_entries if any(p == x["sample"] or p.startswith(x["sample"] + "/") for p in source_changed)]
+            if source_changed:
+                selected_by_key = {(x["sample"], x["buildDef"]): x for x in selected}
+                selected_by_key.update(
+                    {(x["sample"], x["buildDef"]): x for x in all_entries if (x["sample"], x["buildDef"]) in REPRESENTATIVE}
+                )
+                selected = sorted(selected_by_key.values(), key=lambda x: (x["engine"], x["sample"]))
     print(json.dumps({"include": selected}, separators=(",", ":")))
     return 0
 

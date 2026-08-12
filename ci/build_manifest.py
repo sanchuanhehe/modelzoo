@@ -8,11 +8,20 @@ import hashlib
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 
 
 def sha(path: pathlib.Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def compiler_version() -> dict[str, str]:
+    compiler = shutil.which("aarch64-mix210-linux-gcc")
+    if not compiler:
+        return {"executable": "aarch64-mix210-linux-gcc", "version": "unavailable"}
+    version = subprocess.check_output([compiler, "--version"], text=True).splitlines()[0]
+    return {"executable": compiler, "version": version}
 
 
 def main() -> int:
@@ -25,11 +34,17 @@ def main() -> int:
     p.add_argument("--model")
     args = p.parse_args()
     files = [pathlib.Path(args.main)] + ([pathlib.Path(args.model)] if args.model else [])
+    lock = json.loads(pathlib.Path("ci/sdk-lock.json").read_text())
     data = {
         "schemaVersion": 1,
         "commit": os.environ.get("GITHUB_SHA") or subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-        "sdkReleaseTag": json.loads(pathlib.Path("ci/sdk-lock.json").read_text())["releaseTag"],
+        "sdkReleaseTag": lock["releaseTag"],
+        "sdkArtifacts": {
+            "toolchain": lock["artifacts"]["toolchain"]["archive"]["sha256"],
+            args.engine: lock["artifacts"][args.engine]["archive"]["sha256"],
+        },
         "engine": args.engine, "soc": args.soc, "sample": args.sample,
+        "compiler": compiler_version(),
         "cmake": {"buildType": "Release", "toolchain": "samples/common/cmake/toolchain_aarch64_linux.cmake"},
         "outputs": [{"name": f.name, "size": f.stat().st_size, "sha256": sha(f)} for f in files],
     }

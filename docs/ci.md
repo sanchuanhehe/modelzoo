@@ -64,6 +64,11 @@ shellcheck ci/*.sh ci/sdk-release/*.sh
 - `Analyze python`
 - `Dependency review`
 - `Cross-build gate`
+- `Pre-HIL artifact gate`
+
+内部 PR 和 `master` 构建会把代表性 ResNet50 的 AArch64 `main`、转换后的
+`model.om`、固定输入、期望状态和完整哈希清单组装为单一 pre-HIL 工件。该步骤只
+准备板卡测试输入，不连接 Runner 控制机或板卡，也不执行刷机、串口或 SSH。
 - `Model conversion / SVP_NNN`
 
 夜间全量构建用于回归覆盖，不阻塞每个 PR。HIL 检查在自托管 Runner 真正接入后另行增加，不能用 pre-HIL 构建替代。
