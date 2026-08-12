@@ -22,10 +22,9 @@
 
 | 名称 | 内容 |
 | --- | --- |
-| `MODELZOO_SVP_NNN_CANN_URL` | 已安装式 SVP_NNN CANN 归档下载地址。解压后必须包含 `acllib/include/acl` 和 `acllib/lib64/stub`。 |
-| `MODELZOO_SVP_NNN_CANN_SHA256` | 上述 SVP_NNN 归档的小写 SHA-256。 |
-| `MODELZOO_NNN_CANN_URL` | 已安装式 NNN CANN 归档下载地址。 |
-| `MODELZOO_NNN_CANN_SHA256` | 上述 NNN 归档的小写 SHA-256。 |
+| `MODELZOO_SVP_NNN_CANN_SHA256` | 原厂 SVP_NNN PC 归档的小写 SHA-256。 |
+| `MODELZOO_NNN_CANN_SHA256` | 原厂 NNN PC 归档的小写 SHA-256。 |
+| `MODELZOO_TOOLCHAIN_SHA256` | 原厂 `aarch64-mix210-linux.tgz` 的小写 SHA-256。 |
 
 公开 SVP_NNN 安装包的原始下载地址及其 SHA-256 为：
 
@@ -34,7 +33,9 @@ SOURCE_URL=https://hispark-obs.obs.cn-east-3.myhuaweicloud.com/SVP_NNN_PC_V1.0.6
 SOURCE_SHA256=bc299b05b20b583f50ad8695502f7f1e30b4cdbd4635b0ba63e19849b071b314
 ```
 
-该原始包内部仍包含 `.run` 安装器，不能直接作为 `MODELZOO_SVP_NNN_CANN_URL`。应先在授权环境中安装，再把安装目录打成可重定位 tar 归档并重新计算 SHA-256，供无特权的 GitHub Runner 解压使用。
+流水线可以直接处理原厂 PC 归档：先展开外层 `.tgz`，再仅安装目标侧 `acllib/runtime --devel` 包。它不会安装 ATC、主机侧编译器或驱动，也不要求自托管 Runner。流水线同时兼容已安装式可重定位归档。
+
+原厂 GCC 7.3 前端依赖 `libisl.so.19`。Ubuntu 24.04 已不再提供该 ABI；配置脚本会从 Ubuntu 18.04 官方归档下载固定 SHA-256 的 `libisl19` 包，只解到 Runner 临时目录，并通过 `LD_LIBRARY_PATH` 供编译器使用。
 
 SVP_NNN 和 NNN 必须分别配置自己的归档，不能让两个引擎误用同一 CANN 包。
 
@@ -42,10 +43,13 @@ SVP_NNN 和 NNN 必须分别配置自己的归档，不能让两个引擎误用�
 
 | 名称 | 内容 |
 | --- | --- |
-| `MODELZOO_TOOLCHAIN_URL` | 可由 GitHub Runner 下载的 `aarch64-mix210-linux` 可重定位 tar 归档地址。 |
-| `MODELZOO_TOOLCHAIN_SHA256` | 工具链归档的小写 SHA-256。 |
+| `MODELZOO_SVP_NNN_CANN_URL` | GitHub Runner 可下载的原厂 SVP_NNN PC 归档地址。 |
+| `MODELZOO_NNN_CANN_URL` | GitHub Runner 可下载的原厂 NNN PC 归档地址。 |
+| `MODELZOO_TOOLCHAIN_URL` | GitHub Runner 可下载的原厂 `aarch64-mix210-linux.tgz` 地址。 |
 
-工具链 URL 按 Secret 管理，是因为仓库文档说明该工具链通常需要从 SDK/FAE 渠道获取。归档解压后必须包含 `aarch64-mix210-linux-gcc`。不要把 GitHub PAT 或云存储长期密钥放进 URL；优先使用只读、短权限或仓库可访问的下载地址。
+三个 URL 按 Secret 管理，是因为这些包通常需要从 SDK/FAE 渠道获取，而且下载地址可能包含授权信息。不要把 GitHub PAT 或云存储长期密钥放进 URL；优先使用只读、最小权限的下载地址。脚本会在使用前校验 Repository variable 中对应的 SHA-256。
+
+默认不把原厂 SDK 或工具链写入公开仓库的 GitHub Actions cache。若后续确认相关包允许在该仓库的 Actions 范围内分发，可再按引擎和 SHA-256 增加缓存；在此之前由私有下载端控制访问权限和缓存策略。
 
 Fork PR 不运行需要这些凭据的交叉编译任务，但仍运行无密钥的仓库验证。GitHub 默认也不会向 Fork PR 下发仓库 Secrets。
 

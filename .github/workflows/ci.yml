@@ -65,12 +65,12 @@ jobs:
     outputs:
       ready: ${{ steps.check.outputs.ready }}
     env:
-      MODELZOO_SVP_NNN_CANN_URL: ${{ vars.MODELZOO_SVP_NNN_CANN_URL }}
+      MODELZOO_SVP_NNN_CANN_URL: ${{ secrets.MODELZOO_SVP_NNN_CANN_URL }}
       MODELZOO_SVP_NNN_CANN_SHA256: ${{ vars.MODELZOO_SVP_NNN_CANN_SHA256 }}
-      MODELZOO_NNN_CANN_URL: ${{ vars.MODELZOO_NNN_CANN_URL }}
+      MODELZOO_NNN_CANN_URL: ${{ secrets.MODELZOO_NNN_CANN_URL }}
       MODELZOO_NNN_CANN_SHA256: ${{ vars.MODELZOO_NNN_CANN_SHA256 }}
       MODELZOO_TOOLCHAIN_URL: ${{ secrets.MODELZOO_TOOLCHAIN_URL }}
-      MODELZOO_TOOLCHAIN_SHA256: ${{ secrets.MODELZOO_TOOLCHAIN_SHA256 }}
+      MODELZOO_TOOLCHAIN_SHA256: ${{ vars.MODELZOO_TOOLCHAIN_SHA256 }}
     steps:
       - name: Check configuration
         id: check
@@ -117,12 +117,12 @@ jobs:
             build-def: OPTG
             sample: samples/built-in/classification/ResNet50
     env:
-      MODELZOO_SVP_NNN_CANN_URL: ${{ vars.MODELZOO_SVP_NNN_CANN_URL }}
+      MODELZOO_SVP_NNN_CANN_URL: ${{ secrets.MODELZOO_SVP_NNN_CANN_URL }}
       MODELZOO_SVP_NNN_CANN_SHA256: ${{ vars.MODELZOO_SVP_NNN_CANN_SHA256 }}
-      MODELZOO_NNN_CANN_URL: ${{ vars.MODELZOO_NNN_CANN_URL }}
+      MODELZOO_NNN_CANN_URL: ${{ secrets.MODELZOO_NNN_CANN_URL }}
       MODELZOO_NNN_CANN_SHA256: ${{ vars.MODELZOO_NNN_CANN_SHA256 }}
       MODELZOO_TOOLCHAIN_URL: ${{ secrets.MODELZOO_TOOLCHAIN_URL }}
-      MODELZOO_TOOLCHAIN_SHA256: ${{ secrets.MODELZOO_TOOLCHAIN_SHA256 }}
+      MODELZOO_TOOLCHAIN_SHA256: ${{ vars.MODELZOO_TOOLCHAIN_SHA256 }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -130,6 +130,7 @@ jobs:
           persist-credentials: false
 
       - name: Select CANN package
+        id: cann
         shell: bash
         run: |
           if [[ "${{ matrix.engine }}" == svp-nnn ]]; then
@@ -168,7 +169,7 @@ jobs:
         if: success()
         run: |
           mkdir -p artifacts/${{ matrix.engine }}
-          cp "${{ matrix.sample }}/out/main" artifacts/${{ matrix.engine }}/main
+          cp "${{ matrix.sample }}/build/out/main" artifacts/${{ matrix.engine }}/main
           sha256sum artifacts/${{ matrix.engine }}/main > artifacts/${{ matrix.engine }}/checksums.sha256
 
       - name: Upload smoke artifact

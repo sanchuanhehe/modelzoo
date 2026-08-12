@@ -39,10 +39,11 @@ cmake -S "$SAMPLE" -B "$BUILD_DIR" \
     -DSOC_VERSION="$BUILD_DEF"
 cmake --build "$BUILD_DIR" --parallel "$(nproc)"
 
-if [[ ! -x "$SAMPLE/out/main" ]]; then
-    printf 'Build completed without the expected executable: %s/out/main\n' "$SAMPLE" >&2
+artifact="$BUILD_DIR/out/main"
+if [[ ! -x "$artifact" ]]; then
+    printf 'Build completed without the expected executable: %s\n' "$artifact" >&2
     exit 1
 fi
 
-file "$SAMPLE/out/main"
-
+file "$artifact"
+printf '%s\n' "$artifact"
