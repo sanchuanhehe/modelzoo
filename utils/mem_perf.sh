@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright (c) ModelZoo. 2026-2026. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

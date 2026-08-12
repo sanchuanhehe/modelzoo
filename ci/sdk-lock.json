@@ -1,0 +1,48 @@
+{
+  "$schema": "./sdk-lock.schema.json",
+  "schemaVersion": 1,
+  "repository": "sanchuanhehe/modelzoo",
+  "releaseTag": "sdk-ss928v100-r001c02spc022-ci.1",
+  "artifacts": {
+    "toolchain": {
+      "archive": {
+        "name": "ss928v100-r001c02spc022-ci.1-aarch64-mix210-linux.tgz",
+        "size": 260213042,
+        "sha256": "935a86894cba0d6434915e0bae832e11e124dcee1ad848ee289fccf996ba8332"
+      }
+    },
+    "nnn": {
+      "archive": {
+        "name": "ss928v100-r001c02spc022-ci.1-NNN_PC.tgz",
+        "size": 843961029,
+        "sha256": "a6a1063388887594e17c9ba3acc6dfd4905251b3d1cc9794ea876d127f7fcceb"
+      }
+    },
+    "svp-nnn": {
+      "archive": {
+        "name": "SVP_NNN_PC_V1.0.2.17.tgz",
+        "size": 2398084680,
+        "sha256": "3d492cea67c46c2a35bc3136f9a1c3f88c615e8662b7292905c3682ceb54de2e"
+      },
+      "parts": [
+        {
+          "name": "ss928v100-r001c02spc022-ci.1-SVP_NNN_PC_V1.0.2.17.tgz.part-000",
+          "size": 1900000000,
+          "sha256": "4991e6018c5dd5a99b7074566e692c89a25d5ba95ec251c18119dd3af2d200e9"
+        },
+        {
+          "name": "ss928v100-r001c02spc022-ci.1-SVP_NNN_PC_V1.0.2.17.tgz.part-001",
+          "size": 498084680,
+          "sha256": "f0577e949a217d7aa4fa166704dec67cc710abcb7eb656e13d1e834affde4739"
+        }
+      ]
+    }
+  },
+  "hostCompatibility": {
+    "libisl19": {
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/i/isl/libisl19_0.19-1_amd64.deb",
+      "size": 551452,
+      "sha256": "07a0827aba14140b1833ca19ced3f939b2d075646094926d43678a0d19cc942f"
+    }
+  }
+}

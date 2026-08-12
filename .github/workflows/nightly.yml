@@ -1,0 +1,91 @@
+name: Nightly full build
+
+on:
+  schedule:
+    - cron: "17 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  matrix:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false}
+      - id: matrix
+        run: |
+          printf 'matrix=%s\n' "$(python3 ci/build_matrix.py --nightly)" >> "$GITHUB_OUTPUT"
+          mkdir -p nightly-artifacts
+          python3 ci/build_matrix.py --inventory > nightly-artifacts/inventory.tsv
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nightly-inventory-${{ github.sha }}
+          path: nightly-artifacts/inventory.tsv
+          if-no-files-found: error
+          retention-days: 14
+
+  build:
+    name: Nightly / ${{ matrix.engine }}
+    needs: matrix
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false}
+      - name: Read SDK cache key
+        id: sdk
+        run: |
+          sha=$(python3 -c 'import json; d=json.load(open("ci/sdk-lock.json")); print(d["artifacts"]["${{ matrix.engine }}"]["archive"]["sha256"] + "-" + d["artifacts"]["toolchain"]["archive"]["sha256"])')
+          printf 'key=%s\n' "$sha" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/modelzoo/downloads
+          key: modelzoo-sdk-${{ runner.os }}-${{ runner.arch }}-${{ matrix.engine }}-${{ steps.sdk.outputs.key }}
+      - id: toolchain
+        run: bash ci/provision_toolchain.sh --engine "${{ matrix.engine }}"
+      - name: Build engine group
+        env:
+          NPU_INCLUDE_PATH: ${{ steps.toolchain.outputs.npu-include-path }}
+          NPU_LIB_PATH: ${{ steps.toolchain.outputs.npu-lib-path }}
+        run: bash ci/nightly_build.sh "${{ matrix.engine }}" '${{ toJSON(matrix.targets) }}' "nightly-artifacts/${{ matrix.engine }}-summary.tsv"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: nightly-${{ matrix.engine }}-${{ github.sha }}
+          path: nightly-artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
+  summary:
+    name: Nightly summary
+    if: always()
+    needs: [matrix, build]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: nightly-*-${{ github.sha }}
+          path: downloaded
+      - name: Publish success, failure, and skip totals
+        shell: bash
+        run: |
+          scheduled=$(awk -F '\t' 'NR > 1 && $3 == "scheduled" {n++} END {print n+0}' downloaded/nightly-inventory-${{ github.sha }}/inventory.tsv)
+          skipped=$(awk -F '\t' 'NR > 1 && $3 == "skipped" {n++} END {print n+0}' downloaded/nightly-inventory-${{ github.sha }}/inventory.tsv)
+          success=$(awk -F '\t' '$4 == "success" {n++} END {print n+0}' downloaded/nightly-*-${{ github.sha }}/*-summary.tsv)
+          failed=$(awk -F '\t' '$4 == "failed" {n++} END {print n+0}' downloaded/nightly-*-${{ github.sha }}/*-summary.tsv)
+          {
+            printf '# Nightly full build\n\n'
+            printf -- '- Scheduled: %s\n- Success: %s\n- Failed: %s\n- Skipped: %s\n' "$scheduled" "$success" "$failed" "$skipped"
+          } | tee "$GITHUB_STEP_SUMMARY"
+          ((failed == 0))

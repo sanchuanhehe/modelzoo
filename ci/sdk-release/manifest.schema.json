@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanchuanhehe/modelzoo/blob/master/ci/sdk-release/manifest.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "releaseTag", "artifacts"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "releaseTag": {"type": "string", "pattern": "^sdk-"},
+    "artifacts": {
+      "type": "object",
+      "required": ["toolchain", "nnn", "svp-nnn"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

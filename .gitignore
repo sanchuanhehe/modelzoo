@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+
+# Local build and CI output
+archives/
+build/
+out/
+
+# Generated models and pre-HIL packages
+*.onnx
+*.om
+hil-input/
+nightly-artifacts/

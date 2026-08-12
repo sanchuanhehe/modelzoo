@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 CUR_DIR=$(dirname $(readlink -f $0))
 BUILD_PACKAGES_DIR=${CUR_DIR}/output
 PYTHON_VER=$(python3 --version 2>/dev/null | awk '{print $2}' | cut -d. -f1-2)
