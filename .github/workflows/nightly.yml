@@ -52,6 +52,10 @@ jobs:
         with:
           path: ~/.cache/modelzoo/downloads
           key: modelzoo-sdk-${{ runner.os }}-${{ runner.arch }}-${{ matrix.engine }}-${{ steps.sdk.outputs.key }}
+      - name: Initialize engine summary
+        run: |
+          mkdir -p nightly-artifacts
+          printf 'id\tsample\tbuildDef\tresult\n' > "nightly-artifacts/${{ matrix.engine }}-summary.tsv"
       - id: toolchain
         run: bash ci/provision_toolchain.sh --engine "${{ matrix.engine }}"
       - name: Build engine group

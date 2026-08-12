@@ -17,7 +17,9 @@ verify() { [[ -f $1 && $(wc -c < "$1" | tr -d ' ') == "$2" ]] && printf '%s  %s\
 download() {
     local name=$1 size=$2 sha=$3 path="$DOWNLOAD_ROOT/$1"
     if ! verify "$path" "$size" "$sha"; then
-        curl --fail --location --retry 4 --retry-all-errors --output "$path.part" "$base/$name"
+        curl --fail --location --retry 10 --retry-all-errors --retry-delay 5 \
+            --retry-max-time 600 --connect-timeout 30 --continue-at - \
+            --output "$path.part" "$base/$name"
         verify "$path.part" "$size" "$sha" || { printf 'converter asset mismatch: %s\n' "$name" >&2; exit 1; }
         mv "$path.part" "$path"
     fi
