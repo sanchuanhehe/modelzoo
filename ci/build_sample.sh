@@ -44,9 +44,21 @@ cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" \
 cmake --build "$BUILD_DIR" --parallel "$(nproc)"
 
 artifact="$BUILD_DIR/out/main"
-if [[ ! -x "$artifact" ]]; then
-    printf 'Build completed without the expected executable: %s\n' "$artifact" >&2
+source_artifact="$artifact"
+if [[ ! -x "$source_artifact" && -x "$SAMPLE/out/main" ]]; then
+    source_artifact="$SAMPLE/out/main"
+fi
+if [[ ! -x "$source_artifact" ]]; then
+    printf 'Build completed without the expected executable: %s or %s\n' "$artifact" "$SAMPLE/out/main" >&2
     exit 1
+fi
+
+# Some samples configure from their src/ directory and use a relative ../out
+# runtime directory. Normalize every successful build to the path consumed by
+# CI packaging, irrespective of the sample's CMake layout.
+if [[ "$source_artifact" != "$artifact" ]]; then
+    mkdir -p "$(dirname "$artifact")"
+    cp "$source_artifact" "$artifact"
 fi
 
 file "$artifact"
