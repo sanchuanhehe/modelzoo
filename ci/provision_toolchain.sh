@@ -55,7 +55,8 @@ download_asset() {
     local url=$1 size=$2 sha256=$3 destination=$4
     if verify_file "$destination" "$size" "$sha256"; then return; fi
     rm -f "$destination.part"
-    curl --fail --location --retry 4 --retry-all-errors --continue-at - \
+    curl --fail --location --retry 10 --retry-all-errors --retry-delay 5 \
+        --retry-max-time 600 --connect-timeout 30 --continue-at - \
         --output "$destination.part" "$url"
     verify_file "$destination.part" "$size" "$sha256" || {
         printf 'Size/SHA-256 mismatch: %s\n' "$destination.part" >&2; exit 1;
