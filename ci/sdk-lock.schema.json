@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanchuanhehe/modelzoo/blob/master/ci/sdk-lock.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "repository", "releaseTag", "artifacts", "hostCompatibility"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": 1},
+    "repository": {"const": "sanchuanhehe/modelzoo"},
+    "releaseTag": {"const": "sdk-ss928v100-r001c02spc022-ci.1"},
+    "artifacts": {"type": "object", "required": ["toolchain", "nnn", "svp-nnn"]},
+    "hostCompatibility": {"type": "object", "required": ["libisl19"]}
+  },
+  "additionalProperties": false
+}

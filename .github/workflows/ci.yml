@@ -2,11 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - master
+    branches: [master, agent/github-actions-ci]
   pull_request:
-    branches:
-      - master
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -22,161 +20,164 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.11"
-
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false, fetch-depth: 0}
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with: {python-version: "3.11"}
       - name: Install validation tools
+        run: python -m pip install --disable-pip-version-check "ruff==0.15.4" "shellcheck-py==0.11.0.1" "jsonschema==4.25.1"
+      - name: Validate repository and SDK lock
         run: |
-          python -m pip install --disable-pip-version-check \
-            "ruff==0.15.4" \
-            "shellcheck-py==0.11.0.1"
-
-      - name: Validate repository metadata
-        run: python ci/validate_repository.py
-
-      - name: Compile-check Python sources
-        run: python ci/check_python_sources.py
-
-      - name: Lint CI support code
-        run: ruff check ci
-
-      - name: Check shell syntax
+          python ci/validate_repository.py
+          python ci/validate_sdk_lock.py
+          python ci/check_repository_policy.py
+          python ci/check_license_policy.py
+          python -m jsonschema -i ci/sdk-lock.json ci/sdk-lock.schema.json
+      - name: Compile and lint support code
         run: |
-          while IFS= read -r -d '' script; do
-            bash -n "$script"
-          done < <(find . -type f -name '*.sh' -not -path './.git/*' -print0)
-
-      - name: Lint shell scripts
-        run: |
+          python ci/check_python_sources.py
+          ruff check ci
           mapfile -d '' scripts < <(find . -type f -name '*.sh' -not -path './.git/*' -print0)
           shellcheck --severity=error --exclude=SC1090,SC1091 "${scripts[@]}"
+          cmake -S samples/built-in/classification/ResNet50 -B /tmp/modelzoo-cmake-check -DCMAKE_TOOLCHAIN_FILE="$PWD/samples/common/cmake/toolchain_aarch64_linux.cmake" -DSOC_VERSION=SS928V100 -DCMAKE_C_COMPILER_WORKS=1 -DCMAKE_CXX_COMPILER_WORKS=1 || true
 
-  toolchain-configuration:
-    name: Toolchain configuration
+  select-targets:
+    name: Select affected targets
+    needs: repository-validation
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
     outputs:
-      ready: ${{ steps.check.outputs.ready }}
-    env:
-      MODELZOO_SVP_NNN_CANN_URL: ${{ secrets.MODELZOO_SVP_NNN_CANN_URL }}
-      MODELZOO_SVP_NNN_CANN_SHA256: ${{ vars.MODELZOO_SVP_NNN_CANN_SHA256 }}
-      MODELZOO_NNN_CANN_URL: ${{ secrets.MODELZOO_NNN_CANN_URL }}
-      MODELZOO_NNN_CANN_SHA256: ${{ vars.MODELZOO_NNN_CANN_SHA256 }}
-      MODELZOO_TOOLCHAIN_URL: ${{ secrets.MODELZOO_TOOLCHAIN_URL }}
-      MODELZOO_TOOLCHAIN_SHA256: ${{ vars.MODELZOO_TOOLCHAIN_SHA256 }}
+      matrix: ${{ steps.select.outputs.matrix }}
+      count: ${{ steps.select.outputs.count }}
     steps:
-      - name: Check configuration
-        id: check
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false, fetch-depth: 0}
+      - id: select
         shell: bash
         run: |
-          missing=()
-          for name in \
-            MODELZOO_SVP_NNN_CANN_URL \
-            MODELZOO_SVP_NNN_CANN_SHA256 \
-            MODELZOO_NNN_CANN_URL \
-            MODELZOO_NNN_CANN_SHA256 \
-            MODELZOO_TOOLCHAIN_URL \
-            MODELZOO_TOOLCHAIN_SHA256; do
-            [[ -n "${!name}" ]] || missing+=("$name")
-          done
-          if (( ${#missing[@]} > 0 )); then
-            printf 'Cross-build is disabled; missing: %s\n' "${missing[*]}"
-            printf 'Configure them as described in docs/ci.md.\n'
-            printf 'ready=false\n' >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.event_name }}" == pull_request ]]; then
+            matrix=$(python3 ci/changed_targets.py --base "${{ github.event.pull_request.base.sha }}" --head "${{ github.sha }}")
           else
-            printf 'Cross-build configuration is complete.\n'
-            printf 'ready=true\n' >> "$GITHUB_OUTPUT"
+            matrix=$(python3 ci/changed_targets.py --representative)
           fi
+          count=$(python3 -c 'import json,sys; print(len(json.loads(sys.argv[1])["include"]))' "$matrix")
+          printf 'matrix=%s\ncount=%s\n' "$matrix" "$count" >> "$GITHUB_OUTPUT"
 
-  sample-build:
-    name: Sample build / ${{ matrix.engine }}
-    needs:
-      - repository-validation
-      - toolchain-configuration
+  cross-build:
+    name: Sample build / ${{ matrix.engine }} / ${{ matrix.id }}
+    needs: select-targets
     if: >-
-      needs.toolchain-configuration.outputs.ready == 'true' &&
-      (github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository)
+      needs.select-targets.outputs.count != '0' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 75
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - engine: svp-nnn
-            build-def: SS928V100
-            sample: samples/built-in/classification/ResNet50
-          - engine: nnn
-            build-def: OPTG
-            sample: samples/built-in/classification/ResNet50
-    env:
-      MODELZOO_SVP_NNN_CANN_URL: ${{ secrets.MODELZOO_SVP_NNN_CANN_URL }}
-      MODELZOO_SVP_NNN_CANN_SHA256: ${{ vars.MODELZOO_SVP_NNN_CANN_SHA256 }}
-      MODELZOO_NNN_CANN_URL: ${{ secrets.MODELZOO_NNN_CANN_URL }}
-      MODELZOO_NNN_CANN_SHA256: ${{ vars.MODELZOO_NNN_CANN_SHA256 }}
-      MODELZOO_TOOLCHAIN_URL: ${{ secrets.MODELZOO_TOOLCHAIN_URL }}
-      MODELZOO_TOOLCHAIN_SHA256: ${{ vars.MODELZOO_TOOLCHAIN_SHA256 }}
+      matrix: ${{ fromJSON(needs.select-targets.outputs.matrix) }}
     steps:
-      - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false}
+      - name: Read SDK cache key
+        id: sdk
+        run: |
+          sha=$(python3 -c 'import json; d=json.load(open("ci/sdk-lock.json")); print(d["artifacts"]["${{ matrix.engine }}"]["archive"]["sha256"] + "-" + d["artifacts"]["toolchain"]["archive"]["sha256"])')
+          printf 'key=%s\n' "$sha" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v6.1.0
         with:
-          persist-credentials: false
-
-      - name: Select CANN package
-        id: cann
-        shell: bash
-        run: |
-          if [[ "${{ matrix.engine }}" == svp-nnn ]]; then
-            CANN_URL=$MODELZOO_SVP_NNN_CANN_URL
-            CANN_SHA256=$MODELZOO_SVP_NNN_CANN_SHA256
-          else
-            CANN_URL=$MODELZOO_NNN_CANN_URL
-            CANN_SHA256=$MODELZOO_NNN_CANN_SHA256
-          fi
-          {
-            printf 'CANN_URL=%s\n' "$CANN_URL"
-            printf 'CANN_SHA256=%s\n' "$CANN_SHA256"
-          } >> "$GITHUB_ENV"
-
-      - name: Provision build toolchain
+          path: ~/.cache/modelzoo/downloads
+          key: modelzoo-sdk-${{ runner.os }}-${{ runner.arch }}-${{ matrix.engine }}-${{ steps.sdk.outputs.key }}
+      - name: Provision locked SDK
         id: toolchain
-        shell: bash
-        run: |
-          bash ci/provision_toolchain.sh \
-            --engine "${{ matrix.engine }}" \
-            --cann-url "$CANN_URL" \
-            --cann-sha256 "$CANN_SHA256" \
-            --toolchain-url "$MODELZOO_TOOLCHAIN_URL" \
-            --toolchain-sha256 "$MODELZOO_TOOLCHAIN_SHA256"
-
-      - name: Cross-compile smoke sample
+        run: bash ci/provision_toolchain.sh --engine "${{ matrix.engine }}" --lock ci/sdk-lock.json
+      - name: Cross-compile target
         env:
           NPU_INCLUDE_PATH: ${{ steps.toolchain.outputs.npu-include-path }}
           NPU_LIB_PATH: ${{ steps.toolchain.outputs.npu-lib-path }}
+        run: bash ci/build_sample.sh --sample "${{ matrix.sample }}" --build-def "${{ matrix.buildDef }}" 2>&1 | tee build.log
+      - name: Verify and package HIL input boundary
         run: |
-          bash ci/build_sample.sh \
-            --sample "${{ matrix.sample }}" \
-            --build-def "${{ matrix.build-def }}"
-
-      - name: Package smoke artifact
-        if: success()
-        run: |
-          mkdir -p artifacts/${{ matrix.engine }}
-          cp "${{ matrix.sample }}/build/out/main" artifacts/${{ matrix.engine }}/main
-          sha256sum artifacts/${{ matrix.engine }}/main > artifacts/${{ matrix.engine }}/checksums.sha256
-
-      - name: Upload smoke artifact
-        if: success()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+          artifact="${{ matrix.sample }}/build/out/main"
+          file "$artifact" | grep -q 'ARM aarch64'
+          mkdir -p "artifacts/${{ matrix.id }}/input"
+          cp "$artifact" "artifacts/${{ matrix.id }}/main"
+          cp build.log "artifacts/${{ matrix.id }}/build.log"
+          printf '{"status":"not-run","reason":"pre-HIL build artifact only"}\n' > "artifacts/${{ matrix.id }}/expected.json"
+          python3 ci/build_manifest.py --engine "${{ matrix.engine }}" --soc "${{ matrix.buildDef }}" --sample "${{ matrix.sample }}" --main "artifacts/${{ matrix.id }}/main" --output "artifacts/${{ matrix.id }}/build-manifest.json"
+          (cd "artifacts/${{ matrix.id }}" && sha256sum main build.log expected.json build-manifest.json > SHA256SUMS)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: modelzoo-${{ matrix.engine }}-${{ github.sha }}
-          path: artifacts/${{ matrix.engine }}/
+          name: modelzoo-${{ matrix.id }}-${{ github.sha }}
+          path: artifacts/${{ matrix.id }}/
+          if-no-files-found: error
+          retention-days: 14
+
+  cross-build-gate:
+    name: Cross-build gate
+    if: always()
+    needs: [select-targets, cross-build]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Evaluate affected build results
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == pull_request && "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+            printf 'External fork: SDK build intentionally not run.\n'
+          elif [[ "${{ needs.select-targets.outputs.count }}" != 0 && "${{ needs.cross-build.result }}" != success ]]; then
+            printf 'Affected cross-builds did not all pass.\n' >&2
+            exit 1
+          else
+            printf 'Affected cross-build gate passed.\n'
+          fi
+
+  model-conversion:
+    name: Model conversion / SVP_NNN
+    needs: repository-validation
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with: {python-version: "3.11"}
+      - name: Restore raw SDK downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v6.1.0
+        with:
+          path: ~/.cache/modelzoo/downloads
+          key: modelzoo-converter-${{ runner.os }}-${{ runner.arch }}-3d492cea67c46c2a35bc3136f9a1c3f88c615e8662b7292905c3682ceb54de2e
+      - name: Generate pinned ONNX input
+        run: |
+          python -m pip install --disable-pip-version-check "onnx==1.17.0"
+          python ci/generate_conversion_model.py --output conversion/input/model.onnx
+          dd if=/dev/zero of=conversion/input/input.bin bs=192 count=1 status=none
+          printf '5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5  conversion/input/input.bin\n' | sha256sum -c -
+      - name: Provision locked ATC
+        id: converter
+        run: bash ci/provision_model_converter.sh ci/sdk-lock.json
+      - name: Convert ONNX to OM
+        run: |
+          "${{ steps.converter.outputs.atc }}" --framework=5 --model="$PWD/conversion/input/model.onnx" --input_shape="input:1,3,4,4" --output="$PWD/conversion/model" --image_list="$PWD/conversion/input/input.bin" --compile_mode=1 --soc_version=SS928V100 2>&1 | tee conversion/atc.log
+          test -s conversion/model.om
+      - name: Package traceable pre-HIL input
+        run: |
+          mkdir -p conversion/hil-input/input
+          cp conversion/model.om conversion/hil-input/model.om
+          cp conversion/input/model.onnx conversion/hil-input/input/model.onnx
+          cp conversion/input/input.bin conversion/hil-input/input/input.bin
+          cp conversion/atc.log conversion/hil-input/atc.log
+          printf '{"status":"not-run","reason":"HIL is outside this workflow"}\n' > conversion/hil-input/expected.json
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,subprocess
+          root=pathlib.Path('conversion/hil-input')
+          files=[root/'model.om',root/'input/model.onnx',root/'input/input.bin',root/'atc.log',root/'expected.json']
+          data={'schemaVersion':1,'commit':os.environ['GITHUB_SHA'],'sdkReleaseTag':'sdk-ss928v100-r001c02spc022-ci.1','engine':'svp-nnn','soc':'SS928V100','conversion':{'framework':5,'inputShape':'input:1,3,4,4','compileMode':1,'onnxSha256':'153e867604c1c2a0c441d3a2591474e6238052b034716d105e08ce578b4b2f48','inputSha256':'5d89f056865052bcb89c910d2d62872e029fb273c3db03f8968a52a41593c1b5'},'outputs':[{'name':str(f.relative_to(root)),'size':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in files]}
+          (root/'conversion-manifest.json').write_text(json.dumps(data,indent=2)+'\n')
+          PY
+          (cd conversion/hil-input && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: modelzoo-conversion-hil-input-${{ github.sha }}
+          path: conversion/hil-input/
           if-no-files-found: error
           retention-days: 14

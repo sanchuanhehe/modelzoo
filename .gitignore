@@ -6,3 +6,8 @@ archives/
 build/
 out/
 
+# Generated models and pre-HIL packages
+*.onnx
+*.om
+hil-input/
+nightly-artifacts/
