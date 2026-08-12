@@ -1,0 +1,181 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-validation:
+    name: Repository validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Install validation tools
+        run: |
+          python -m pip install --disable-pip-version-check \
+            "ruff==0.15.4" \
+            "shellcheck-py==0.11.0.1"
+
+      - name: Validate repository metadata
+        run: python ci/validate_repository.py
+
+      - name: Compile-check Python sources
+        run: python ci/check_python_sources.py
+
+      - name: Lint CI support code
+        run: ruff check ci
+
+      - name: Check shell syntax
+        run: |
+          while IFS= read -r -d '' script; do
+            bash -n "$script"
+          done < <(find . -type f -name '*.sh' -not -path './.git/*' -print0)
+
+      - name: Lint shell scripts
+        run: |
+          mapfile -d '' scripts < <(find . -type f -name '*.sh' -not -path './.git/*' -print0)
+          shellcheck --severity=error --exclude=SC1090,SC1091 "${scripts[@]}"
+
+  toolchain-configuration:
+    name: Toolchain configuration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    env:
+      MODELZOO_SVP_NNN_CANN_URL: ${{ vars.MODELZOO_SVP_NNN_CANN_URL }}
+      MODELZOO_SVP_NNN_CANN_SHA256: ${{ vars.MODELZOO_SVP_NNN_CANN_SHA256 }}
+      MODELZOO_NNN_CANN_URL: ${{ vars.MODELZOO_NNN_CANN_URL }}
+      MODELZOO_NNN_CANN_SHA256: ${{ vars.MODELZOO_NNN_CANN_SHA256 }}
+      MODELZOO_TOOLCHAIN_URL: ${{ secrets.MODELZOO_TOOLCHAIN_URL }}
+      MODELZOO_TOOLCHAIN_SHA256: ${{ secrets.MODELZOO_TOOLCHAIN_SHA256 }}
+    steps:
+      - name: Check configuration
+        id: check
+        shell: bash
+        run: |
+          missing=()
+          for name in \
+            MODELZOO_SVP_NNN_CANN_URL \
+            MODELZOO_SVP_NNN_CANN_SHA256 \
+            MODELZOO_NNN_CANN_URL \
+            MODELZOO_NNN_CANN_SHA256 \
+            MODELZOO_TOOLCHAIN_URL \
+            MODELZOO_TOOLCHAIN_SHA256; do
+            [[ -n "${!name}" ]] || missing+=("$name")
+          done
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Cross-build is disabled; missing: %s\n' "${missing[*]}"
+            printf 'Configure them as described in docs/ci.md.\n'
+            printf 'ready=false\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'Cross-build configuration is complete.\n'
+            printf 'ready=true\n' >> "$GITHUB_OUTPUT"
+          fi
+
+  sample-build:
+    name: Sample build / ${{ matrix.engine }}
+    needs:
+      - repository-validation
+      - toolchain-configuration
+    if: >-
+      needs.toolchain-configuration.outputs.ready == 'true' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - engine: svp-nnn
+            build-def: SS928V100
+            sample: samples/built-in/classification/ResNet50
+          - engine: nnn
+            build-def: OPTG
+            sample: samples/built-in/classification/ResNet50
+    env:
+      MODELZOO_SVP_NNN_CANN_URL: ${{ vars.MODELZOO_SVP_NNN_CANN_URL }}
+      MODELZOO_SVP_NNN_CANN_SHA256: ${{ vars.MODELZOO_SVP_NNN_CANN_SHA256 }}
+      MODELZOO_NNN_CANN_URL: ${{ vars.MODELZOO_NNN_CANN_URL }}
+      MODELZOO_NNN_CANN_SHA256: ${{ vars.MODELZOO_NNN_CANN_SHA256 }}
+      MODELZOO_TOOLCHAIN_URL: ${{ secrets.MODELZOO_TOOLCHAIN_URL }}
+      MODELZOO_TOOLCHAIN_SHA256: ${{ secrets.MODELZOO_TOOLCHAIN_SHA256 }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Select CANN package
+        shell: bash
+        run: |
+          if [[ "${{ matrix.engine }}" == svp-nnn ]]; then
+            CANN_URL=$MODELZOO_SVP_NNN_CANN_URL
+            CANN_SHA256=$MODELZOO_SVP_NNN_CANN_SHA256
+          else
+            CANN_URL=$MODELZOO_NNN_CANN_URL
+            CANN_SHA256=$MODELZOO_NNN_CANN_SHA256
+          fi
+          {
+            printf 'CANN_URL=%s\n' "$CANN_URL"
+            printf 'CANN_SHA256=%s\n' "$CANN_SHA256"
+          } >> "$GITHUB_ENV"
+
+      - name: Provision build toolchain
+        id: toolchain
+        shell: bash
+        run: |
+          bash ci/provision_toolchain.sh \
+            --engine "${{ matrix.engine }}" \
+            --cann-url "$CANN_URL" \
+            --cann-sha256 "$CANN_SHA256" \
+            --toolchain-url "$MODELZOO_TOOLCHAIN_URL" \
+            --toolchain-sha256 "$MODELZOO_TOOLCHAIN_SHA256"
+
+      - name: Cross-compile smoke sample
+        env:
+          NPU_INCLUDE_PATH: ${{ steps.toolchain.outputs.npu-include-path }}
+          NPU_LIB_PATH: ${{ steps.toolchain.outputs.npu-lib-path }}
+        run: |
+          bash ci/build_sample.sh \
+            --sample "${{ matrix.sample }}" \
+            --build-def "${{ matrix.build-def }}"
+
+      - name: Package smoke artifact
+        if: success()
+        run: |
+          mkdir -p artifacts/${{ matrix.engine }}
+          cp "${{ matrix.sample }}/out/main" artifacts/${{ matrix.engine }}/main
+          sha256sum artifacts/${{ matrix.engine }}/main > artifacts/${{ matrix.engine }}/checksums.sha256
+
+      - name: Upload smoke artifact
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: modelzoo-${{ matrix.engine }}-${{ github.sha }}
+          path: artifacts/${{ matrix.engine }}/
+          if-no-files-found: error
+          retention-days: 14

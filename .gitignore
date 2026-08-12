@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+
+# Local build and CI output
+archives/
+build/
+out/
+
