@@ -69,6 +69,10 @@ shellcheck ci/*.sh ci/sdk-release/*.sh
 内部 PR 和 `master` 构建会把代表性 ResNet50 的 AArch64 `main`、转换后的
 `model.om`、固定输入、期望状态和完整哈希清单组装为单一 pre-HIL 工件。该步骤只
 准备板卡测试输入，不连接 Runner 控制机或板卡，也不执行刷机、串口或 SSH。
+
+夜间工作流按 NNN 和 SVP_NNN 分成两个标准 Runner job，每个 job 只安装一次对应
+SDK，再顺序构建该引擎的全部 SS928 目标。最终 `Nightly summary` 会报告 scheduled、
+success、failed 和 skipped 数量，并保留逐目标日志与 TSV 清单。
 - `Model conversion / SVP_NNN`
 
 夜间全量构建用于回归覆盖，不阻塞每个 PR。HIL 检查在自托管 Runner 真正接入后另行增加，不能用 pre-HIL 构建替代。

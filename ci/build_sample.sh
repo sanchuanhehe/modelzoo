@@ -22,7 +22,11 @@ if [[ -z "$SAMPLE" || -z "$BUILD_DEF" ]]; then
     usage >&2
     exit 2
 fi
-if [[ ! -f "$SAMPLE/CMakeLists.txt" ]]; then
+SOURCE_DIR="$SAMPLE"
+if [[ ! -f "$SOURCE_DIR/CMakeLists.txt" && -f "$SAMPLE/src/CMakeLists.txt" ]]; then
+    SOURCE_DIR="$SAMPLE/src"
+fi
+if [[ ! -f "$SOURCE_DIR/CMakeLists.txt" ]]; then
     printf 'Sample is missing CMakeLists.txt: %s\n' "$SAMPLE" >&2
     exit 1
 fi
@@ -33,7 +37,7 @@ TOOLCHAIN_FILE=samples/common/cmake/toolchain_aarch64_linux.cmake
 BUILD_DIR="$SAMPLE/build"
 rm -rf "$BUILD_DIR" "$SAMPLE/out"
 
-cmake -S "$SAMPLE" -B "$BUILD_DIR" \
+cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE="$(pwd)/$TOOLCHAIN_FILE" \
     -DSOC_VERSION="$BUILD_DEF"

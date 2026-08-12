@@ -32,9 +32,25 @@ def entries() -> list[dict[str, str]]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--nightly", action="store_true")
+    parser.add_argument("--inventory", action="store_true")
     args = parser.parse_args()
     all_entries = entries()
-    if args.nightly:
+    if args.inventory:
+        supported = {(item["sample"], item["buildDef"]) for item in all_entries}
+        seen: set[tuple[str, str]] = set()
+        print("sample\tbuildDef\tstatus\treason")
+        for config in CONFIGS:
+            for item in json.loads(config.read_text(encoding="utf-8")):
+                sample = (config.parent / item["relativePath"]).relative_to(ROOT).as_posix()
+                key = (sample, item["buildDef"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                if key in supported:
+                    print(sample, item["buildDef"], "scheduled", "supported SS928 target", sep="\t")
+                else:
+                    print(sample, item["buildDef"], "skipped", "outside SS928V100/OPTG CI scope", sep="\t")
+    elif args.nightly:
         matrix = [
             {"engine": engine, "targets": [item for item in all_entries if item["engine"] == engine]}
             for engine in ("svp-nnn", "nnn")
