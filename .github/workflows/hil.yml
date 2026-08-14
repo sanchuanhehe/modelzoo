@@ -130,7 +130,9 @@ jobs:
             exit 1
           fi
           jq -e --arg sha "$HIL_SOURCE_SHA" '
-            .schemaVersion == 1 and .commit == $sha and .engine == "svp-nnn"
+            .schemaVersion == 1 and .commit == $sha
+            and (.workflowCommit | type == "string" and test("^[0-9a-f]{40}$"))
+            and .engine == "svp-nnn"
             and .soc == "SS928V100" and .sample == "samples/built-in/classification/ResNet50"
           ' "$artifact/build-manifest.json" >/dev/null
           file "$artifact/main" | grep -q 'ARM aarch64'

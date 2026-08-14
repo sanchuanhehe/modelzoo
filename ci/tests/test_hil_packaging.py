@@ -22,6 +22,8 @@ class HilPackagingTests(unittest.TestCase):
             main.write_bytes(b"aarch64-placeholder")
             environment = os.environ.copy()
             environment["GITHUB_SHA"] = "a" * 40
+            environment["MODELZOO_SOURCE_SHA"] = "b" * 40
+            environment["MODELZOO_WORKFLOW_SHA"] = "c" * 40
             completed = subprocess.run(
                 [
                     "python3",
@@ -46,7 +48,8 @@ class HilPackagingTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 0, completed.stderr)
             manifest = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(manifest["boundary"], "build-only; no board execution performed")
-            self.assertEqual(manifest["commit"], "a" * 40)
+            self.assertEqual(manifest["commit"], "b" * 40)
+            self.assertEqual(manifest["workflowCommit"], "c" * 40)
             self.assertEqual(manifest["outputs"][0]["name"], "main")
 
     def test_pre_hil_package_uses_conversion_not_run_marker(self) -> None:

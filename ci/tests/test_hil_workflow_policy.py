@@ -48,6 +48,14 @@ class HilWorkflowPolicyTests(unittest.TestCase):
         self.assertNotIn("expected.json", package_step)
         self.assertIn('"boundary": "build-only; no board execution performed"', BUILD_MANIFEST)
 
+    def test_pr_artifacts_bind_source_and_workflow_commits(self) -> None:
+        self.assertIn("MODELZOO_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}", CI)
+        self.assertIn("MODELZOO_WORKFLOW_SHA: ${{ github.sha }}", CI)
+        self.assertIn("workflowCommit", BUILD_MANIFEST)
+        self.assertIn("modelzoo-${{ matrix.id }}-${{ env.MODELZOO_SOURCE_SHA }}", CI)
+        self.assertIn(".commit == $sha", HIL)
+        self.assertIn(".workflowCommit", HIL)
+
     def test_not_run_artifacts_remain_explicitly_rejected(self) -> None:
         self.assertIn("Synthetic expected.status=not-run is forbidden.", HIL)
         self.assertIn("actions/download-artifact@", HIL)
