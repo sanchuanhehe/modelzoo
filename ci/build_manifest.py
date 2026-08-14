@@ -35,9 +35,14 @@ def main() -> int:
     args = p.parse_args()
     files = [pathlib.Path(args.main)] + ([pathlib.Path(args.model)] if args.model else [])
     lock = json.loads(pathlib.Path("ci/sdk-lock.json").read_text())
+    git_head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    source_commit = os.environ.get("MODELZOO_SOURCE_SHA") or os.environ.get("GITHUB_SHA") or git_head
+    workflow_commit = os.environ.get("MODELZOO_WORKFLOW_SHA") or os.environ.get("GITHUB_SHA") or git_head
     data = {
         "schemaVersion": 1,
-        "commit": os.environ.get("GITHUB_SHA") or subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        "boundary": "build-only; no board execution performed",
+        "commit": source_commit,
+        "workflowCommit": workflow_commit,
         "sdkReleaseTag": lock["releaseTag"],
         "sdkArtifacts": {
             "toolchain": lock["artifacts"]["toolchain"]["archive"]["sha256"],

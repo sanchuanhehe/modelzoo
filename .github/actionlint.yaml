@@ -1,0 +1,6 @@
+self-hosted-runner:
+  labels:
+    - hil
+    - hi3403
+    - eulerpi-v1_3
+    - svp-nnn

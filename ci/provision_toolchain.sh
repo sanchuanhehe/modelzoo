@@ -109,7 +109,20 @@ missing_libraries=$(unresolved_host_libraries)
 if grep -qx libisl.so.19 <<< "$missing_libraries"; then
     libisl_package="$DOWNLOAD_ROOT/libisl19_${LIBISL_SHA256}.deb"
     download_asset "$LIBISL_URL" "$LIBISL_SIZE" "$LIBISL_SHA256" "$libisl_package"
-    dpkg-deb --extract "$libisl_package" "$COMPAT_ROOT"
+    if command -v dpkg-deb >/dev/null 2>&1; then
+        dpkg-deb --extract "$libisl_package" "$COMPAT_ROOT"
+    else
+        command -v ar >/dev/null 2>&1 || { printf 'dpkg-deb and ar are both unavailable\n' >&2; exit 1; }
+        deb_member=$(ar t "$libisl_package" | awk '/^data\.tar\./ {print; exit}')
+        [[ -n "$deb_member" ]] || { printf 'Debian package has no data archive\n' >&2; exit 1; }
+        case "$deb_member" in
+            *.tar.xz) ar p "$libisl_package" "$deb_member" | tar -xJf - -C "$COMPAT_ROOT" ;;
+            *.tar.gz) ar p "$libisl_package" "$deb_member" | tar -xzf - -C "$COMPAT_ROOT" ;;
+            *.tar.bz2) ar p "$libisl_package" "$deb_member" | tar -xjf - -C "$COMPAT_ROOT" ;;
+            *.tar.zst) ar p "$libisl_package" "$deb_member" | tar --zstd -xf - -C "$COMPAT_ROOT" ;;
+            *) printf 'Unsupported Debian data archive: %s\n' "$deb_member" >&2; exit 1 ;;
+        esac
+    fi
     compat_lib_path="$COMPAT_ROOT/usr/lib/x86_64-linux-gnu"
     [[ -z ${GITHUB_ENV:-} ]] || printf 'LD_LIBRARY_PATH=%s\n' "$compat_lib_path" >> "$GITHUB_ENV"
     export LD_LIBRARY_PATH="$compat_lib_path${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
@@ -141,7 +154,7 @@ if [[ -z "$include_path" || -z "$lib_path" ]]; then
     fi
     [[ -n "$target_installer" ]] || { printf 'Target development installer not found\n' >&2; exit 1; }
     chmod +x "$target_installer"
-    "$target_installer" --quiet --devel --install-path="$CANN_ROOT/installed"
+    "$target_installer" --noexec --extract="$CANN_ROOT/installed" >/dev/null
     rm -rf "$payload_root"
     find_cann_paths
 fi
