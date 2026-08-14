@@ -37,6 +37,7 @@ def main() -> int:
     lock = json.loads(pathlib.Path("ci/sdk-lock.json").read_text())
     data = {
         "schemaVersion": 1,
+        "boundary": "build-only; no board execution performed",
         "commit": os.environ.get("GITHUB_SHA") or subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "sdkReleaseTag": lock["releaseTag"],
         "sdkArtifacts": {

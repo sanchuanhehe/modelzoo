@@ -39,6 +39,7 @@ jobs:
           NPU_LIB_PATH: /tmp/modelzoo-cmake-check/lib
         run: |
           python ci/check_python_sources.py
+          python -m unittest discover -s ci/tests -p 'test_*.py' -v
           ruff check ci
           mapfile -d '' scripts < <(find . -type f -name '*.sh' -not -path './.git/*' -print0)
           shellcheck --severity=error --exclude=SC1090,SC1091 "${scripts[@]}"
@@ -103,9 +104,8 @@ jobs:
           mkdir -p "artifacts/${{ matrix.id }}/input"
           cp "$artifact" "artifacts/${{ matrix.id }}/main"
           cp build.log "artifacts/${{ matrix.id }}/build.log"
-          printf '{"status":"not-run","reason":"pre-HIL build artifact only"}\n' > "artifacts/${{ matrix.id }}/expected.json"
           python3 ci/build_manifest.py --engine "${{ matrix.engine }}" --soc "${{ matrix.buildDef }}" --sample "${{ matrix.sample }}" --main "artifacts/${{ matrix.id }}/main" --output "artifacts/${{ matrix.id }}/build-manifest.json"
-          (cd "artifacts/${{ matrix.id }}" && sha256sum main build.log expected.json build-manifest.json > SHA256SUMS)
+          (cd "artifacts/${{ matrix.id }}" && sha256sum main build.log build-manifest.json > SHA256SUMS)
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: modelzoo-${{ matrix.id }}-${{ github.sha }}

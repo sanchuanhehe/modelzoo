@@ -1,0 +1,186 @@
+name: Hi3403 HIL
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful CI run containing the AArch64 ResNet50 artifact
+        required: true
+        type: string
+      source_sha:
+        description: Exact 40-character commit SHA built by source_run_id
+        required: true
+        type: string
+      board_profile:
+        description: Board inventory/profile selector
+        required: true
+        default: hi3403-svp-nnn-01
+        type: choice
+        options: [hi3403-svp-nnn-01]
+      test_level:
+        description: One inference or ten consecutive inferences
+        required: true
+        default: smoke
+        type: choice
+        options: [smoke, stability]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  authorize:
+    name: Authorize HIL source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      artifact-name: ${{ steps.verify.outputs.artifact-name }}
+    steps:
+      - id: verify
+        name: Verify owner, source run, SHA and artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ github.repository_owner }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$ACTOR" == "$OWNER" ]] || { printf 'Only the repository owner may dispatch HIL.\n' >&2; exit 1; }
+          [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]] || { printf 'Invalid source_run_id.\n' >&2; exit 1; }
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { printf 'Invalid source_sha.\n' >&2; exit 1; }
+          api=https://api.github.com/repos/$REPOSITORY
+          auth=(-H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28')
+          run_json=$(curl --fail --silent --show-error "${auth[@]}" "$api/actions/runs/$SOURCE_RUN_ID")
+          jq -e --arg repo "$REPOSITORY" --arg sha "$SOURCE_SHA" '
+            .repository.full_name == $repo and .head_repository.full_name == $repo
+            and .head_sha == $sha and .status == "completed" and .conclusion == "success"
+            and .name == "CI" and .path == ".github/workflows/ci.yml"
+          ' <<<"$run_json" >/dev/null || { printf 'Source run identity/status/SHA/workflow mismatch.\n' >&2; exit 1; }
+          artifact="modelzoo-built-in-classification-resnet50-ss928v100-$SOURCE_SHA"
+          artifacts_json=$(curl --fail --silent --show-error "${auth[@]}" "$api/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100")
+          count=$(jq --arg name "$artifact" '[.artifacts[] | select(.name == $name and (.expired | not))] | length' <<<"$artifacts_json")
+          [[ $count == 1 ]] || { printf 'Expected exactly one unexpired artifact %s, got %s.\n' "$artifact" "$count" >&2; exit 1; }
+          printf 'artifact-name=%s\n' "$artifact" >>"$GITHUB_OUTPUT"
+
+  hil:
+    name: ResNet50 / ${{ inputs.test_level }}
+    needs: authorize
+    environment: hil-hi3403
+    runs-on: [self-hosted, linux, x64, hil, hi3403, eulerpi-v1_3, svp-nnn]
+    timeout-minutes: 45
+    concurrency:
+      group: hil-hi3403-01
+      cancel-in-progress: false
+    env:
+      HIL_BOARD_PROFILE: ${{ inputs.board_profile }}
+      HIL_BOARD_PROFILE_PATH: /opt/hil/board-profile.json
+      HIL_BOARD_HOST: 192.168.2.88
+      HIL_BOARD_USER: root
+      HIL_SERIAL_DEVICE: /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
+      HIL_SSH_KEY: /opt/hil/keys/board_actions_ed25519
+      HIL_KNOWN_HOSTS: /opt/hil/keys/known_hosts
+      HIL_GOLDEN_DIR: /opt/hil/models/resnet50-svp-nnn/v1
+      HIL_RUN_ROOT: /opt/hil/runs
+      HIL_SOURCE_SHA: ${{ inputs.source_sha }}
+      HIL_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false}
+
+      - name: Start UART evidence capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_dir="$HIL_RUN_ROOT/$HIL_RUN_ID"
+          mkdir -p "$run_dir"
+          uart_log="$run_dir/uart.log"
+          python3 ci/hil/capture_uart.py --device "$HIL_SERIAL_DEVICE" --output "$uart_log" --pid-file "$run_dir/uart.pid" &
+          uart_process=$!
+          printf '%s\n' "$uart_process" >"$run_dir/uart-process.pid"
+          sleep 1
+          kill -0 "$uart_process" 2>/dev/null || { printf 'UART capture failed to stay running.\n' >&2; exit 1; }
+          test -f "$run_dir/uart.pid" || { printf 'UART capture did not acquire its PID lock.\n' >&2; exit 1; }
+          printf 'HIL_UART_LOG=%s\n' "$uart_log" >>"$GITHUB_ENV"
+
+      - name: Host preflight
+        run: bash ci/hil/preflight_host.sh
+
+      - name: Board preflight
+        run: bash ci/hil/preflight_board.sh
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.authorize.outputs.artifact-name }}
+          path: /opt/hil/runs/${{ env.HIL_RUN_ID }}/artifact
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Validate artifact boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact="$HIL_RUN_ROOT/$HIL_RUN_ID/artifact"
+          test -f "$artifact/main"
+          test -f "$artifact/build-manifest.json"
+          if test -f "$artifact/expected.json" && jq -e '.status == "not-run"' "$artifact/expected.json" >/dev/null; then
+            printf 'Synthetic expected.status=not-run is forbidden.\n' >&2
+            exit 1
+          fi
+          jq -e --arg sha "$HIL_SOURCE_SHA" '
+            .schemaVersion == 1 and .commit == $sha and .engine == "svp-nnn"
+            and .soc == "SS928V100" and .sample == "samples/built-in/classification/ResNet50"
+          ' "$artifact/build-manifest.json" >/dev/null
+          file "$artifact/main" | grep -q 'ARM aarch64'
+
+      - name: Deploy and run inference
+        run: >-
+          bash ci/hil/deploy_and_run.sh
+          --run-id "$HIL_RUN_ID"
+          --artifact-dir "$HIL_RUN_ROOT/$HIL_RUN_ID/artifact"
+          --golden-dir "$HIL_GOLDEN_DIR"
+          --test-level "${{ inputs.test_level }}"
+
+      - name: Verify every retained result
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=0
+          for result in "$HIL_RUN_ROOT/$HIL_RUN_ID"/results/*.txt; do
+            test -f "$result"
+            python3 ci/hil/verify_result.py --expected "$HIL_GOLDEN_DIR/expected.json" \
+              --result "$result" --asset-root "$HIL_GOLDEN_DIR" --sha256s "$HIL_GOLDEN_DIR/SHA256SUMS"
+            count=$((count + 1))
+          done
+          expected_count=1
+          [[ "${{ inputs.test_level }}" == stability ]] && expected_count=10
+          [[ $count -eq $expected_count ]] || { printf 'Expected %s results, got %s.\n' "$expected_count" "$count" >&2; exit 1; }
+
+      - name: Stop UART capture
+        if: always()
+        shell: bash
+        run: |
+          pid_file="$HIL_RUN_ROOT/$HIL_RUN_ID/uart-process.pid"
+          if [[ -f $pid_file ]]; then
+            pid=$(cat "$pid_file")
+            [[ $pid =~ ^[0-9]+$ ]] && kill -TERM "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+          fi
+
+      - name: Collect diagnostics
+        if: always()
+        run: bash ci/hil/collect_diagnostics.sh "$HIL_RUN_ID" || true
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: hil-hi3403-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /opt/hil/runs/${{ env.HIL_RUN_ID }}/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Safe cleanup
+        if: always()
+        run: bash ci/hil/cleanup_run.sh "$HIL_RUN_ID"

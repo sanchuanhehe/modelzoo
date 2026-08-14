@@ -25,28 +25,34 @@ int main(int argc, char *argv[])
     InferParam inferParam;
     if (!ParseParamFromCmd(argc, argv, inferParam)) {
         LOG(ERROR) << "fail to parse cmd";
-        return -1;
+        return 1;
     }
-    EnvInit(inferParam.aclConfigPath);
+    if (EnvInit(inferParam.aclConfigPath) != 0) {
+        LOG(ERROR) << "fail to initialize environment";
+        return 1;
+    }
+
+    int exitCode = 1;
     std::unique_ptr<Model> model = std::make_unique<Model>();
     if (model->Load(inferParam.omModelPath, Resnet50) != 0) {
         LOG(ERROR) << "fail to load model";
-        return 0;
+    } else {
+        auto ret = model->Infer(inferParam.imglistPath);
+        if (ret.empty()) {
+            LOG(ERROR) << "fail to infer model";
+        } else {
+            exitCode = 0;
+        }
+        ret.clear();
+        ret.shrink_to_fit();
+        if (model->Unload() != 0) {
+            LOG(ERROR) << "fail to unload model";
+            exitCode = 1;
+        }
     }
-    auto ret = model->Infer(inferParam.imglistPath);
-    if (ret.size() == 0) {
-        LOG(ERROR) << "fail to infer model";
-        model->Unload();
-        EnvDeinit();
-        return 0;
+    if (EnvDeinit() != 0) {
+        LOG(ERROR) << "fail to deinitialize environment";
+        exitCode = 1;
     }
-    ret.clear();
-    ret.shrink_to_fit();
-    if (model->Unload() != 0) {
-        LOG(ERROR) << "fail to unload model";
-        EnvDeinit();
-        return 0;
-    }
-    EnvDeinit();
-    return 0;
+    return exitCode;
 }
