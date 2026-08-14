@@ -23,6 +23,24 @@ on:
         default: smoke
         type: choice
         options: [smoke, stability]
+  workflow_call:
+    inputs:
+      source_run_id:
+        description: Successful CI run containing the AArch64 ResNet50 artifact
+        required: true
+        type: string
+      source_sha:
+        description: Exact 40-character commit SHA built by source_run_id
+        required: true
+        type: string
+      board_profile:
+        description: Board inventory/profile selector
+        required: true
+        type: string
+      test_level:
+        description: One inference or ten consecutive inferences
+        required: true
+        type: string
 
 permissions:
   contents: read

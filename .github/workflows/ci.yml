@@ -6,6 +6,27 @@ on:
   pull_request:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      hil_source_run_id:
+        description: Optional successful CI run ID for pre-merge HIL bootstrap
+        required: false
+        type: string
+      hil_source_sha:
+        description: Exact source SHA built by hil_source_run_id
+        required: false
+        type: string
+      hil_board_profile:
+        description: Board inventory/profile selector
+        required: false
+        default: hi3403-svp-nnn-01
+        type: choice
+        options: [hi3403-svp-nnn-01]
+      hil_test_level:
+        description: HIL inference count
+        required: false
+        default: smoke
+        type: choice
+        options: [smoke, stability]
 
 permissions:
   contents: read
@@ -247,3 +268,16 @@ jobs:
           else
             printf 'Pre-HIL artifact gate passed.\n'
           fi
+
+  hil-bootstrap:
+    name: Pre-merge Hi3403 HIL bootstrap
+    if: github.event_name == 'workflow_dispatch' && inputs.hil_source_run_id != ''
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/hil.yml
+    with:
+      source_run_id: ${{ inputs.hil_source_run_id }}
+      source_sha: ${{ inputs.hil_source_sha }}
+      board_profile: ${{ inputs.hil_board_profile }}
+      test_level: ${{ inputs.hil_test_level }}

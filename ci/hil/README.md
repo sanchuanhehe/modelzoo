@@ -19,6 +19,13 @@ The fixed local OM SHA-256 is `c9c3f12d4e0f1b856d1fd7db639d0947abd006416914204ad
 
 Run `CI` on the desired commit first. In **Actions → Hi3403 HIL → Run workflow**, select an Environment-allowed branch and supply the successful CI run ID, its exact 40-character SHA, `hi3403-svp-nnn-01`, and `smoke` or `stability`. Stability performs ten sequential inferences under one concurrency lock.
 
+GitHub only exposes a new `workflow_dispatch` file after that file exists on the default branch.
+Before this workflow is merged, use **Actions → CI → Run workflow** on the feature branch and
+set `hil_source_run_id` and `hil_source_sha`; the optional bootstrap job calls this same reusable
+HIL workflow. It is guarded by `github.event_name == 'workflow_dispatch'` plus a nonempty run ID,
+so pushes and pull requests cannot schedule the self-hosted runner. After merge, use the direct
+Hi3403 HIL dispatch entry above.
+
 ## UART and recovery
 
 The DEBUG connector is board port 14, the Ethernet cable uses port 3 (`eth0`), and UART is 115200 8N1. The workflow starts UART capture before any network or SSH preflight. If SSH fails, the job uploads the UART log and reports failure; it never reflashes or claims recovery.

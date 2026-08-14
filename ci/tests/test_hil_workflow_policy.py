@@ -17,7 +17,13 @@ class HilWorkflowPolicyTests(unittest.TestCase):
     def test_hil_is_manual_only(self) -> None:
         trigger = HIL.split("\npermissions:", maxsplit=1)[0]
         self.assertIn("workflow_dispatch:", trigger)
+        self.assertIn("workflow_call:", trigger)
         self.assertNotRegex(trigger, r"(?m)^\s+(push|pull_request|schedule):")
+
+    def test_premerge_bootstrap_is_manual_and_reuses_hil(self) -> None:
+        self.assertIn("if: github.event_name == 'workflow_dispatch' && inputs.hil_source_run_id != ''", CI)
+        self.assertIn("uses: ./.github/workflows/hil.yml", CI)
+        self.assertIn("source_run_id: ${{ inputs.hil_source_run_id }}", CI)
 
     def test_authorization_and_source_identity_are_enforced(self) -> None:
         for required in (
