@@ -1,0 +1,17 @@
+apiVersion: modelzoo.hil/v1alpha1
+kind: TestDefinition
+metadata:
+  name: resnet50-smoke
+spec:
+  targetClass: hi3403-svp-nnn
+  adapter: resnet50-svp-nnn
+  buildArtifact:
+    sample: samples/built-in/classification/ResNet50
+    engine: svp-nnn
+    soc: SS928V100
+  assetManifest: ci/hil/assets/resnet50-svp-nnn-v1.yaml
+  iterations: 1
+  timeoutSeconds: 180
+  expectation:
+    type: classification.topk
+    asset: expected.json

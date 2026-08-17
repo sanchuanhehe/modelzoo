@@ -11,3 +11,9 @@ out/
 *.om
 hil-input/
 nightly-artifacts/
+
+# HIL v2 reviewed target-side entrypoints (may be hidden by a global target/ ignore).
+!ci/hil/target/
+!ci/hil/target/hil-target-agent
+!ci/hil/adapters/resnet50-svp-nnn/target/
+!ci/hil/adapters/resnet50-svp-nnn/target/run-test

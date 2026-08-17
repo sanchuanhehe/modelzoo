@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanchuanhehe/modelzoo/ci/hil/schemas/test-adapter.schema.json",
+  "title": "ModelZoo HIL test adapter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "modelzoo.hil/v1alpha1"},
+    "kind": {"const": "TestAdapter"},
+    "metadata": {
+      "type": "object", "additionalProperties": false, "required": ["name"],
+      "properties": {"name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"}}
+    },
+    "spec": {
+      "type": "object", "additionalProperties": false,
+      "required": ["interfaceVersion", "targetClass", "resultType"],
+      "properties": {
+        "interfaceVersion": {"const": 1},
+        "targetClass": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"},
+        "resultType": {"const": "classification.topk"}
+      }
+    }
+  }
+}

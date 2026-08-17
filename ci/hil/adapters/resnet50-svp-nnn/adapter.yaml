@@ -1,0 +1,8 @@
+apiVersion: modelzoo.hil/v1alpha1
+kind: TestAdapter
+metadata:
+  name: resnet50-svp-nnn
+spec:
+  interfaceVersion: 1
+  targetClass: hi3403-svp-nnn
+  resultType: classification.topk

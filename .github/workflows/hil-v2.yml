@@ -1,0 +1,300 @@
+name: Hi3403 HIL v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful CI run containing the AArch64 artifact
+        required: true
+        type: string
+      source_sha:
+        description: Exact 40-character commit built by source_run_id
+        required: true
+        type: string
+      target:
+        description: LabInventory target ID
+        required: true
+        default: hi3403-01
+        type: choice
+        options: [hi3403-01]
+      test_definition:
+        description: Reviewed data-only test definition
+        required: true
+        default: resnet50-smoke
+        type: choice
+        options: [resnet50-smoke, resnet50-stability]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  authorize:
+    name: Authorize source and fixed workflow
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      artifact-name: ${{ steps.authorize.outputs.artifact-name }}
+      source-branch: ${{ steps.authorize.outputs.source-branch }}
+      workflow-sha: ${{ steps.authorize.outputs.workflow-sha }}
+    steps:
+      - id: authorize
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          OWNER: ${{ github.repository_owner }}
+          REPOSITORY: ${{ github.repository }}
+          WORKFLOW_REF: ${{ github.ref }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$ACTOR" == "$OWNER" ]] || { echo 'Only the repository owner may dispatch HIL.' >&2; exit 1; }
+          [[ "$WORKFLOW_REF" == refs/heads/master ]] || { echo 'HIL v2 must run from master.' >&2; exit 1; }
+          [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]] || { echo 'Invalid source run ID.' >&2; exit 1; }
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo 'Invalid source SHA.' >&2; exit 1; }
+          run_json=$(gh api "repos/$REPOSITORY/actions/runs/$SOURCE_RUN_ID")
+          jq -e --arg repo "$REPOSITORY" --arg sha "$SOURCE_SHA" '
+            .repository.full_name == $repo and .head_repository.full_name == $repo
+            and .status == "completed" and .conclusion == "success"
+            and .name == "CI" and .path == ".github/workflows/ci.yml"
+            and (
+              (.event == "pull_request" and any(.pull_requests[]; .head.sha == $sha))
+              or (.event != "pull_request" and .head_sha == $sha)
+            )
+          ' <<<"$run_json" >/dev/null
+          workflow_sha=$(jq -r '.head_sha // empty' <<<"$run_json")
+          [[ "$workflow_sha" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'Source workflow SHA is invalid.' >&2; exit 1;
+          }
+          source_branch=$(jq -r '.head_branch // empty' <<<"$run_json")
+          [[ "$source_branch" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]{0,254}$ ]] || {
+            echo 'Source run branch is invalid.' >&2; exit 1;
+          }
+          artifact="modelzoo-built-in-classification-resnet50-ss928v100-$SOURCE_SHA"
+          artifacts=$(gh api "repos/$REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100")
+          [[ $(jq --arg name "$artifact" '[.artifacts[] | select(.name == $name and (.expired | not))] | length' <<<"$artifacts") == 1 ]]
+          printf 'artifact-name=%s\n' "$artifact" >>"$GITHUB_OUTPUT"
+          printf 'source-branch=%s\n' "$source_branch" >>"$GITHUB_OUTPUT"
+          printf 'workflow-sha=%s\n' "$workflow_sha" >>"$GITHUB_OUTPUT"
+
+  hil:
+    name: ${{ inputs.test_definition }} / ${{ inputs.target }}
+    needs: authorize
+    environment: hil-hi3403
+    runs-on: [self-hosted, linux, x64, hil, hi3403, eulerpi-v1_3, svp-nnn]
+    timeout-minutes: 60
+    concurrency:
+      group: hil-hi3403-01
+      cancel-in-progress: false
+    env:
+      HIL_INVENTORY: /etc/hil/lab-inventory.yaml
+      HIL_RUN_ROOT: /opt/hil/runs
+      HIL_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+      HIL_EVENT_LOG_DIRECTORY: /opt/hil/runs/${{ github.run_id }}-${{ github.run_attempt }}/events
+      HIL_TARGET: ${{ inputs.target }}
+      HIL_CREDENTIALS_DIRECTORY: /opt/hil/runs/${{ github.run_id }}-${{ github.run_attempt }}/credentials
+      HIL_DEFINITION: ci/hil/definitions/${{ inputs.test_definition }}.yaml
+      HIL_SOURCE_SHA: ${{ inputs.source_sha }}
+      HIL_SOURCE_BRANCH: ${{ needs.authorize.outputs.source-branch }}
+      HIL_SOURCE_WORKFLOW_SHA: ${{ needs.authorize.outputs.workflow-sha }}
+    steps:
+      - name: Initialize exact run and evidence context
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_dir="$HIL_RUN_ROOT/$HIL_RUN_ID"
+          [[ "$HIL_RUN_ID" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]]
+          [[ ! -e "$run_dir" && ! -L "$run_dir" ]]
+          install -d -m 0750 "$run_dir"
+          install -d -m 0750 "$HIL_EVENT_LOG_DIRECTORY"
+          install -d -m 0700 "$HIL_CREDENTIALS_DIRECTORY"
+          jq -n --arg run "$HIL_RUN_ID" --arg sha "$HIL_SOURCE_SHA" \
+            --arg workflowSha "$HIL_SOURCE_WORKFLOW_SHA" \
+            --arg sourceBranch "$HIL_SOURCE_BRANCH" \
+            --arg definition "$HIL_DEFINITION" --arg target "$HIL_TARGET" \
+            '{schemaVersion:1, runId:$run, sourceSha:$sha, sourceWorkflowSha:$workflowSha,
+              sourceBranch:$sourceBranch,
+              definition:$definition, targetId:$target}' \
+            >"$run_dir/execution-context.json"
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with: {persist-credentials: false}
+
+      - name: Resolve reviewed TestDefinition and asset policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolved="$HIL_RUN_ROOT/$HIL_RUN_ID/resolved-definition.json"
+          python3 ci/hil/hilctl.py resolve --definition "$HIL_DEFINITION" \
+            --inventory "$HIL_INVENTORY" --target "$HIL_TARGET" --execution-ready \
+            >"$resolved"
+          jq -e '.details.executionReady == true' "$resolved" >/dev/null
+          execution_mode=$(jq -r '.details.executionMode' "$resolved")
+          if [[ "$execution_mode" == forced-command-root && "$HIL_SOURCE_BRANCH" != master ]]; then
+            echo 'Root target execution accepts only CI artifacts built from master.' >&2
+            exit 1
+          fi
+          asset_manifest=$(jq -r '.details.assetManifest' "$resolved")
+          adapter=$(jq -r '.details.adapter' "$resolved")
+          [[ "$asset_manifest" =~ ^ci/hil/assets/[a-z0-9][a-z0-9._-]*\.yaml$ ]]
+          [[ "$adapter" =~ ^[a-z0-9][a-z0-9.-]{0,62}$ ]]
+          printf 'HIL_ASSET_MANIFEST=%s\nHIL_ADAPTER=%s\n' \
+            "$asset_manifest" "$adapter" >>"$GITHUB_ENV"
+          temporary="$HIL_RUN_ROOT/$HIL_RUN_ID/execution-context.json.tmp"
+          jq --slurpfile resolved "$resolved" \
+            '. + {resolvedDefinition: $resolved[0].details}' \
+            "$HIL_RUN_ROOT/$HIL_RUN_ID/execution-context.json" >"$temporary"
+          mv "$temporary" "$HIL_RUN_ROOT/$HIL_RUN_ID/execution-context.json"
+
+      - name: Stage runtime-only credentials
+        env:
+          V2_BOARD_SSH_KEY: ${{ secrets.HIL_V2_BOARD_SSH_KEY }}
+          BOARD_KNOWN_HOSTS: ${{ secrets.HIL_BOARD_KNOWN_HOSTS }}
+          RESTRICTED_ASSET_TOKEN: ${{ secrets.HIL_RESTRICTED_ASSET_TOKEN }}
+          RELEASE_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$V2_BOARD_SSH_KEY" && -n "$BOARD_KNOWN_HOSTS" && -n "$RELEASE_TOKEN" ]]
+          umask 077
+          printf '%s' "$V2_BOARD_SSH_KEY" >"$HIL_CREDENTIALS_DIRECTORY/hil-v2-board-ssh"
+          printf '%s\n' "$BOARD_KNOWN_HOSTS" >"$HIL_CREDENTIALS_DIRECTORY/hil-board-known-hosts"
+          printf '%s' "$RELEASE_TOKEN" >"$HIL_CREDENTIALS_DIRECTORY/github-workflow-token"
+          if [[ -n "$RESTRICTED_ASSET_TOKEN" ]]; then
+            printf '%s' "$RESTRICTED_ASSET_TOKEN" >"$HIL_CREDENTIALS_DIRECTORY/restricted-asset-token"
+            chmod 0600 "$HIL_CREDENTIALS_DIRECTORY/restricted-asset-token"
+          fi
+          chmod 0600 "$HIL_CREDENTIALS_DIRECTORY/hil-v2-board-ssh" \
+            "$HIL_CREDENTIALS_DIRECTORY/github-workflow-token"
+          chmod 0640 "$HIL_CREDENTIALS_DIRECTORY/hil-board-known-hosts"
+
+      - name: Fetch and verify immutable assets
+        run: >-
+          /usr/local/bin/lab-control asset fetch --inventory "$HIL_INVENTORY"
+          --manifest "$HIL_ASSET_MANIFEST" --asset-root "$HIL_RUN_ROOT/$HIL_RUN_ID/assets"
+          --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+
+      - name: Start external UART capture
+        run: >-
+          /usr/local/bin/lab-control uart start --inventory "$HIL_INVENTORY"
+          --target "$HIL_TARGET" --run-id "$HIL_RUN_ID"
+
+      - name: Controller preflight
+        run: >-
+          /usr/local/bin/lab-control controller preflight --inventory "$HIL_INVENTORY"
+          --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+
+      - name: Target agent preflight
+        run: >-
+          /usr/local/bin/lab-control target preflight --inventory "$HIL_INVENTORY"
+          --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+          --target-class ci/hil/target-classes/hi3403-svp-nnn.yaml
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.authorize.outputs.artifact-name }}
+          path: /opt/hil/runs/${{ env.HIL_RUN_ID }}/artifact
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Verify source-bound AArch64 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolved="$HIL_RUN_ROOT/$HIL_RUN_ID/resolved-definition.json"
+          sample=$(jq -r '.details.buildArtifact.sample' "$resolved")
+          engine=$(jq -r '.details.buildArtifact.engine' "$resolved")
+          soc=$(jq -r '.details.buildArtifact.soc' "$resolved")
+          /usr/local/bin/lab-control artifact verify \
+            --artifact-root "$HIL_RUN_ROOT/$HIL_RUN_ID/artifact" \
+            --source-sha "$HIL_SOURCE_SHA" --workflow-sha "$HIL_SOURCE_WORKFLOW_SHA" \
+            --sdk-lock ci/sdk-lock.json \
+            --sample "$sample" --engine "$engine" --soc "$soc"
+
+      - name: Prepare model-specific payload through reviewed adapter
+        run: >-
+          python3 "ci/hil/adapters/$HIL_ADAPTER/prepare.py"
+          --artifact-root "$HIL_RUN_ROOT/$HIL_RUN_ID/artifact"
+          --asset-root "$HIL_RUN_ROOT/$HIL_RUN_ID/assets"
+          --asset-manifest "$HIL_ASSET_MANIFEST"
+          --output "$HIL_RUN_ROOT/$HIL_RUN_ID/payload"
+
+      - name: Upload sealed payload
+        run: >-
+          /usr/local/bin/lab-control target upload --inventory "$HIL_INVENTORY"
+          --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+          --run-id "$HIL_RUN_ID" --payload-root "$HIL_RUN_ROOT/$HIL_RUN_ID/payload"
+
+      - name: Run fixed target entrypoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolved="$HIL_RUN_ROOT/$HIL_RUN_ID/resolved-definition.json"
+          iterations=$(jq -r '.details.iterations' "$resolved")
+          timeout=$(jq -r '.details.timeoutSeconds' "$resolved")
+          /usr/local/bin/lab-control target run --inventory "$HIL_INVENTORY" \
+            --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY" \
+            --run-id "$HIL_RUN_ID" --iterations "$iterations" --timeout "$timeout"
+
+      - name: Download retained outputs
+        if: always()
+        run: >-
+          /usr/local/bin/lab-control target download --inventory "$HIL_INVENTORY"
+          --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+          --run-id "$HIL_RUN_ID" --output-root "$HIL_RUN_ROOT/$HIL_RUN_ID/target"
+
+      - name: Verify business result through reviewed adapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolved="$HIL_RUN_ROOT/$HIL_RUN_ID/resolved-definition.json"
+          iterations=$(jq -r '.details.iterations' "$resolved")
+          expectation=$(jq -r '.details.expectation.asset' "$resolved")
+          python3 "ci/hil/adapters/$HIL_ADAPTER/verify.py" \
+            --expected "$HIL_RUN_ROOT/$HIL_RUN_ID/assets/$expectation" \
+            --results-root "$HIL_RUN_ROOT/$HIL_RUN_ID/target/iterations" \
+            --count "$iterations"
+
+      - name: Stop UART capture
+        if: always()
+        run: >-
+          /usr/local/bin/lab-control uart stop --inventory "$HIL_INVENTORY"
+          --target "$HIL_TARGET" --run-id "$HIL_RUN_ID"
+
+      - name: Collect evidence even when the target is unavailable
+        if: always()
+        run: >-
+          /usr/local/bin/lab-control evidence snapshot --inventory "$HIL_INVENTORY"
+          --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+          --run-id "$HIL_RUN_ID" --context "$HIL_RUN_ROOT/$HIL_RUN_ID/execution-context.json"
+          --asset-manifest "${HIL_ASSET_MANIFEST:-}"
+          --build-manifest "$HIL_RUN_ROOT/$HIL_RUN_ID/artifact/build-manifest.json"
+
+      - name: Clean exact target sandbox
+        if: always()
+        run: >-
+          /usr/local/bin/lab-control target cleanup --inventory "$HIL_INVENTORY"
+          --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+          --run-id "$HIL_RUN_ID"
+
+      - name: Finalize evidence after target cleanup
+        if: always()
+        run: >-
+          /usr/local/bin/lab-control evidence finalize --run-root "$HIL_RUN_ROOT"
+          --run-id "$HIL_RUN_ID" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: hil-v2-hi3403-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /opt/hil/runs/${{ env.HIL_RUN_ID }}/evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean exact controller sandbox
+        if: always()
+        run: >-
+          /usr/local/bin/lab-control local cleanup --run-root "$HIL_RUN_ROOT"
+          --run-id "$HIL_RUN_ID"

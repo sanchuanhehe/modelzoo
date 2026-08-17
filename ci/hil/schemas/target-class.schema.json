@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanchuanhehe/modelzoo/ci/hil/schemas/target-class.schema.json",
+  "title": "ModelZoo HIL target class",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "modelzoo.hil/v1alpha1"},
+    "kind": {"const": "TargetClass"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {"name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"}}
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["soc", "engine", "abi", "agentProtocol", "requiredLibraries", "requiredKernelModules", "forbiddenKernelModules", "requiredDeviceNodes", "minimumFreeBytes", "temperaturePolicy"],
+      "properties": {
+        "soc": {"const": "SS928V100"},
+        "engine": {"const": "svp-nnn"},
+        "abi": {"const": "linux-aarch64"},
+        "agentProtocol": {"const": 1},
+        "requiredLibraries": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$"}
+        },
+        "requiredKernelModules": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9_]{1,127}$"}
+        },
+        "forbiddenKernelModules": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9_]{1,127}$"}
+        },
+        "requiredDeviceNodes": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^/dev/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"}
+        },
+        "minimumFreeBytes": {"type": "integer", "minimum": 1048576, "maximum": 107374182400},
+        "temperaturePolicy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["required", "maximumMilliCelsius"],
+          "properties": {
+            "required": {"type": "boolean"},
+            "maximumMilliCelsius": {"type": "integer", "minimum": 1000, "maximum": 150000}
+          }
+        }
+      }
+    }
+  }
+}

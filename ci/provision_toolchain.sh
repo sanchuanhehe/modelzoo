@@ -71,6 +71,8 @@ download_asset "$release_url/$TOOLCHAIN_NAME" "$TOOLCHAIN_SIZE" "$TOOLCHAIN_SHA2
 cann_archive="$DOWNLOAD_ROOT/$CANN_SOURCE_NAME"
 if [[ "$CANN_PARTS" == "$CANN_SOURCE_NAME|$CANN_SOURCE_SIZE|$CANN_SOURCE_SHA256" ]]; then
     download_asset "$release_url/$CANN_SOURCE_NAME" "$CANN_SOURCE_SIZE" "$CANN_SOURCE_SHA256" "$cann_archive"
+elif verify_file "$cann_archive" "$CANN_SOURCE_SIZE" "$CANN_SOURCE_SHA256"; then
+    printf 'Using verified reconstructed archive: %s\n' "$cann_archive"
 else
     cann_tmp="$cann_archive.part"
     rm -f "$cann_tmp"

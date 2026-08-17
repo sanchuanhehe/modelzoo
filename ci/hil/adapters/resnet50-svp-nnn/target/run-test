@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+test "$#" -eq 0
+test -x ./main
+test -f ./assets/resnet50.om
+test -f ./assets/acl.json
+test -f ./assets/file_list.json
+
+cd assets
+rm -rf result
+mkdir -p result/txt
+LD_LIBRARY_PATH=/opt/hil/runtime/svp_nnn/lib:/opt/hil/runtime/svp_nnn/lib/svp_npu:/opt/lib \
+    ../main --model resnet50.om --acl acl.json --input file_list.json
+test -f result/txt/golden_0.txt
+mkdir -p ../output
+cp result/txt/golden_0.txt ../output/result.txt

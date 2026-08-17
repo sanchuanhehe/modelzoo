@@ -50,7 +50,7 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with: {python-version: "3.11"}
       - name: Install validation tools
-        run: python -m pip install --disable-pip-version-check "ruff==0.15.4" "shellcheck-py==0.11.0.1" "jsonschema==4.25.1"
+        run: python -m pip install --disable-pip-version-check "ruff==0.15.4" "shellcheck-py==0.11.0.1" "jsonschema==4.25.1" "PyYAML==6.0.2"
       - name: Validate repository and SDK lock
         run: |
           python ci/validate_repository.py
@@ -58,6 +58,7 @@ jobs:
           python ci/check_repository_policy.py
           python ci/check_license_policy.py
           python -m jsonschema -i ci/sdk-lock.json ci/sdk-lock.schema.json
+          python ci/hil/validate_config.py --all
       - name: Compile and lint support code
         env:
           NPU_INCLUDE_PATH: /tmp/modelzoo-cmake-check/include
@@ -68,6 +69,7 @@ jobs:
           ruff check ci
           mapfile -d '' scripts < <(find . -type f -name '*.sh' -not -path './.git/*' -print0)
           shellcheck --severity=error --exclude=SC1090,SC1091 "${scripts[@]}"
+          shellcheck --severity=error ci/hil/adapters/resnet50-svp-nnn/target/run-test ci/hil/target/hil-target-agent
           cmake -S samples/built-in/classification/ResNet50 -B /tmp/modelzoo-cmake-check -DCMAKE_TOOLCHAIN_FILE="$PWD/samples/common/cmake/toolchain_aarch64_openeuler.cmake" -DCMAKE_C_COMPILER=/usr/bin/cc -DCMAKE_CXX_COMPILER=/usr/bin/c++ -DSOC_VERSION=SS928V100
 
   select-targets:

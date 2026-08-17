@@ -1,0 +1,24 @@
+apiVersion: modelzoo.hil/v1alpha1
+kind: TargetClass
+metadata:
+  name: hi3403-svp-nnn
+spec:
+  soc: SS928V100
+  engine: svp-nnn
+  abi: linux-aarch64
+  agentProtocol: 1
+  requiredLibraries:
+    - libsvp_acl.so
+    - libsvp_aicpu.so
+    - libsecurec.so
+    - libprotobuf-c.so.1
+    - libopencv_world.so.412
+  requiredKernelModules:
+    - ot_svp_npu
+  forbiddenKernelModules:
+    - ot_pqp
+  requiredDeviceNodes: []
+  minimumFreeBytes: 1073741824
+  temperaturePolicy:
+    required: false
+    maximumMilliCelsius: 90000
