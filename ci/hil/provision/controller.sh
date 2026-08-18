@@ -35,10 +35,19 @@ install -m 0755 -o root -g root \
     "$source_root/ci/hil/capture_uart.py" "$stage/ci/hil/capture_uart.py"
 install -m 0644 -o root -g root \
     "$source_root/ci/hil/validate_config.py" "$stage/ci/hil/validate_config.py"
-for schema in "$source_root"/ci/hil/schemas/*.json; do
+schema_list=$stage/.schema-list
+find "$source_root/ci/hil/schemas" -maxdepth 1 -type f -name '*.json' -print | \
+    LC_ALL=C sort >"$schema_list"
+[ -s "$schema_list" ] || fail "no schemas found"
+while IFS= read -r schema; do
+    case $schema in
+        "$source_root"/ci/hil/schemas/[A-Za-z0-9._-]*.json) ;;
+        *) fail "unsafe schema path" ;;
+    esac
     install -m 0644 -o root -g root \
         "$schema" "$stage/ci/hil/schemas/$(basename "$schema")"
-done
+done <"$schema_list"
+rm -f "$schema_list"
 (
     cd "$stage"
     find ci -type f -print | LC_ALL=C sort | while IFS= read -r path; do

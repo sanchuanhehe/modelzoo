@@ -34,6 +34,7 @@ class HilWorkflowV2Tests(unittest.TestCase):
             "Fetch and verify immutable assets",
             "Start external UART capture",
             "Controller preflight",
+            "Target reachability and optional one-shot reset recovery",
             "Target agent preflight",
             "Prepare model-specific payload through reviewed adapter",
             "Upload sealed payload",
@@ -103,6 +104,28 @@ class HilWorkflowV2Tests(unittest.TestCase):
         self.assertIn("source-branch", self.text)
         self.assertIn("workflow-sha", self.text)
         self.assertIn('--workflow-sha "$HIL_SOURCE_WORKFLOW_SHA"', self.text)
+
+    def test_reset_recovery_is_explicit_single_shot_and_probe_only(self) -> None:
+        inputs = self.workflow["on"]["workflow_dispatch"]["inputs"]
+        policy = inputs["reset_policy"]
+        self.assertEqual(policy["default"], "none")
+        self.assertEqual(
+            policy["options"], ["none", "reset-on-unreachable-once"]
+        )
+        self.assertEqual(self.text.count("lab-control reset pulse"), 1)
+        self.assertEqual(self.text.count("lab-control target wait-ready"), 1)
+        recovery = next(
+            step
+            for step in self.workflow["jobs"]["hil"]["steps"]
+            if step.get("name")
+            == "Target reachability and optional one-shot reset recovery"
+        )["run"]
+        self.assertIn("lab-control target probe", recovery)
+        self.assertIn("probe_status=$?", recovery)
+        self.assertIn("[[ $probe_status -ne 41 ]]", recovery)
+        self.assertIn("reset is forbidden", recovery)
+        self.assertIn("reset-on-unreachable-once", recovery)
+        self.assertNotIn("target preflight", recovery)
 
 
 if __name__ == "__main__":

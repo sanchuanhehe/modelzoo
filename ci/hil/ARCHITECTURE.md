@@ -26,7 +26,8 @@ execution, and model-specific test semantics.
   mode accepts only source CI artifacts built from `master` because the tested
   executable itself is otherwise a root-code boundary.
 - UART, loss of SSH, kernel panic, reset, and flashing remain outside the board
-  agent and are handled by the VM/operator recovery path.
+  agent. The VM owns one identity-pinned, fixed-protocol, normally-open reset
+  primitive; power-cycle and flashing remain operator recovery actions.
 
 ## Fixed workflow
 
@@ -42,6 +43,17 @@ The only supported order is:
 8. download and validate results through the repository adapter;
 9. always collect evidence;
 10. always clean the exact local and target run sandboxes.
+
+The workflow does not accept arbitrary recovery steps. A reset may only invoke
+the reviewed `lab-control reset pulse` primitive for the target's VM-local
+`resetControllerRef`. Its model, USB identity, channel, 115200-baud driver,
+normally-open contact, fixed pulse duration, and state-verification policy come
+from root-owned LabInventory. Command frames are compiled into the reviewed
+driver and cannot be supplied by TestDefinition, workflow input, or inventory.
+The only workflow recovery choice is `reset-on-unreachable-once`: after UART
+and controller preflight, one failed target-agent reachability probe may cause
+one pulse and one bounded wait. Full target preflight failures, test failures,
+and repeated outages never trigger another reset or flashing.
 
 ## Asset policy
 

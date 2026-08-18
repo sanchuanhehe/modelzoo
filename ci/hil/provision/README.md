@@ -70,3 +70,59 @@ The target agent accepts version/probe, generic library/module inspection,
 exact sandbox preparation, verified upload, seal, fixed entrypoint execution,
 snapshot/get, and exact cleanup. It cannot run an arbitrary shell command and
 does not implement reset or flashing.
+
+## External USB reset transport
+
+USB ownership is provisioned independently from relay operation. On the
+libvirt host, first verify that exactly one device has the reviewed VID, PID,
+and serial number, then persistently attach it to the control VM:
+
+```sh
+python3 ci/hil/provision/host_usb_passthrough.py \
+  --domain hil-hi3403-01 \
+  --vendor-id 0483 \
+  --product-id 5740 \
+  --serial 698684C41432 \
+  --dry-run
+```
+
+Remove `--dry-run` only after reviewing the JSON result. The helper never opens
+the serial endpoint or sends a relay command. Libvirt's USB hostdev selector is
+limited to VID/PID, so the helper refuses provisioning if another connected USB
+device shares those IDs. Keep that uniqueness invariant after provisioning.
+Once a running VM owns the device it may disappear from host sysfs; an
+idempotent rerun then reports `controller-preflight-required`, and VM
+`lab-control controller preflight` must prove the serial number and
+ModemManager exclusion.
+
+If a USB serial adapter re-enumerates while the VM remains running, libvirt may
+retain a stale live bus/device number even though persistent VID/PID config is
+correct. Diagnose without mutation first by adding `--refresh-live --dry-run`.
+If JSON reports `liveRefreshRequired: true`, rerun with `--refresh-live` and no
+`--dry-run`; the helper refreshes only the live attachment and never changes
+persistent XML or opens the serial endpoint.
+
+Inside the control VM, install an identity-pinned udev rule as root:
+
+```sh
+python3 ci/hil/provision/controller_usb_serial.py \
+  --vendor-id 0483 \
+  --product-id 5740 \
+  --serial 698684C41432 \
+  --symlink hil/hi3403-rst-relay \
+  --group dialout \
+  --dry-run
+```
+
+After review, remove `--dry-run`. This creates the stable
+`/dev/hil/hi3403-rst-relay` path, grants mode `0660` to `dialout`, and marks the
+device for ModemManager exclusion. Add `actions` to `dialout` through the VM
+image or configuration management and verify the group after a fresh login.
+
+These helpers provide only the transport layer. They intentionally do not infer
+a relay protocol from a generic USB VID/PID. Relay operation is implemented as
+a separately reviewed, fixed driver using the vendor's
+[`USB Relay (TC, 2, Opto)` protocol](https://wiki.diustou.com/cn/USB_Relay).
+Wire the board reset input through the
+channel-1 normally-open contact (`NO1` and `COM1`) so loss of VM or relay power
+leaves reset deasserted.

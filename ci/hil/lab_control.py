@@ -4,17 +4,20 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
 import os
 import pwd
 import re
+import select
 import shutil
 import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import termios
 import time
 import urllib.error
 import urllib.request
@@ -30,11 +33,12 @@ if str(ROOT) not in sys.path:
 
 from ci.hil import validate_config  # noqa: E402
 
-VERSION = "0.2.0"
+VERSION = "0.3.1"
 EXIT_CONFIG = 10
 EXIT_ASSET = 20
 EXIT_ARTIFACT = 30
 EXIT_TARGET = 40
+EXIT_TARGET_UNREACHABLE = 41
 EXIT_EXECUTION = 50
 EXIT_EVIDENCE = 60
 EXIT_CLEANUP = 70
@@ -43,14 +47,31 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 PAYLOAD_LINE_RE = re.compile(
     r"^(?P<sha>[0-9a-f]{64})  (?P<name>[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*)$"
 )
+DIUSTOU_TC_DRIVER = "diustou-usb-relay-tc-v1"
+DIUSTOU_TC_CHANNEL_1_ON = bytes.fromhex("A0 01 01 A2")
+DIUSTOU_TC_CHANNEL_1_OFF = bytes.fromhex("A0 01 00 A1")
+DIUSTOU_TC_CHANNEL_1_QUERY = bytes.fromhex("A0 01 02 A3")
+DIUSTOU_TC_STATE_RE = re.compile(rb"(?:^|\r?\n)CH1:(ON|OFF)\r?\n")
+DIUSTOU_TC_CONTROL_SETTLE_SECONDS = 0.1
+SSH_UNREACHABLE_RE = re.compile(
+    r"^ssh: connect to host .+ port [0-9]+: "
+    r"(?:Connection refused|Connection timed out|No route to host|Network is unreachable)$"
+)
 
 
 class LabError(RuntimeError):
     """Expected laboratory operation failure with a stable exit category."""
 
-    def __init__(self, message: str, exit_code: int) -> None:
+    def __init__(
+        self,
+        message: str,
+        exit_code: int,
+        *,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         super().__init__(message)
         self.exit_code = exit_code
+        self.details = details or {}
 
 
 def timestamp() -> str:
@@ -114,6 +135,19 @@ def select_target(inventory: dict[str, Any], target_id: str) -> dict[str, Any]:
     if target is None:
         raise LabError(f"target is absent from LabInventory: {target_id}", EXIT_CONFIG)
     return target
+
+
+def select_reset_controller(
+    inventory: dict[str, Any], target_id: str
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    target = select_target(inventory, target_id)
+    reference = target["resetControllerRef"]
+    controller = inventory["spec"]["resetControllers"].get(reference)
+    if controller is None:
+        raise LabError(
+            f"reset controller is absent from LabInventory: {reference}", EXIT_CONFIG
+        )
+    return target, controller
 
 
 def credential_file(directory: Path, reference: str, *, private: bool) -> Path:
@@ -540,9 +574,15 @@ def target_probe(
     target = select_target(inventory, target_id)
     result = target_command(target, credentials_dir, ["probe"], runner=runner)
     if result.returncode != 0:
+        diagnostic = result.stderr.decode(errors="replace").strip()
+        exit_code = (
+            EXIT_TARGET_UNREACHABLE
+            if result.returncode == 255 and SSH_UNREACHABLE_RE.fullmatch(diagnostic)
+            else EXIT_TARGET
+        )
         raise LabError(
-            f"target probe failed with exit {result.returncode}: {result.stderr.decode(errors='replace').strip()}",
-            EXIT_TARGET,
+            f"target probe failed with exit {result.returncode}: {diagnostic}",
+            exit_code,
         )
     try:
         lines = result.stdout.decode("utf-8").splitlines()
@@ -649,13 +689,59 @@ def target_preflight(
     }
 
 
+def target_wait_ready(
+    inventory_path: Path,
+    target_id: str,
+    credentials_dir: Path,
+    *,
+    runner: Callable[..., subprocess.CompletedProcess[bytes]] = subprocess.run,
+    sleeper: Callable[[float], None] = time.sleep,
+) -> dict[str, Any]:
+    inventory = load_inventory(inventory_path)
+    _target, reset_controller = select_reset_controller(inventory, target_id)
+    timeout_seconds = reset_controller["recoveryBootTimeoutSeconds"]
+    deadline = time.monotonic() + timeout_seconds
+    attempts = 0
+    last_error = "target has not answered"
+    while True:
+        attempts += 1
+        try:
+            probe = target_probe(
+                inventory_path, target_id, credentials_dir, runner=runner
+            )
+            return {
+                "targetId": target_id,
+                "ready": True,
+                "attempts": attempts,
+                "timeoutSeconds": timeout_seconds,
+                "probe": probe,
+            }
+        except LabError as exc:
+            if exc.exit_code != EXIT_TARGET:
+                raise
+            last_error = str(exc)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise LabError(
+                f"target did not become ready after reset: {last_error}",
+                EXIT_TARGET,
+                details={
+                    "targetId": target_id,
+                    "ready": False,
+                    "attempts": attempts,
+                    "timeoutSeconds": timeout_seconds,
+                },
+            )
+        sleeper(min(2.0, remaining))
+
+
 def controller_preflight(
     inventory_path: Path,
     target_id: str,
     credentials_dir: Path,
 ) -> dict[str, Any]:
     inventory = load_inventory(inventory_path)
-    target = select_target(inventory, target_id)
+    target, reset_controller = select_reset_controller(inventory, target_id)
     if os.geteuid() == 0 or pwd.getpwuid(os.geteuid()).pw_name != "actions":
         raise LabError("controller primitives must run as the non-root actions user", EXIT_CONFIG)
     run_root = Path(inventory["spec"]["runner"]["runRoot"])
@@ -678,6 +764,23 @@ def controller_preflight(
         raise LabError(f"UART device is unavailable: {serial}", EXIT_CONFIG) from exc
     if not stat.S_ISCHR(serial_resolved.stat().st_mode):
         raise LabError("UART path does not resolve to a character device", EXIT_CONFIG)
+    reset_device = Path(reset_controller["device"])
+    try:
+        reset_resolved = reset_device.resolve(strict=True)
+    except OSError as exc:
+        raise LabError(
+            f"reset controller is unavailable: {reset_device}", EXIT_CONFIG
+        ) from exc
+    if not stat.S_ISCHR(reset_resolved.stat().st_mode):
+        raise LabError(
+            "reset controller path does not resolve to a character device", EXIT_CONFIG
+        )
+    if not os.access(reset_resolved, os.R_OK | os.W_OK):
+        raise LabError(
+            "actions user cannot read/write the reset controller", EXIT_CONFIG
+        )
+    reset_properties = usb_serial_identity(reset_device)
+    validate_reset_identity(reset_controller, reset_properties)
     missing_commands = [name for name in ("ssh", "python3", "sha256sum") if not shutil.which(name)]
     if missing_commands:
         raise LabError(f"controller commands are missing: {', '.join(missing_commands)}", EXIT_CONFIG)
@@ -690,6 +793,17 @@ def controller_preflight(
         "freeBytes": free_bytes,
         "serialDevice": str(serial),
         "serialResolved": str(serial_resolved),
+        "resetController": {
+            "driver": reset_controller["driver"],
+            "model": reset_controller["model"],
+            "device": str(reset_device),
+            "resolved": str(reset_resolved),
+            "usbIdentity": reset_controller["usbIdentity"],
+            "channel": reset_controller["channel"],
+            "contact": reset_controller["contact"],
+            "pulseMilliseconds": reset_controller["pulseMilliseconds"],
+            "modemManagerIgnored": True,
+        },
     }
 
 
@@ -924,6 +1038,257 @@ def write_event_log(payload: dict[str, Any]) -> None:
     )
 
 
+def usb_serial_identity(
+    device: Path,
+    *,
+    runner: Callable[..., subprocess.CompletedProcess[bytes]] = subprocess.run,
+) -> dict[str, str]:
+    try:
+        result = runner(
+            ["udevadm", "info", "--query=property", f"--name={device}"],
+            input=None,
+            capture_output=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise LabError("cannot inspect reset controller identity", EXIT_CONFIG) from exc
+    if result.returncode != 0:
+        diagnostic = result.stderr.decode("utf-8", errors="replace").strip()
+        raise LabError(
+            f"cannot inspect reset controller identity: {diagnostic or 'udevadm failed'}",
+            EXIT_CONFIG,
+        )
+    properties: dict[str, str] = {}
+    for raw_line in result.stdout.decode("utf-8", errors="strict").splitlines():
+        key, separator, value = raw_line.partition("=")
+        if separator and key:
+            properties[key] = value
+    return properties
+
+
+def validate_reset_identity(
+    controller: dict[str, Any], properties: dict[str, str]
+) -> None:
+    expected = controller["usbIdentity"]
+    actual = {
+        "vendorId": properties.get("ID_VENDOR_ID", "").lower(),
+        "productId": properties.get("ID_MODEL_ID", "").lower(),
+        "serial": properties.get("ID_SERIAL_SHORT", ""),
+    }
+    if actual != expected:
+        raise LabError(
+            "reset controller USB identity does not match LabInventory", EXIT_CONFIG
+        )
+    if properties.get("ID_MM_DEVICE_IGNORE") != "1":
+        raise LabError(
+            "reset controller is not excluded from ModemManager", EXIT_CONFIG
+        )
+
+
+def configure_diustou_tc_serial(fd: int) -> None:
+    attributes = termios.tcgetattr(fd)
+    attributes[0] = 0
+    attributes[1] = 0
+    attributes[2] = termios.CLOCAL | termios.CREAD | termios.CS8
+    attributes[3] = 0
+    attributes[4] = termios.B115200
+    attributes[5] = termios.B115200
+    attributes[6][termios.VMIN] = 0
+    attributes[6][termios.VTIME] = 0
+    termios.tcsetattr(fd, termios.TCSANOW, attributes)
+    termios.tcflush(fd, termios.TCIOFLUSH)
+
+
+def write_relay_frame(fd: int, frame: bytes) -> None:
+    offset = 0
+    while offset < len(frame):
+        try:
+            written = os.write(fd, frame[offset:])
+        except BlockingIOError:
+            select.select([], [fd], [], 0.2)
+            continue
+        if written <= 0:
+            raise LabError("reset controller serial write made no progress", EXIT_EXECUTION)
+        offset += written
+    termios.tcdrain(fd)
+
+
+def query_diustou_tc_channel_1(fd: int, timeout_seconds: float = 1.0) -> str:
+    termios.tcflush(fd, termios.TCIFLUSH)
+    write_relay_frame(fd, DIUSTOU_TC_CHANNEL_1_QUERY)
+    deadline = time.monotonic() + timeout_seconds
+    response = bytearray()
+    while time.monotonic() < deadline and len(response) < 256:
+        readable, _, _ = select.select([fd], [], [], max(0.0, deadline - time.monotonic()))
+        if not readable:
+            break
+        try:
+            chunk = os.read(fd, 256 - len(response))
+        except BlockingIOError:
+            continue
+        if not chunk:
+            continue
+        response.extend(chunk)
+        match = DIUSTOU_TC_STATE_RE.search(response)
+        if match:
+            return match.group(1).decode("ascii").lower()
+    raise LabError("reset controller did not return a valid channel-1 state", EXIT_EXECUTION)
+
+
+def set_and_verify_diustou_tc_channel_1(fd: int, enabled: bool) -> None:
+    write_relay_frame(
+        fd, DIUSTOU_TC_CHANNEL_1_ON if enabled else DIUSTOU_TC_CHANNEL_1_OFF
+    )
+    time.sleep(DIUSTOU_TC_CONTROL_SETTLE_SECONDS)
+    expected = "on" if enabled else "off"
+    actual = query_diustou_tc_channel_1(fd)
+    if actual != expected:
+        raise LabError(
+            f"reset controller channel-1 state mismatch: expected={expected}, actual={actual}",
+            EXIT_EXECUTION,
+        )
+
+
+def pulse_diustou_tc_channel_1(device: Path, pulse_milliseconds: int) -> dict[str, Any]:
+    try:
+        resolved = device.resolve(strict=True)
+    except OSError as exc:
+        raise LabError("reset controller device is unavailable", EXIT_CONFIG) from exc
+    try:
+        metadata = resolved.stat()
+    except OSError as exc:
+        raise LabError("cannot inspect reset controller device", EXIT_CONFIG) from exc
+    if not stat.S_ISCHR(metadata.st_mode):
+        raise LabError("reset controller endpoint is not a character device", EXIT_CONFIG)
+    flags = os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        fd = os.open(resolved, flags)
+    except OSError as exc:
+        raise LabError(f"cannot open reset controller: {exc}", EXIT_EXECUTION) from exc
+    asserted = False
+    release_required = False
+    primary_error: BaseException | None = None
+    off_verified = False
+    try:
+        if os.fstat(fd).st_rdev != metadata.st_rdev:
+            raise LabError("reset controller device changed during open", EXIT_CONFIG)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise LabError("reset controller is busy", EXIT_EXECUTION) from exc
+        configure_diustou_tc_serial(fd)
+        release_required = True
+        set_and_verify_diustou_tc_channel_1(fd, False)
+        asserted = True
+        write_relay_frame(fd, DIUSTOU_TC_CHANNEL_1_ON)
+        deadline = time.monotonic() + pulse_milliseconds / 1000
+        time.sleep(DIUSTOU_TC_CONTROL_SETTLE_SECONDS)
+        if query_diustou_tc_channel_1(fd) != "on":
+            raise LabError("reset controller did not assert channel 1", EXIT_EXECUTION)
+        remaining = deadline - time.monotonic()
+        if remaining > 0:
+            time.sleep(remaining)
+    except BaseException as exc:
+        primary_error = exc
+    finally:
+        if release_required:
+            for _attempt in range(3):
+                try:
+                    set_and_verify_diustou_tc_channel_1(fd, False)
+                    off_verified = True
+                    break
+                except (LabError, OSError, termios.error):
+                    time.sleep(0.05)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+        except OSError:
+            pass
+        os.close(fd)
+    if release_required and not off_verified:
+        raise LabError(
+            "CRITICAL: reset controller channel 1 could not be verified off; "
+            "disconnect relay USB to release reset",
+            EXIT_EXECUTION,
+            details={
+                "asserted": True,
+                "released": False,
+                "stateVerified": False,
+                "operatorAction": "disconnect-relay-usb",
+            },
+        )
+    if primary_error is not None:
+        if isinstance(primary_error, LabError):
+            primary_error.details.update(
+                {
+                    "asserted": asserted,
+                    "released": True,
+                    "stateVerified": True,
+                }
+            )
+            raise primary_error
+        raise LabError(
+            f"reset pulse failed: {primary_error}",
+            EXIT_EXECUTION,
+            details={
+                "asserted": asserted,
+                "released": True,
+                "stateVerified": True,
+            },
+        ) from primary_error
+    return {"asserted": True, "released": True, "stateVerified": True}
+
+
+def reset_pulse(
+    inventory_path: Path,
+    target_id: str,
+    run_id: str,
+    *,
+    dry_run: bool,
+    identity_reader: Callable[[Path], dict[str, str]] = usb_serial_identity,
+    pulse_driver: Callable[[Path, int], dict[str, Any]] = pulse_diustou_tc_channel_1,
+) -> dict[str, Any]:
+    if not RUN_ID_RE.fullmatch(run_id):
+        raise LabError("unsafe run ID", EXIT_CONFIG)
+    inventory = load_inventory(inventory_path)
+    _target, controller = select_reset_controller(inventory, target_id)
+    if controller["driver"] != DIUSTOU_TC_DRIVER:
+        raise LabError("unsupported reset controller driver", EXIT_CONFIG)
+    if (
+        controller["channel"] != 1
+        or controller["contact"] != "normally-open"
+        or controller["signal"] != "active-low-reset"
+        or controller["baudRate"] != 115200
+        or not controller["verifyState"]
+    ):
+        raise LabError("unsafe reset controller policy", EXIT_CONFIG)
+    properties = identity_reader(Path(controller["device"]))
+    validate_reset_identity(controller, properties)
+    details: dict[str, Any] = {
+        "targetId": target_id,
+        "runId": run_id,
+        "driver": controller["driver"],
+        "model": controller["model"],
+        "device": controller["device"],
+        "usbIdentity": controller["usbIdentity"],
+        "channel": 1,
+        "contact": "normally-open",
+        "pulseMilliseconds": controller["pulseMilliseconds"],
+        "stateVerificationRequired": True,
+        "dryRun": dry_run,
+    }
+    if dry_run:
+        details.update({"asserted": False, "released": True, "stateVerified": False})
+        return details
+    result = pulse_driver(
+        Path(controller["device"]), controller["pulseMilliseconds"]
+    )
+    details.update(result)
+    return details
+
+
 def uart_start(
     inventory_path: Path,
     target_id: str,
@@ -1044,6 +1409,15 @@ def uart_stop(
         command = ""
     capture_path = str(Path(__file__).resolve().parent / "capture_uart.py")
     if capture_path not in command or str(pid_file) not in command:
+        if not pid_file.exists():
+            process_file.unlink(missing_ok=True)
+            return {
+                "targetId": target_id,
+                "runId": run_id,
+                "state": "already-exited",
+                "staleProcessId": pid,
+                "dryRun": False,
+            }
         raise LabError("refusing to signal unrelated PID", EXIT_EVIDENCE)
     try:
         os.kill(pid, signal.SIGTERM)
@@ -1390,6 +1764,8 @@ def build_parser() -> argparse.ArgumentParser:
     cleanup = target_commands.add_parser("cleanup")
     add_inventory_arguments(cleanup)
     cleanup.add_argument("--run-id", required=True)
+    wait_ready = target_commands.add_parser("wait-ready")
+    add_inventory_arguments(wait_ready)
 
     controller = commands.add_parser("controller")
     controller_commands = controller.add_subparsers(
@@ -1418,6 +1794,14 @@ def build_parser() -> argparse.ArgumentParser:
     uart_stop_parser.add_argument("--target", required=True)
     uart_stop_parser.add_argument("--run-id", required=True)
     uart_stop_parser.add_argument("--dry-run", action="store_true")
+
+    reset = commands.add_parser("reset")
+    reset_commands = reset.add_subparsers(dest="reset_command", required=True)
+    reset_pulse_parser = reset_commands.add_parser("pulse")
+    reset_pulse_parser.add_argument("--inventory", required=True, type=Path)
+    reset_pulse_parser.add_argument("--target", required=True)
+    reset_pulse_parser.add_argument("--run-id", required=True)
+    reset_pulse_parser.add_argument("--dry-run", action="store_true")
 
     evidence = commands.add_parser("evidence")
     evidence_commands = evidence.add_subparsers(dest="evidence_command", required=True)
@@ -1494,6 +1878,10 @@ def run_cli(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
         return "target.cleanup", target_cleanup(
             args.inventory, args.target, args.credentials_dir, args.run_id
         )
+    if args.command == "target" and args.target_command == "wait-ready":
+        return "target.wait-ready", target_wait_ready(
+            args.inventory, args.target, args.credentials_dir
+        )
     if args.command == "controller" and args.controller_command == "preflight":
         return "controller.preflight", controller_preflight(
             args.inventory, args.target, args.credentials_dir
@@ -1514,6 +1902,10 @@ def run_cli(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
         return "uart.stop", uart_stop(
             args.inventory, args.target, args.run_id, dry_run=args.dry_run
         )
+    if args.command == "reset" and args.reset_command == "pulse":
+        return "reset.pulse", reset_pulse(
+            args.inventory, args.target, args.run_id, dry_run=args.dry_run
+        )
     if args.command == "evidence" and args.evidence_command == "snapshot":
         return "evidence.snapshot", evidence_snapshot(
             args.inventory,
@@ -1531,14 +1923,22 @@ def run_cli(args: argparse.Namespace) -> tuple[str, dict[str, Any]]:
     raise LabError("unsupported command", EXIT_CONFIG)
 
 
+def parsed_command_name(args: argparse.Namespace) -> str:
+    subcommand = getattr(args, f"{args.command}_command", None)
+    return f"{args.command}.{subcommand}" if subcommand else args.command
+
+
 def main() -> int:
     args = build_parser().parse_args()
-    command = args.command
+    command = parsed_command_name(args)
     try:
         command, details = run_cli(args)
     except (LabError, validate_config.ConfigError) as exc:
         exit_code = exc.exit_code if isinstance(exc, LabError) else EXIT_CONFIG
-        payload = event(command, "failed", {"error": str(exc)})
+        failure_details = {"error": str(exc)}
+        if isinstance(exc, LabError):
+            failure_details.update(exc.details)
+        payload = event(command, "failed", failure_details)
         try:
             write_event_log(payload)
         except LabError as log_error:

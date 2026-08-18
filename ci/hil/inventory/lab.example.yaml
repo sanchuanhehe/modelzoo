@@ -22,9 +22,26 @@ spec:
       executionMode: forced-command-root
       executionRationale: Vendor Linux loader and BusyBox are root-only executables.
       serialDevice: /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
+      resetControllerRef: hi3403-rst-relay
       sshCredentialRef: hil-v2-board-ssh
       knownHostsCredentialRef: hil-board-known-hosts
       concurrencyGroup: hil-hi3403-01
+  resetControllers:
+    hi3403-rst-relay:
+      driver: diustou-usb-relay-tc-v1
+      model: USB Relay (TC, 2, Opto)
+      device: /dev/hil/hi3403-rst-relay
+      usbIdentity:
+        vendorId: "0483"
+        productId: "5740"
+        serial: "698684C41432"
+      baudRate: 115200
+      channel: 1
+      contact: normally-open
+      signal: active-low-reset
+      pulseMilliseconds: 300
+      verifyState: true
+      recoveryBootTimeoutSeconds: 120
   assetSources:
     modelzoo-public-release:
       kind: github-release

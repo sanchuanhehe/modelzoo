@@ -6,8 +6,10 @@ import io
 import json
 import os
 import pty
+import select
 import subprocess
 import tempfile
+import threading
 import time
 import unittest
 from contextlib import redirect_stderr
@@ -82,6 +84,34 @@ class HilLabControlTests(unittest.TestCase):
             path = root / name
             path.write_text(value, encoding="utf-8")
             path.chmod(0o600 if name != "hil-board-known-hosts" else 0o640)
+
+    def test_target_probe_classifies_only_known_ssh_transport_failure_as_unreachable(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as credential_directory:
+            credentials = Path(credential_directory)
+            self.credentials(credentials)
+
+            def unreachable_runner(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+                return subprocess.CompletedProcess(
+                    [],
+                    255,
+                    stdout=b"",
+                    stderr=b"ssh: connect to host 192.168.2.88 port 22: No route to host\n",
+                )
+
+            with self.assertRaises(lab.LabError) as caught:
+                lab.target_probe(INVENTORY, "hi3403-01", credentials, runner=unreachable_runner)
+            self.assertEqual(caught.exception.exit_code, lab.EXIT_TARGET_UNREACHABLE)
+
+            def auth_failure_runner(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[bytes]:
+                return subprocess.CompletedProcess(
+                    [], 255, stdout=b"", stderr=b"root@192.168.2.88: Permission denied (publickey).\n"
+                )
+
+            with self.assertRaises(lab.LabError) as caught:
+                lab.target_probe(INVENTORY, "hi3403-01", credentials, runner=auth_failure_runner)
+            self.assertEqual(caught.exception.exit_code, lab.EXIT_TARGET)
 
     def test_fetch_uses_approved_source_and_exact_size_sha(self) -> None:
         payload = b"immutable release payload"
@@ -403,6 +433,45 @@ class HilLabControlTests(unittest.TestCase):
         self.assertEqual(result["executionMode"], "forced-command-root")
         self.assertEqual(calls[0], "probe")
 
+    def test_target_wait_ready_is_bounded_by_inventory_and_eventually_probes(self) -> None:
+        attempts = 0
+
+        def runner(
+            argv: list[str],
+            *,
+            input: bytes | None,
+            capture_output: bool,
+            timeout: int,
+            check: bool,
+        ) -> subprocess.CompletedProcess[bytes]:
+            nonlocal attempts
+            del input, capture_output, timeout, check
+            attempts += 1
+            if attempts < 3:
+                return subprocess.CompletedProcess(argv, 255, b"", b"unreachable")
+            return subprocess.CompletedProcess(
+                argv,
+                0,
+                b"protocol=1\nagentVersion=0.2.0\nuser=root\n"
+                b"kernel=4.19.90\narchitecture=aarch64\nfreeBytes=4294967296\n"
+                b"temperatureMilliCelsius=unavailable\n",
+                b"",
+            )
+
+        with tempfile.TemporaryDirectory() as credential_directory:
+            credentials = Path(credential_directory)
+            self.credentials(credentials)
+            result = lab.target_wait_ready(
+                INVENTORY,
+                "hi3403-01",
+                credentials,
+                runner=runner,
+                sleeper=lambda _seconds: None,
+            )
+        self.assertTrue(result["ready"])
+        self.assertEqual(result["attempts"], 3)
+        self.assertEqual(result["timeoutSeconds"], 120)
+
     def test_local_cleanup_is_exact_and_dry_runnable(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -595,6 +664,210 @@ class HilLabControlTests(unittest.TestCase):
         self.assertEqual((uart.command, uart.uart_command), ("uart", "start"))
         with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             parser.parse_args(["target", "shell"])
+
+    def test_reset_pulse_uses_only_inventory_pinned_driver_and_duration(self) -> None:
+        calls: list[tuple[Path, int]] = []
+
+        def identity(_device: Path) -> dict[str, str]:
+            return {
+                "ID_VENDOR_ID": "0483",
+                "ID_MODEL_ID": "5740",
+                "ID_SERIAL_SHORT": "698684C41432",
+                "ID_MM_DEVICE_IGNORE": "1",
+            }
+
+        def pulse(device: Path, milliseconds: int) -> dict[str, object]:
+            calls.append((device, milliseconds))
+            return {"asserted": True, "released": True, "stateVerified": True}
+
+        result = lab.reset_pulse(
+            INVENTORY,
+            "hi3403-01",
+            "reset-1",
+            dry_run=False,
+            identity_reader=identity,
+            pulse_driver=pulse,
+        )
+        self.assertEqual(calls, [(Path("/dev/hil/hi3403-rst-relay"), 300)])
+        self.assertTrue(result["released"])
+        self.assertEqual(result["contact"], "normally-open")
+        self.assertNotIn("frame", result)
+        self.assertNotIn("commandBytes", result)
+
+    def test_reset_dry_run_checks_identity_but_never_opens_device(self) -> None:
+        touched = False
+
+        def pulse(_device: Path, _milliseconds: int) -> dict[str, object]:
+            nonlocal touched
+            touched = True
+            raise AssertionError("dry-run must not operate the relay")
+
+        result = lab.reset_pulse(
+            INVENTORY,
+            "hi3403-01",
+            "reset-dry",
+            dry_run=True,
+            identity_reader=lambda _device: {
+                "ID_VENDOR_ID": "0483",
+                "ID_MODEL_ID": "5740",
+                "ID_SERIAL_SHORT": "698684C41432",
+                "ID_MM_DEVICE_IGNORE": "1",
+            },
+            pulse_driver=pulse,
+        )
+        self.assertFalse(touched)
+        self.assertFalse(result["asserted"])
+        self.assertTrue(result["released"])
+
+    def test_reset_rejects_wrong_usb_identity_before_operation(self) -> None:
+        with self.assertRaisesRegex(lab.LabError, "identity does not match"):
+            lab.reset_pulse(
+                INVENTORY,
+                "hi3403-01",
+                "reset-wrong-device",
+                dry_run=False,
+                identity_reader=lambda _device: {
+                    "ID_VENDOR_ID": "0483",
+                    "ID_MODEL_ID": "5740",
+                    "ID_SERIAL_SHORT": "DIFFERENT",
+                    "ID_MM_DEVICE_IGNORE": "1",
+                },
+                pulse_driver=lambda *_args: (_ for _ in ()).throw(
+                    AssertionError("wrong device must not be operated")
+                ),
+            )
+
+    def test_diustou_driver_uses_fixed_frames_and_releases_channel(self) -> None:
+        master, slave = pty.openpty()
+        self.addCleanup(os.close, master)
+        self.addCleanup(os.close, slave)
+        device = Path(os.ttyname(slave))
+        observed: list[bytes] = []
+        stop = threading.Event()
+
+        def emulate() -> None:
+            pending = bytearray()
+            enabled = False
+            while not stop.is_set():
+                readable, _, _ = select.select([master], [], [], 0.1)
+                if not readable:
+                    continue
+                try:
+                    pending.extend(os.read(master, 64))
+                except OSError:
+                    return
+                while len(pending) >= 4:
+                    frame = bytes(pending[:4])
+                    del pending[:4]
+                    observed.append(frame)
+                    if frame == lab.DIUSTOU_TC_CHANNEL_1_ON:
+                        enabled = True
+                    elif frame == lab.DIUSTOU_TC_CHANNEL_1_OFF:
+                        enabled = False
+                    elif frame == lab.DIUSTOU_TC_CHANNEL_1_QUERY:
+                        state = b"ON" if enabled else b"OFF"
+                        os.write(master, b"CH1:" + state + b"\r\n")
+
+        thread = threading.Thread(target=emulate, daemon=True)
+        thread.start()
+        try:
+            result = lab.pulse_diustou_tc_channel_1(device, 100)
+        finally:
+            stop.set()
+            thread.join(timeout=1)
+        self.assertEqual(
+            observed,
+            [
+                bytes.fromhex("A0 01 00 A1"),
+                bytes.fromhex("A0 01 02 A3"),
+                bytes.fromhex("A0 01 01 A2"),
+                bytes.fromhex("A0 01 02 A3"),
+                bytes.fromhex("A0 01 00 A1"),
+                bytes.fromhex("A0 01 02 A3"),
+            ],
+        )
+        self.assertEqual(result, {"asserted": True, "released": True, "stateVerified": True})
+
+    def test_diustou_driver_attempts_verified_off_after_initial_query_failure(self) -> None:
+        master, slave = pty.openpty()
+        self.addCleanup(os.close, master)
+        self.addCleanup(os.close, slave)
+        device = Path(os.ttyname(slave))
+        writes: list[bytes] = []
+        initial_failure = lab.LabError("initial state unavailable", lab.EXIT_EXECUTION)
+        with (
+            mock.patch.object(lab, "write_relay_frame", side_effect=lambda _fd, frame: writes.append(frame)),
+            mock.patch.object(
+                lab,
+                "query_diustou_tc_channel_1",
+                side_effect=[initial_failure, "off"],
+            ),
+        ):
+            with self.assertRaisesRegex(lab.LabError, "initial state unavailable") as raised:
+                lab.pulse_diustou_tc_channel_1(device, 100)
+        self.assertEqual(
+            writes,
+            [lab.DIUSTOU_TC_CHANNEL_1_OFF, lab.DIUSTOU_TC_CHANNEL_1_OFF],
+        )
+        self.assertFalse(raised.exception.details["asserted"])
+        self.assertTrue(raised.exception.details["released"])
+        self.assertTrue(raised.exception.details["stateVerified"])
+
+    def test_uart_stop_removes_stale_pid_without_signalling_reused_process(self) -> None:
+        inventory = lab.load_inventory(INVENTORY)
+        with tempfile.TemporaryDirectory() as directory:
+            run_root = Path(directory)
+            run_dir = run_root / "uart-stale"
+            run_dir.mkdir()
+            process_file = run_dir / "uart-process.pid"
+            process_file.write_text(f"{os.getpid()}\n", encoding="ascii")
+            with mock.patch.object(lab, "load_inventory", return_value=inventory):
+                result = lab.uart_stop(
+                    INVENTORY,
+                    "hi3403-01",
+                    "uart-stale",
+                    dry_run=False,
+                    run_root_override=run_root,
+                )
+            self.assertEqual(result["state"], "already-exited")
+            self.assertFalse(process_file.exists())
+
+    def test_reset_cli_has_no_raw_frame_or_duration_override(self) -> None:
+        parser = lab.build_parser()
+        parsed = parser.parse_args(
+            [
+                "reset", "pulse", "--inventory", str(INVENTORY),
+                "--target", "hi3403-01", "--run-id", "reset-1", "--dry-run",
+            ]
+        )
+        self.assertEqual((parsed.command, parsed.reset_command), ("reset", "pulse"))
+        self.assertEqual(lab.parsed_command_name(parsed), "reset.pulse")
+        for forbidden in ("--frame", "--bytes", "--duration", "--channel"):
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                parser.parse_args(
+                    [
+                        "reset", "pulse", "--inventory", str(INVENTORY),
+                        "--target", "hi3403-01", "--run-id", "reset-1",
+                        forbidden, "1",
+                    ]
+                )
+        wait_ready = parser.parse_args(
+            [
+                "target", "wait-ready", "--inventory", str(INVENTORY),
+                "--target", "hi3403-01", "--credentials-dir", "/run/hil/credentials",
+            ]
+        )
+        self.assertEqual(
+            (wait_ready.command, wait_ready.target_command),
+            ("target", "wait-ready"),
+        )
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            parser.parse_args(
+                [
+                    "target", "wait-ready", "--inventory", str(INVENTORY),
+                    "--target", "hi3403-01", "--timeout", "9999",
+                ]
+            )
 
 
 if __name__ == "__main__":

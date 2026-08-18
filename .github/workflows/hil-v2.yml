@@ -23,6 +23,12 @@ on:
         default: resnet50-smoke
         type: choice
         options: [resnet50-smoke, resnet50-stability]
+      reset_policy:
+        description: Optional one-shot reset only when the initial target probe is unreachable
+        required: true
+        default: none
+        type: choice
+        options: [none, reset-on-unreachable-once]
 
 permissions:
   contents: read
@@ -96,6 +102,7 @@ jobs:
       HIL_TARGET: ${{ inputs.target }}
       HIL_CREDENTIALS_DIRECTORY: /opt/hil/runs/${{ github.run_id }}-${{ github.run_attempt }}/credentials
       HIL_DEFINITION: ci/hil/definitions/${{ inputs.test_definition }}.yaml
+      HIL_RESET_POLICY: ${{ inputs.reset_policy }}
       HIL_SOURCE_SHA: ${{ inputs.source_sha }}
       HIL_SOURCE_BRANCH: ${{ needs.authorize.outputs.source-branch }}
       HIL_SOURCE_WORKFLOW_SHA: ${{ needs.authorize.outputs.workflow-sha }}
@@ -114,9 +121,10 @@ jobs:
             --arg workflowSha "$HIL_SOURCE_WORKFLOW_SHA" \
             --arg sourceBranch "$HIL_SOURCE_BRANCH" \
             --arg definition "$HIL_DEFINITION" --arg target "$HIL_TARGET" \
+            --arg resetPolicy "$HIL_RESET_POLICY" \
             '{schemaVersion:1, runId:$run, sourceSha:$sha, sourceWorkflowSha:$workflowSha,
               sourceBranch:$sourceBranch,
-              definition:$definition, targetId:$target}' \
+              definition:$definition, targetId:$target, resetPolicy:$resetPolicy}' \
             >"$run_dir/execution-context.json"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -185,6 +193,29 @@ jobs:
         run: >-
           /usr/local/bin/lab-control controller preflight --inventory "$HIL_INVENTORY"
           --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+
+      - name: Target reachability and optional one-shot reset recovery
+        shell: bash
+        run: |
+          set +e
+          /usr/local/bin/lab-control target probe --inventory "$HIL_INVENTORY" \
+            --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
+          probe_status=$?
+          set -e
+          if [[ $probe_status -eq 0 ]]; then
+            exit 0
+          fi
+          if [[ $probe_status -ne 41 ]]; then
+            echo "Target probe failed with non-recoverable status $probe_status; reset is forbidden." >&2
+            exit "$probe_status"
+          fi
+          if [[ "$HIL_RESET_POLICY" != reset-on-unreachable-once ]]; then
+            exit "$probe_status"
+          fi
+          /usr/local/bin/lab-control reset pulse --inventory "$HIL_INVENTORY" \
+            --target "$HIL_TARGET" --run-id "$HIL_RUN_ID"
+          /usr/local/bin/lab-control target wait-ready --inventory "$HIL_INVENTORY" \
+            --target "$HIL_TARGET" --credentials-dir "$HIL_CREDENTIALS_DIRECTORY"
 
       - name: Target agent preflight
         run: >-

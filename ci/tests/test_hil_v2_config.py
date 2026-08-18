@@ -86,6 +86,31 @@ class HilV2ConfigTests(unittest.TestCase):
         inventory = config.load_document(INVENTORY)
         self.assertIn("192.168.2.88", yaml.safe_dump(inventory))
 
+    def test_inventory_reset_control_is_fixed_data_without_protocol_bytes(self) -> None:
+        inventory = config.load_typed(INVENTORY, "LabInventory")
+        target = inventory["spec"]["targets"]["hi3403-01"]
+        controller = inventory["spec"]["resetControllers"][
+            target["resetControllerRef"]
+        ]
+        self.assertEqual(controller["driver"], "diustou-usb-relay-tc-v1")
+        self.assertEqual(controller["model"], "USB Relay (TC, 2, Opto)")
+        self.assertEqual(controller["contact"], "normally-open")
+        self.assertEqual(controller["channel"], 1)
+        self.assertEqual(controller["pulseMilliseconds"], 300)
+        self.assertEqual(controller["recoveryBootTimeoutSeconds"], 120)
+        serialized = yaml.safe_dump(inventory)
+        for raw_frame in ("A0 01 01 A2", "A0 01 00 A1", "A0 01 02 A3"):
+            self.assertNotIn(raw_frame, serialized)
+
+    def test_inventory_rejects_missing_reset_controller_reference(self) -> None:
+        inventory = config.load_document(INVENTORY)
+        inventory["spec"]["targets"]["hi3403-01"][
+            "resetControllerRef"
+        ] = "absent"
+        path = self.write_yaml(inventory)
+        with self.assertRaisesRegex(config.ConfigError, "absent reset controller"):
+            config.load_typed(path, "LabInventory")
+
     def test_target_class_matches_frozen_board_inventory_requirements(self) -> None:
         target_class = config.load_typed(
             ROOT / "ci" / "hil" / "target-classes" / "hi3403-svp-nnn.yaml",

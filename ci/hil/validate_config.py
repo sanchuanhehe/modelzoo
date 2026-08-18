@@ -32,6 +32,7 @@ FIXED_PHASES = (
     "assets.resolve-and-verify",
     "uart.start",
     "preflight.controller",
+    "probe.target-and-recover-once",
     "preflight.target",
     "adapter.prepare",
     "target.upload",
@@ -203,6 +204,14 @@ def load_typed(path: Path, kind: str) -> dict[str, Any]:
     if validate_schema(document, path) != kind:
         raise ConfigError(f"{path} is not a {kind}")
     reject_control_keys(document)
+    if kind == "LabInventory":
+        reset_controllers = document["spec"]["resetControllers"]
+        for target_id, target in document["spec"]["targets"].items():
+            reference = target["resetControllerRef"]
+            if reference not in reset_controllers:
+                raise ConfigError(
+                    f"target {target_id} references an absent reset controller: {reference}"
+                )
     return document
 
 

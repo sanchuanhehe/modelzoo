@@ -6,6 +6,33 @@
   "additionalProperties": false,
   "required": ["apiVersion", "kind", "metadata", "spec"],
   "$defs": {
+    "resetController": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["driver", "model", "device", "usbIdentity", "baudRate", "channel", "contact", "signal", "pulseMilliseconds", "verifyState", "recoveryBootTimeoutSeconds"],
+      "properties": {
+        "driver": {"const": "diustou-usb-relay-tc-v1"},
+        "model": {"const": "USB Relay (TC, 2, Opto)"},
+        "device": {"type": "string", "pattern": "^/dev/hil/[a-z0-9][a-z0-9._-]{0,62}$"},
+        "usbIdentity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["vendorId", "productId", "serial"],
+          "properties": {
+            "vendorId": {"type": "string", "pattern": "^[0-9a-f]{4}$"},
+            "productId": {"type": "string", "pattern": "^[0-9a-f]{4}$"},
+            "serial": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,126}$"}
+          }
+        },
+        "baudRate": {"const": 115200},
+        "channel": {"const": 1},
+        "contact": {"const": "normally-open"},
+        "signal": {"const": "active-low-reset"},
+        "pulseMilliseconds": {"type": "integer", "minimum": 100, "maximum": 1000},
+        "verifyState": {"const": true},
+        "recoveryBootTimeoutSeconds": {"type": "integer", "minimum": 30, "maximum": 300}
+      }
+    },
     "source": {
       "oneOf": [
         {
@@ -39,7 +66,7 @@
     },
     "spec": {
       "type": "object", "additionalProperties": false,
-      "required": ["runner", "targets", "assetSources"],
+      "required": ["runner", "targets", "resetControllers", "assetSources"],
       "properties": {
         "runner": {
           "type": "object", "additionalProperties": false,
@@ -55,7 +82,7 @@
           "propertyNames": {"pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"},
           "additionalProperties": {
             "type": "object", "additionalProperties": false,
-            "required": ["targetClass", "host", "user", "executionMode", "serialDevice", "sshCredentialRef", "knownHostsCredentialRef", "concurrencyGroup"],
+            "required": ["targetClass", "host", "user", "executionMode", "serialDevice", "resetControllerRef", "sshCredentialRef", "knownHostsCredentialRef", "concurrencyGroup"],
             "properties": {
               "targetClass": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"},
               "host": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]{0,252}$"},
@@ -63,6 +90,7 @@
               "executionMode": {"enum": ["unprivileged", "forced-command-root"]},
               "executionRationale": {"type": "string", "minLength": 16, "maxLength": 512},
               "serialDevice": {"type": "string", "pattern": "^/dev/serial/by-id/[A-Za-z0-9._-]+$"},
+              "resetControllerRef": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"},
               "sshCredentialRef": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"},
               "knownHostsCredentialRef": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"},
               "concurrencyGroup": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"}
@@ -75,6 +103,11 @@
               }
             ]
           }
+        },
+        "resetControllers": {
+          "type": "object", "minProperties": 1, "maxProperties": 32,
+          "propertyNames": {"pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"},
+          "additionalProperties": {"$ref": "#/$defs/resetController"}
         },
         "assetSources": {
           "type": "object", "minProperties": 1, "maxProperties": 32,

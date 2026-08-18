@@ -21,6 +21,11 @@ Run the normal `CI` workflow first, then dispatch `Hi3403 HIL v2` with:
 - `target`: reviewed LabInventory ID, currently `hi3403-01`;
 - `test_definition`: reviewed pure-data definition, currently
   `resnet50-smoke` or `resnet50-stability`.
+- `reset_policy`: `none` by default, or `reset-on-unreachable-once`. The latter
+  performs exactly one reviewed reset pulse only if the initial target-agent
+  probe fails, waits up to the LabInventory boot timeout, and then runs the full
+  target preflight. It never retries a library, ABI, temperature, or inference
+  failure and never loops resets.
 
 Adding a test means adding a schema-valid `TestDefinition` and a conventional
 adapter directory with `adapter.yaml`, `prepare.py`, `verify.py`, and the fixed
@@ -31,7 +36,11 @@ The control VM runs the GitHub Runner as `actions`. Each run receives an exact
 `/opt/hil/runs/<run-id>` sandbox and short-lived credentials. `lab-control`
 performs only asset verification, UART, controller/target probes, verified
 target transport/execution, evidence, and exact cleanup. See
-`provision/README.md` for reconstruction.
+`provision/README.md` for reconstruction. External reset transport is pinned by
+USB VID/PID/serial and exposed only through a fixed `USB Relay (TC, 2, Opto)`
+channel-1 pulse primitive. The normally-open `NO1`/`COM1` wiring releases reset
+if relay or VM power is lost. Neither TestDefinition nor workflow input can
+provide serial bytes, channel selection, or pulse duration.
 
 The board SSH identity is explicit in VM LabInventory and always uses a forced
 command. Prefer the dedicated `hilagent` account; a recorded forced-command
@@ -62,8 +71,24 @@ Every run stops UART and collects a schema-validated, SHA-indexed evidence
 bundle even if SSH is unavailable. The bundle contains execution context,
 manifests, structured lab-control events, host snapshot, a final target probe
 (including temperature/free-space when available), UART, retained raw exit
-codes/stdout/stderr/results, and credential-value redaction. Reset,
-power-cycle, and flashing remain manual.
+codes/stdout/stderr/results, and credential-value redaction. A reset event
+records the pinned device identity, duration, and verified released state but
+never arbitrary command bytes. Automatic workflow recovery is disabled until
+the first physical pulse is accepted; power-cycle and flashing remain manual.
+
+For an operator-authorized reset, start UART capture first, then run:
+
+```sh
+/usr/local/bin/lab-control reset pulse \
+  --inventory /etc/hil/lab-inventory.yaml \
+  --target hi3403-01 \
+  --run-id <existing-run-id> \
+  --dry-run
+```
+
+Remove `--dry-run` only after the dry-run identity check passes. If release
+verification fails, disconnect relay USB to return the normally-open contact to
+its safe state; do not loop resets.
 
 ## Verification
 
