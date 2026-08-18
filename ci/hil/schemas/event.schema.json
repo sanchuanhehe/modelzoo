@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanchuanhehe/modelzoo/ci/hil/schemas/event.schema.json",
+  "title": "ModelZoo HIL command event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "hilctlVersion", "command", "status", "timestamp", "details"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "hilctlVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "command": {"type": "string", "pattern": "^[a-z]+(?:[.-][a-z]+)*$"},
+    "status": {"enum": ["passed", "failed", "validated", "available"]},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "details": {"type": "object"}
+  }
+}

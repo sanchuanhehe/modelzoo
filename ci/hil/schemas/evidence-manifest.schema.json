@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanchuanhehe/modelzoo/ci/hil/schemas/evidence-manifest.schema.json",
+  "title": "ModelZoo HIL evidence manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "targetId", "collectedAt", "targetSnapshotStatus", "files"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "runId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "targetId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"},
+    "collectedAt": {"type": "string", "format": "date-time"},
+    "targetSnapshotStatus": {"enum": ["collected", "unavailable"]},
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "size", "sha256"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"},
+          "size": {"type": "integer", "minimum": 0},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  }
+}

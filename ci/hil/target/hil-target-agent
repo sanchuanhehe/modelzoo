@@ -1,0 +1,321 @@
+#!/bin/sh
+set -eu
+set -f
+
+version=0.2.0
+if [ "${1:-}" = --version ]; then
+    printf '%s\n' "$version"
+    exit 0
+fi
+default_run_root=/opt/hil/runs
+if [ "${HIL_TARGET_AGENT_TESTING:-0}" = 1 ]; then
+    run_root=${HIL_TARGET_RUN_ROOT:?test run root is required}
+else
+    run_root=$default_run_root
+fi
+
+fail() {
+    printf 'hil-target-agent: %s\n' "$*" >&2
+    exit 2
+}
+
+valid_run_id() {
+    case $1 in
+        ''|*[!A-Za-z0-9._-]*|.*) return 1 ;;
+    esac
+    [ "${#1}" -le 128 ]
+}
+
+valid_relative_path() {
+    case $1 in
+        ''|/*|*..*|*[!A-Za-z0-9._/-]*|*/|*//*|./*|*/./*) return 1 ;;
+    esac
+    return 0
+}
+
+valid_sha256() {
+    [ "${#1}" -eq 64 ] || return 1
+    case $1 in *[!0-9a-f]*) return 1 ;; esac
+}
+
+valid_system_name() {
+    case $1 in ''|*[!A-Za-z0-9_.+-]*) return 1 ;; esac
+    [ "${#1}" -le 128 ]
+}
+
+run_directory() {
+    valid_run_id "$1" || fail "unsafe run ID"
+    printf '%s/%s\n' "$run_root" "$1"
+}
+
+prepare_run() {
+    [ "$#" -eq 1 ] || fail "prepare requires RUN_ID"
+    directory=$(run_directory "$1")
+    [ ! -e "$directory" ] || fail "run already exists"
+    install -d -m 0750 "$directory/payload" "$directory/iterations"
+    printf 'prepared run=%s protocol=1\n' "$1"
+}
+
+put_file() {
+    [ "$#" -eq 4 ] || fail "put requires RUN_ID PATH SIZE SHA256"
+    directory=$(run_directory "$1")
+    relative=$2
+    expected_size=$3
+    expected_sha=$4
+    valid_relative_path "$relative" || fail "unsafe payload path"
+    case $expected_size in ''|*[!0-9]*) fail "invalid payload size" ;; esac
+    valid_sha256 "$expected_sha" || fail "invalid payload SHA-256"
+    [ -d "$directory/payload" ] || fail "run is not prepared"
+    [ ! -e "$directory/.sealed" ] || fail "run is already sealed"
+    destination=$directory/payload/$relative
+    parent=$(dirname "$destination")
+    install -d -m 0750 "$parent"
+    [ ! -e "$destination" ] && [ ! -L "$destination" ] || fail "payload path already exists"
+    temporary=$destination.partial.$$
+    trap 'rm -f "$temporary"' EXIT HUP INT TERM
+    umask 027
+    cat >"$temporary"
+    actual_size=$(stat -c %s "$temporary")
+    [ "$actual_size" = "$expected_size" ] || fail "payload size mismatch"
+    actual_sha=$(sha256sum "$temporary")
+    actual_sha=${actual_sha%% *}
+    [ "$actual_sha" = "$expected_sha" ] || fail "payload SHA-256 mismatch"
+    chmod 0640 "$temporary"
+    case $relative in main|run-test) chmod 0750 "$temporary" ;; esac
+    mv "$temporary" "$destination"
+    trap - EXIT HUP INT TERM
+    printf 'stored path=%s size=%s sha256=%s\n' "$relative" "$actual_size" "$actual_sha"
+}
+
+verify_payload() {
+    [ "$#" -eq 1 ] || fail "verify requires RUN_ID"
+    directory=$(run_directory "$1")
+    payload=$directory/payload
+    sums=$payload/PAYLOAD_SHA256SUMS
+    [ -f "$sums" ] && [ ! -L "$sums" ] || fail "missing payload checksums"
+    [ -x "$payload/run-test" ] && [ ! -L "$payload/run-test" ] || fail "missing run-test"
+    [ -x "$payload/main" ] && [ ! -L "$payload/main" ] || fail "missing main"
+    if find "$payload" -type l -print -quit | grep -q .; then
+        fail "payload contains symlink"
+    fi
+    entries=0
+    entrypoint=0
+    actual_list=$directory/.actual-files.$$
+    expected_list=$directory/.expected-files.$$
+    trap 'rm -f "$actual_list" "$expected_list"' EXIT HUP INT TERM
+    : >"$expected_list"
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Deliberate field splitting; globbing is disabled globally with set -f.
+        # shellcheck disable=SC2086
+        set -- $line
+        [ "$#" -eq 2 ] || fail "malformed checksum line"
+        valid_sha256 "$1" || fail "malformed checksum digest"
+        valid_relative_path "$2" || fail "unsafe checksum path"
+        [ "$2" != PAYLOAD_SHA256SUMS ] || fail "checksum file cannot list itself"
+        entries=$((entries + 1))
+        [ "$2" != run-test ] || entrypoint=$((entrypoint + 1))
+        printf '%s\n' "$2" >>"$expected_list"
+    done <"$sums"
+    [ "$entries" -gt 0 ] || fail "empty payload checksums"
+    [ "$entrypoint" -eq 1 ] || fail "run-test must be listed exactly once"
+    (cd "$payload" && sha256sum -c PAYLOAD_SHA256SUMS >/dev/null)
+    printf '%s\n' PAYLOAD_SHA256SUMS >>"$expected_list"
+    find "$payload" -type f | while IFS= read -r path; do
+        printf '%s\n' "${path#"$payload"/}"
+    done | LC_ALL=C sort >"$actual_list"
+    LC_ALL=C sort -o "$expected_list" "$expected_list"
+    cmp -s "$expected_list" "$actual_list" || fail "payload contains unlisted files"
+    rm -f "$actual_list" "$expected_list"
+    trap - EXIT HUP INT TERM
+    printf 'verified run=%s files=%s\n' "$1" "$entries"
+}
+
+seal_run() {
+    [ "$#" -eq 1 ] || fail "seal requires RUN_ID"
+    directory=$(run_directory "$1")
+    verify_payload "$1"
+    : >"$directory/.sealed"
+    chmod 0440 "$directory/.sealed"
+    printf 'sealed run=%s\n' "$1"
+}
+
+run_entrypoint() {
+    [ "$#" -eq 3 ] || fail "run requires RUN_ID ITERATION TIMEOUT_SECONDS"
+    directory=$(run_directory "$1")
+    iteration=$2
+    timeout_seconds=$3
+    case $iteration in ''|*[!0-9]*) fail "invalid iteration" ;; esac
+    case $timeout_seconds in ''|*[!0-9]*) fail "invalid timeout" ;; esac
+    [ "$iteration" -ge 1 ] && [ "$iteration" -le 100 ] || fail "iteration out of range"
+    [ "$timeout_seconds" -ge 1 ] && [ "$timeout_seconds" -le 3600 ] || fail "timeout out of range"
+    [ -f "$directory/.sealed" ] || fail "run is not sealed"
+    verify_payload "$1"
+    output=$directory/iterations/$iteration
+    [ ! -e "$output" ] || fail "iteration already exists"
+    install -d -m 0750 "$output"
+    work=$directory/.work-$iteration
+    [ ! -e "$work" ] && [ ! -L "$work" ] || fail "iteration work path exists"
+    cp -R "$directory/payload" "$work"
+    # $1 is intentionally expanded by the new shell, not this agent process.
+    # shellcheck disable=SC2016
+    setsid sh -c '
+        cd "$1"
+        exec env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin HOME=/nonexistent ./run-test
+    ' sh "$work" >"$output/stdout.log" 2>"$output/stderr.log" &
+    test_pid=$!
+    (
+        elapsed=0
+        while kill -0 "$test_pid" 2>/dev/null && [ "$elapsed" -lt "$timeout_seconds" ]; do
+            sleep 1
+            elapsed=$((elapsed + 1))
+        done
+        kill -0 "$test_pid" 2>/dev/null || exit 0
+        : >"$output/timed-out"
+        kill -TERM -- "-$test_pid" 2>/dev/null || exit 0
+        sleep 2
+        kill -KILL -- "-$test_pid" 2>/dev/null || true
+    ) &
+    watchdog_pid=$!
+    set +e
+    wait "$test_pid"
+    result=$?
+    set -e
+    wait "$watchdog_pid" 2>/dev/null || true
+    if [ -f "$output/timed-out" ]; then
+        result=124
+    fi
+    printf '%s\n' "$result" >"$output/exit-code"
+    if [ -d "$work/output" ]; then
+        mv "$work/output" "$output/output"
+    fi
+    rm -rf "$work"
+    printf 'completed run=%s iteration=%s exit=%s\n' "$1" "$iteration" "$result"
+    exit "$result"
+}
+
+snapshot_run() {
+    [ "$#" -eq 1 ] || fail "snapshot requires RUN_ID"
+    directory=$(run_directory "$1")
+    [ -d "$directory" ] || fail "run does not exist"
+    find "$directory" -type f | LC_ALL=C sort | while IFS= read -r path; do
+        relative=${path#"$directory"/}
+        valid_relative_path "$relative" || fail "unsafe evidence path"
+        size=$(stat -c %s "$path")
+        printf '%s\t%s\n' "$relative" "$size"
+    done
+}
+
+get_file() {
+    [ "$#" -eq 2 ] || fail "get requires RUN_ID PATH"
+    directory=$(run_directory "$1")
+    relative=$2
+    valid_relative_path "$relative" || fail "unsafe output path"
+    case $relative in iterations/*) ;; *) fail "get is limited to iteration evidence" ;; esac
+    source=$directory/$relative
+    [ -f "$source" ] && [ ! -L "$source" ] || fail "output is not a regular file"
+    cat "$source"
+}
+
+cleanup_run() {
+    [ "$#" -eq 1 ] || fail "cleanup requires RUN_ID"
+    directory=$(run_directory "$1")
+    case $directory in "$run_root"/*) ;; *) fail "cleanup escaped run root" ;; esac
+    if [ -e "$directory" ]; then
+        rm -rf "$directory"
+    fi
+    printf 'cleaned run=%s\n' "$1"
+}
+
+probe_target() {
+    [ "$#" -eq 0 ] || fail "probe takes no arguments"
+    for command in awk cat chmod cmp cp df dirname env find grep id install kill mv \
+        rm setsid sha256sum sleep sort stat uname; do
+        command -v "$command" >/dev/null 2>&1 || fail "missing prerequisite: $command"
+    done
+    free_kib=$(df -Pk "$run_root" | awk 'NR == 2 {print $4}')
+    case $free_kib in ''|*[!0-9]*) fail "cannot determine free space" ;; esac
+    free_bytes=$((free_kib * 1024))
+    temperature=unavailable
+    for sensor in /sys/class/thermal/thermal_zone*/temp; do
+        [ -f "$sensor" ] || continue
+        value=$(cat "$sensor" 2>/dev/null || true)
+        case $value in ''|*[!0-9]*) continue ;; esac
+        if [ "$temperature" = unavailable ] || [ "$value" -gt "$temperature" ]; then
+            temperature=$value
+        fi
+    done
+    printf 'protocol=1\nagentVersion=%s\nuser=%s\nkernel=%s\narchitecture=%s\nfreeBytes=%s\ntemperatureMilliCelsius=%s\n' \
+        "$version" "$(id -un)" "$(uname -r)" "$(uname -m)" "$free_bytes" "$temperature"
+}
+
+check_library() {
+    [ "$#" -eq 1 ] || fail "check-library requires NAME"
+    valid_system_name "$1" || fail "unsafe library name"
+    if command -v ldconfig >/dev/null 2>&1 && \
+        ldconfig -p 2>/dev/null | awk -v name="$1" '$1 == name {found=1} END {exit !found}'; then
+        printf 'library=%s status=present\n' "$1"
+        return 0
+    fi
+    for root in /lib /usr/lib /usr/local/lib /opt/lib /opt/hil/runtime; do
+        [ -d "$root" ] || continue
+        if find "$root" -type f -name "$1" -print -quit 2>/dev/null | grep -q .; then
+            printf 'library=%s status=present\n' "$1"
+            return 0
+        fi
+    done
+    printf 'library=%s status=absent\n' "$1"
+    return 1
+}
+
+check_module() {
+    [ "$#" -eq 1 ] || fail "check-module requires NAME"
+    valid_system_name "$1" || fail "unsafe module name"
+    if awk -v name="$1" '$1 == name {found=1} END {exit !found}' /proc/modules; then
+        printf 'module=%s status=present\n' "$1"
+        return 0
+    fi
+    printf 'module=%s status=absent\n' "$1"
+    return 1
+}
+
+check_device() {
+    [ "$#" -eq 1 ] || fail "check-device requires PATH"
+    case $1 in /dev/*) ;; *) fail "unsafe device path" ;; esac
+    valid_relative_path "${1#/dev/}" || fail "unsafe device path"
+    if [ -e "$1" ] && [ ! -L "$1" ]; then
+        printf 'device=%s status=present\n' "$1"
+        return 0
+    fi
+    printf 'device=%s status=absent\n' "$1"
+    return 1
+}
+
+dispatch() {
+    command=${1:-}
+    [ "$#" -gt 0 ] && shift || true
+    case $command in
+        probe) probe_target "$@" ;;
+        check-library) check_library "$@" ;;
+        check-module) check_module "$@" ;;
+        check-device) check_device "$@" ;;
+        prepare) prepare_run "$@" ;;
+        put) put_file "$@" ;;
+        verify) verify_payload "$@" ;;
+        seal) seal_run "$@" ;;
+        run) run_entrypoint "$@" ;;
+        snapshot) snapshot_run "$@" ;;
+        get) get_file "$@" ;;
+        cleanup) cleanup_run "$@" ;;
+        *) fail "unsupported command" ;;
+    esac
+}
+
+if [ "${1:-}" = --forced ]; then
+    [ -n "${SSH_ORIGINAL_COMMAND:-}" ] || fail "missing forced command"
+    # Deliberate argument splitting; metacharacters are data and globbing is disabled.
+    # shellcheck disable=SC2086
+    set -- $SSH_ORIGINAL_COMMAND
+    dispatch "$@"
+else
+    dispatch "$@"
+fi

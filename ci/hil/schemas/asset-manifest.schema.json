@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanchuanhehe/modelzoo/ci/hil/schemas/asset-manifest.schema.json",
+  "title": "ModelZoo HIL asset manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "modelzoo.hil/v1alpha1"},
+    "kind": {"const": "AssetManifest"},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "state"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"},
+        "version": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,31}$"},
+        "state": {"enum": ["candidate", "released"]}
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "engine", "soc", "files"],
+      "properties": {
+        "model": {"type": "string", "minLength": 1, "maxLength": 64},
+        "engine": {"enum": ["svp-nnn"]},
+        "soc": {"const": "SS928V100"},
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "sourceRef", "immutableTag", "releaseAsset", "sha256", "size", "mediaType", "access", "license"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"
+              },
+              "sourceRef": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"},
+              "immutableTag": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+              "releaseAsset": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "size": {"type": "integer", "minimum": 1, "maximum": 1073741824},
+              "mediaType": {"type": "string", "pattern": "^[a-z0-9.+-]+/[a-zA-Z0-9.+-]+$"},
+              "access": {"enum": ["public", "restricted"]},
+              "license": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["status", "reference"],
+                "properties": {
+                  "status": {"enum": ["redistributable", "restricted", "unconfirmed"]},
+                  "reference": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9.+_-]{0,127}$"}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

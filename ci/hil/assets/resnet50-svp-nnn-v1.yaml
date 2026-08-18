@@ -1,0 +1,66 @@
+apiVersion: modelzoo.hil/v1alpha1
+kind: AssetManifest
+metadata:
+  name: resnet50-svp-nnn
+  version: v1
+  state: released
+spec:
+  model: resnet50
+  engine: svp-nnn
+  soc: SS928V100
+  files:
+    - name: resnet50.om
+      sourceRef: modelzoo-public-release
+      immutableTag: hil-assets-resnet50-svp-nnn-v1
+      releaseAsset: resnet50.om
+      sha256: c9c3f12d4e0f1b856d1fd7db639d0947abd006416914204adbbeeb568cbf9c5d
+      size: 26074852
+      mediaType: application/vnd.hisilicon.svp-nnn
+      access: public
+      license:
+        status: redistributable
+        reference: LicenseRef-User-Authorized-Publication-2026-08-17
+    - name: input/golden.jpg
+      sourceRef: modelzoo-public-release
+      immutableTag: hil-assets-resnet50-svp-nnn-v1
+      releaseAsset: golden.jpg
+      sha256: 0565d0b330f11ecaae92412ff5931e6c1e4bf1636f7924928ea0fa5a97468d67
+      size: 51854
+      mediaType: image/jpeg
+      access: public
+      license:
+        status: redistributable
+        reference: LicenseRef-User-Authorized-Publication-2026-08-17
+    - name: file_list.json
+      sourceRef: modelzoo-public-release
+      immutableTag: hil-assets-resnet50-svp-nnn-v1
+      releaseAsset: file_list.json
+      sha256: 3f248601f8c25f943652478dfc820e12586f7a74e0f657923b207e1bf9156cc3
+      size: 74
+      mediaType: application/json
+      access: public
+      license:
+        status: redistributable
+        reference: LicenseRef-ModelZoo-HIL-Metadata
+    - name: acl.json
+      sourceRef: modelzoo-public-release
+      immutableTag: hil-assets-resnet50-svp-nnn-v1
+      releaseAsset: acl.json
+      sha256: ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356
+      size: 3
+      mediaType: application/json
+      access: public
+      license:
+        status: redistributable
+        reference: LicenseRef-ModelZoo-HIL-Metadata
+    - name: expected.json
+      sourceRef: modelzoo-public-release
+      immutableTag: hil-assets-resnet50-svp-nnn-v1
+      releaseAsset: expected.json
+      sha256: f67861d743d2c454deadb56bbee624c3e2437a6066de9cc3c68b25526e7fab75
+      size: 292
+      mediaType: application/json
+      access: public
+      license:
+        status: redistributable
+        reference: LicenseRef-ModelZoo-HIL-Metadata

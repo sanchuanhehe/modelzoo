@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sanchuanhehe/modelzoo/ci/hil/schemas/test-definition.schema.json",
+  "title": "ModelZoo HIL test definition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {"const": "modelzoo.hil/v1alpha1"},
+    "kind": {"const": "TestDefinition"},
+    "metadata": {
+      "type": "object", "additionalProperties": false, "required": ["name"],
+      "properties": {"name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"}}
+    },
+    "spec": {
+      "type": "object", "additionalProperties": false,
+      "required": ["targetClass", "adapter", "buildArtifact", "assetManifest", "iterations", "timeoutSeconds", "expectation"],
+      "properties": {
+        "targetClass": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"},
+        "adapter": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{0,62}$"},
+        "buildArtifact": {
+          "type": "object", "additionalProperties": false,
+          "required": ["sample", "engine", "soc"],
+          "properties": {
+            "sample": {"type": "string", "pattern": "^samples/[A-Za-z0-9._/-]+$"},
+            "engine": {"const": "svp-nnn"},
+            "soc": {"const": "SS928V100"}
+          }
+        },
+        "assetManifest": {"type": "string", "pattern": "^ci/hil/assets/[a-z0-9][a-z0-9._-]*\\.yaml$"},
+        "iterations": {"type": "integer", "minimum": 1, "maximum": 100},
+        "timeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 3600},
+        "expectation": {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "asset"],
+          "properties": {
+            "type": {"const": "classification.topk"},
+            "asset": {"const": "expected.json"}
+          }
+        }
+      }
+    }
+  }
+}
