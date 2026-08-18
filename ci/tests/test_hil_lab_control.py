@@ -466,7 +466,8 @@ class HilLabControlTests(unittest.TestCase):
             self.assertIn(b"boot evidence", log.read_bytes())
 
     def test_evidence_snapshot_survives_target_loss_and_redacts_credentials(self) -> None:
-        secret = b"secret-value-12345"
+        # Synthetic non-secret marker used only to prove exact-value redaction.
+        redaction_marker = b"unit-test-redaction-marker-12345"
 
         def runner(
             argv: list[str],
@@ -478,8 +479,12 @@ class HilLabControlTests(unittest.TestCase):
         ) -> subprocess.CompletedProcess[bytes]:
             del input, capture_output, timeout, check
             if argv[0] == "ssh":
-                return subprocess.CompletedProcess(argv, 255, secret, b"offline")
-            return subprocess.CompletedProcess(argv, 0, secret + b"\n", b"")
+                return subprocess.CompletedProcess(
+                    argv, 255, redaction_marker, b"offline"
+                )
+            return subprocess.CompletedProcess(
+                argv, 0, redaction_marker + b"\n", b""
+            )
 
         with (
             tempfile.TemporaryDirectory() as run_directory,
@@ -489,11 +494,13 @@ class HilLabControlTests(unittest.TestCase):
             run_root = Path(run_directory)
             credentials = Path(credential_directory)
             self.credentials(credentials)
-            (credentials / "hil-v2-board-ssh").write_bytes(secret)
+            (credentials / "hil-v2-board-ssh").write_bytes(redaction_marker)
             (credentials / "hil-v2-board-ssh").chmod(0o600)
             inputs = Path(input_directory)
             context = inputs / "context.json"
-            context.write_text(json.dumps({"note": secret.decode()}), encoding="utf-8")
+            context.write_text(
+                json.dumps({"note": redaction_marker.decode()}), encoding="utf-8"
+            )
             asset_manifest = inputs / "assets.yaml"
             asset_manifest.write_text("kind: evidence\n", encoding="utf-8")
             build_manifest = inputs / "build.json"
@@ -515,11 +522,14 @@ class HilLabControlTests(unittest.TestCase):
                 b"[REDACTED]",
                 (evidence_root / "bundle" / "manifests" / "execution-context.json").read_bytes(),
             )
-            self.assertNotIn(secret, b"".join(
-                path.read_bytes()
-                for path in evidence_root.rglob("*")
-                if path.is_file()
-            ))
+            self.assertNotIn(
+                redaction_marker,
+                b"".join(
+                    path.read_bytes()
+                    for path in evidence_root.rglob("*")
+                    if path.is_file()
+                ),
+            )
             manifest = json.loads(
                 (evidence_root / "evidence-manifest.json").read_text(encoding="utf-8")
             )
