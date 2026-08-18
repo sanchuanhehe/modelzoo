@@ -102,7 +102,10 @@ if [ -e /usr/local/libexec/hil-target-agent ] || \
 fi
 trap 'rm -f "$temporary_link"' EXIT HUP INT TERM
 ln -s "$(basename "$versioned_agent")" "$temporary_link"
-mv -Tf "$temporary_link" /usr/local/libexec/hil-target-agent
+# BusyBox mv on the vendor target has no GNU -T option. The destination was
+# constrained above to either absent or a symlink, so POSIX -f preserves the
+# intended atomic rename without directory-target ambiguity.
+mv -f "$temporary_link" /usr/local/libexec/hil-target-agent
 trap - EXIT HUP INT TERM
 
 printf 'target agent version=%s user=%s forced-command=enabled\n' \

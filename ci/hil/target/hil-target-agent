@@ -2,7 +2,7 @@
 set -eu
 set -f
 
-version=0.2.0
+version=0.2.1
 if [ "${1:-}" = --version ]; then
     printf '%s\n' "$version"
     exit 0
@@ -196,7 +196,11 @@ run_entrypoint() {
 snapshot_run() {
     [ "$#" -eq 1 ] || fail "snapshot requires RUN_ID"
     directory=$(run_directory "$1")
-    [ -d "$directory" ] || fail "run does not exist"
+    [ ! -L "$directory" ] || fail "run path is a symbolic link"
+    if [ ! -e "$directory" ]; then
+        return 0
+    fi
+    [ -d "$directory" ] || fail "run path is not a directory"
     find "$directory" -type f | LC_ALL=C sort | while IFS= read -r path; do
         relative=${path#"$directory"/}
         valid_relative_path "$relative" || fail "unsafe evidence path"
@@ -220,7 +224,9 @@ cleanup_run() {
     [ "$#" -eq 1 ] || fail "cleanup requires RUN_ID"
     directory=$(run_directory "$1")
     case $directory in "$run_root"/*) ;; *) fail "cleanup escaped run root" ;; esac
+    [ ! -L "$directory" ] || fail "cleanup path is a symbolic link"
     if [ -e "$directory" ]; then
+        [ -d "$directory" ] || fail "cleanup path is not a directory"
         rm -rf "$directory"
     fi
     printf 'cleaned run=%s\n' "$1"

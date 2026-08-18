@@ -95,6 +95,16 @@ class HilWorkflowV2Tests(unittest.TestCase):
             names.index("Stage runtime-only credentials"),
         )
 
+    def test_staged_openssh_private_key_has_required_terminal_newline(self) -> None:
+        self.assertIn(
+            "printf '%s\\n' \"$V2_BOARD_SSH_KEY\" >\"$HIL_CREDENTIALS_DIRECTORY/hil-v2-board-ssh\"",
+            self.text,
+        )
+        self.assertNotIn(
+            "printf '%s' \"$V2_BOARD_SSH_KEY\" >\"$HIL_CREDENTIALS_DIRECTORY/hil-v2-board-ssh\"",
+            self.text,
+        )
+
     def test_root_execution_is_limited_to_master_source_artifacts(self) -> None:
         self.assertIn(
             "Root target execution accepts only CI artifacts built from master.",
