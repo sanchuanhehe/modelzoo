@@ -51,6 +51,8 @@ class HilProvisionV2Tests(unittest.TestCase):
         self.assertIn("execution identity change requires explicit deprovision", source)
         self.assertIn("public key file must contain exactly one non-empty line", source)
         self.assertIn("stable target-agent path is not a symbolic link", source)
+        self.assertIn('mv -f "$temporary_link" /usr/local/libexec/hil-target-agent', source)
+        self.assertNotIn('mv -Tf "$temporary_link" /usr/local/libexec/hil-target-agent', source)
         self.assertNotIn("rm -f \"$authorized_keys\"", source)
 
     def test_host_usb_passthrough_requires_exact_unique_identity(self) -> None:

@@ -87,6 +87,25 @@ class HilTargetAgentTests(unittest.TestCase):
         self.assertEqual(self.agent("cleanup", run_id).returncode, 0)
         self.assertFalse((self.run_root / run_id).exists())
 
+    def test_snapshot_and_cleanup_are_idempotent_for_absent_run(self) -> None:
+        run_id = "never-prepared"
+        snapshot = self.agent("snapshot", run_id)
+        self.assertEqual(snapshot.returncode, 0, snapshot.stderr.decode())
+        self.assertEqual(snapshot.stdout, b"")
+        cleanup = self.agent("cleanup", run_id)
+        self.assertEqual(cleanup.returncode, 0, cleanup.stderr.decode())
+        self.assertIn(b"cleaned run=never-prepared", cleanup.stdout)
+
+    def test_snapshot_and_cleanup_reject_run_path_symlink(self) -> None:
+        outside = self.run_root / "outside"
+        outside.mkdir()
+        link = self.run_root / "linked-run"
+        link.symlink_to(outside, target_is_directory=True)
+        self.assertNotEqual(self.agent("snapshot", "linked-run").returncode, 0)
+        self.assertNotEqual(self.agent("cleanup", "linked-run").returncode, 0)
+        self.assertTrue(link.is_symlink())
+        self.assertTrue(outside.is_dir())
+
     def test_put_rejects_traversal_and_bad_digest(self) -> None:
         self.assertEqual(self.agent("prepare", "run-2").returncode, 0)
         traversal = self.agent("put", "run-2", "../escape", "1", "0" * 64, data=b"x")

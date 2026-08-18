@@ -167,7 +167,7 @@ jobs:
           set -euo pipefail
           [[ -n "$V2_BOARD_SSH_KEY" && -n "$BOARD_KNOWN_HOSTS" && -n "$RELEASE_TOKEN" ]]
           umask 077
-          printf '%s' "$V2_BOARD_SSH_KEY" >"$HIL_CREDENTIALS_DIRECTORY/hil-v2-board-ssh"
+          printf '%s\n' "$V2_BOARD_SSH_KEY" >"$HIL_CREDENTIALS_DIRECTORY/hil-v2-board-ssh"
           printf '%s\n' "$BOARD_KNOWN_HOSTS" >"$HIL_CREDENTIALS_DIRECTORY/hil-board-known-hosts"
           printf '%s' "$RELEASE_TOKEN" >"$HIL_CREDENTIALS_DIRECTORY/github-workflow-token"
           if [[ -n "$RESTRICTED_ASSET_TOKEN" ]]; then

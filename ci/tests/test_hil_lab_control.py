@@ -235,6 +235,38 @@ class HilLabControlTests(unittest.TestCase):
             self.assertEqual(len(records), 1)
             self.assertEqual(json.loads(records[0].read_text()), payload)
 
+    def test_main_does_not_log_after_local_cleanup_removes_event_directory(self) -> None:
+        arguments = mock.Mock(command="local", local_command="cleanup")
+        parser = mock.Mock()
+        parser.parse_args.return_value = arguments
+        with (
+            mock.patch.object(lab, "build_parser", return_value=parser),
+            mock.patch.object(
+                lab,
+                "run_cli",
+                return_value=("local.cleanup", {"removed": True}),
+            ),
+            mock.patch.object(lab, "write_event_log") as write_event,
+        ):
+            self.assertEqual(lab.main(), 0)
+        write_event.assert_not_called()
+
+    def test_main_preserves_local_cleanup_failure_without_event_logging(self) -> None:
+        arguments = mock.Mock(command="local", local_command="cleanup")
+        parser = mock.Mock()
+        parser.parse_args.return_value = arguments
+        with (
+            mock.patch.object(lab, "build_parser", return_value=parser),
+            mock.patch.object(
+                lab,
+                "run_cli",
+                side_effect=lab.LabError("cleanup failed", lab.EXIT_CLEANUP),
+            ),
+            mock.patch.object(lab, "write_event_log") as write_event,
+        ):
+            self.assertEqual(lab.main(), lab.EXIT_CLEANUP)
+        write_event.assert_not_called()
+
     def test_artifact_verification_binds_sha_and_aarch64(self) -> None:
         source_sha = "1" * 40
         header = bytearray(64)
@@ -381,6 +413,48 @@ class HilLabControlTests(unittest.TestCase):
             lab.target_command(target, Path("/missing"), ["run", "bad id"])
         with self.assertRaisesRegex(lab.LabError, "unsafe target-agent argument"):
             lab.target_command(target, Path("/missing"), ["probe;touch"])
+
+    def test_absent_target_run_download_and_cleanup_are_successful(self) -> None:
+        calls: list[str] = []
+
+        def runner(
+            argv: list[str],
+            *,
+            input: bytes | None,
+            capture_output: bool,
+            timeout: int,
+            check: bool,
+        ) -> subprocess.CompletedProcess[bytes]:
+            del input, capture_output, timeout, check
+            calls.append(argv[-1])
+            return subprocess.CompletedProcess(argv, 0, b"", b"")
+
+        with (
+            tempfile.TemporaryDirectory() as credential_directory,
+            tempfile.TemporaryDirectory() as output_directory,
+        ):
+            credentials = Path(credential_directory)
+            self.credentials(credentials)
+            output = Path(output_directory)
+            downloaded = lab.target_download(
+                INVENTORY,
+                "hi3403-01",
+                credentials,
+                "never-prepared",
+                output,
+                runner=runner,
+            )
+            cleaned = lab.target_cleanup(
+                INVENTORY,
+                "hi3403-01",
+                credentials,
+                "never-prepared",
+                runner=runner,
+            )
+            self.assertEqual(downloaded["files"], [])
+            self.assertEqual((output / "target-snapshot.txt").read_bytes(), b"")
+            self.assertTrue(cleaned["cleaned"])
+        self.assertEqual(calls, ["snapshot never-prepared", "cleanup never-prepared"])
 
     def test_target_preflight_interprets_target_class_on_controller(self) -> None:
         calls: list[str] = []

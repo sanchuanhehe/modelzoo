@@ -33,7 +33,7 @@ if str(ROOT) not in sys.path:
 
 from ci.hil import validate_config  # noqa: E402
 
-VERSION = "0.3.1"
+VERSION = "0.3.2"
 EXIT_CONFIG = 10
 EXIT_ASSET = 20
 EXIT_ARTIFACT = 30
@@ -1939,19 +1939,21 @@ def main() -> int:
         if isinstance(exc, LabError):
             failure_details.update(exc.details)
         payload = event(command, "failed", failure_details)
-        try:
-            write_event_log(payload)
-        except LabError as log_error:
-            print(f"event logging failed: {log_error}", file=sys.stderr)
-            exit_code = EXIT_EVIDENCE
+        if command != "local.cleanup":
+            try:
+                write_event_log(payload)
+            except LabError as log_error:
+                print(f"event logging failed: {log_error}", file=sys.stderr)
+                exit_code = EXIT_EVIDENCE
         print(json.dumps(payload, sort_keys=True))
         return exit_code
     payload = event(command, "passed", details)
-    try:
-        write_event_log(payload)
-    except LabError as exc:
-        print(json.dumps(event(command, "failed", {"error": str(exc)}), sort_keys=True))
-        return EXIT_EVIDENCE
+    if command != "local.cleanup":
+        try:
+            write_event_log(payload)
+        except LabError as exc:
+            print(json.dumps(event(command, "failed", {"error": str(exc)}), sort_keys=True))
+            return EXIT_EVIDENCE
     print(json.dumps(payload, sort_keys=True))
     return 0
 
