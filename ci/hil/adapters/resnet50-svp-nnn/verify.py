@@ -23,11 +23,11 @@ def verify(expected_path: Path, results_root: Path, count: int) -> dict[str, obj
         raise verify_result.ValidationError("results root must be a real directory")
     records: list[dict[str, object]] = []
     required_iterations = [str(index) for index in range(1, count + 1)]
-    actual_iterations = sorted(path.name for path in results_root.iterdir())
-    if actual_iterations != required_iterations:
+    actual_iterations = {path.name for path in results_root.iterdir()}
+    if actual_iterations != set(required_iterations):
         raise verify_result.ValidationError(
             "iteration directory set mismatch: "
-            f"expected={required_iterations}, actual={actual_iterations}"
+            f"expected={required_iterations}, actual={sorted(actual_iterations)}"
         )
     for index in range(1, count + 1):
         iteration_root = results_root / str(index)

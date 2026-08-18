@@ -70,7 +70,7 @@ class HilAdapterV2Tests(unittest.TestCase):
             expected_path = root / "expected.json"
             expected_path.write_text(json.dumps(expected), encoding="utf-8")
             results = root / "iterations"
-            for index in (1, 2):
+            for index in range(1, 11):
                 output = results / str(index) / "output"
                 output.mkdir(parents=True)
                 (results / str(index) / "exit-code").write_text("0\n", encoding="ascii")
@@ -78,10 +78,10 @@ class HilAdapterV2Tests(unittest.TestCase):
                     "10,0.9\n20,0.8\n30,0.7\n40,0.6\n50,0.5\n",
                     encoding="utf-8",
                 )
-            self.assertEqual(VERIFY.verify(expected_path, results, 2)["count"], 2)
-            (results / "2" / "exit-code").write_text("1\n", encoding="ascii")
+            self.assertEqual(VERIFY.verify(expected_path, results, 10)["count"], 10)
+            (results / "10" / "exit-code").write_text("1\n", encoding="ascii")
             with self.assertRaisesRegex(Exception, "nonzero retained exit code"):
-                VERIFY.verify(expected_path, results, 2)
+                VERIFY.verify(expected_path, results, 10)
 
     def test_payload_checksums_are_complete(self) -> None:
         data = b"payload"
